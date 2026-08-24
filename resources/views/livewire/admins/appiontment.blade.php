@@ -1,8 +1,13 @@
 <div>
     <div class="content">
         <div class="container">
-            <div class="page-title">
-                <h3 class="text-info">{{ env('APP_NAME') }} Appointments</h3>
+            <div class="row page-title align-items-center">
+                <div class="col">
+                    <h3 class="text-info">{{ env('APP_NAME') }} Appointments</h3>
+                </div>
+                <div class="col-auto">
+                    @include('admins.partials.back-to-dashboard')
+                </div>
             </div>
             <div>
                 @if (session()->has('message'))
@@ -24,10 +29,11 @@
                         <div class="form-group">
                             <label for="patient">Select Patient</label>
                             <select name="patient" wire:model.lazy="patient" class="form-control" required>
+                                <option value="">Choose Patient</option>
                                 @forelse ($patients as $patient)
                                     <option value="{{ $patient->id }}">{{ $patient->name }}</option>
                                 @empty
-                                    <option value="">No Fatient Found!</option>
+                                    <option value="">No Patient Found!</option>
                                 @endforelse
                             </select>
                             @error('patient')
@@ -38,6 +44,7 @@
                         <div class="form-group">
                             <label for="Nurse">Select Nurse</label>
                             <select name="Nurse" wire:model.lazy="nurse" class="form-control" required>
+                                <option value="">Choose Nurse</option>
                                 @forelse ($nurses as $nurse)
                                     <option value="{{ $nurse->id }}">{{ $nurse->name }}</option>
                                 @empty
@@ -53,8 +60,9 @@
                         <div class="form-group">
                             <label for="Doctor">Select Doctor</label>
                             <select name="Doctor" wire:model.lazy="doctor" class="form-control" required>
+                                <option value="">Choose Doctor</option>
                                 @forelse ($doctors as $doctor)
-                                    <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
+                                    <option value="{{ $doctor->id }}">{{ $doctor->employ->name ?? 'Unknown' }}</option>
                                 @empty
                                     <option value="">No Doctor Found!</option>
                                 @endforelse
@@ -80,6 +88,14 @@
                                 placeholder="Set End Time Of Appointment" wire:model.lazy="endtime" />
                             <p class="text-info">Current Value: {{ $endtime }}</p>
                             @error('endtime')
+                                <span class="text-red-500 text-danger text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description</label>
+                            <textarea name="description" wire:model.lazy="description" class="form-control" placeholder="Reason / notes for this appointment"></textarea>
+                            @error('description')
                                 <span class="text-red-500 text-danger text-xs">{{ $message }}</span>
                             @enderror
                         </div>

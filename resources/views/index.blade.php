@@ -1,13 +1,16 @@
 @extends('layouts.app')
 @section('content')
-<div id="home" class="parallax first-section wow fadeIn" data-stellar-background-ratio="0.4" style="background-image:url('images/slider-bg.png');" {{ $app = App\Models\settings::latest()->first() }}>
+@php
+   $iconValue = App\Models\Settings::where('key', 'icon')->value('value');
+@endphp
+<div id="home" class="parallax first-section wow fadeIn" data-stellar-background-ratio="0.4" style="background-image:url('images/slider-bg.png');">
    <div class="container">
       <div class="row">
          <div class="col-md-12 col-sm-12">
             <div class="text-contant">
                <h2>
-                  <span class="center"><span class="icon"><img src="{{ ($app) ? config('app.url').'storage/'. $app->icon_logo_path:'images/icon-logo.png' }}" alt="#" /></span></span>
-                  <a href="" class="typewrite" data-period="2000" data-type='[ "Welcome to Life Care", "We Care Your Health", "We are Expert!" ]'>
+                  <span class="center"><span class="icon"><img src="{{ $iconValue ? config('app.url').'storage/'.$iconValue : 'images/icon-logo.png' }}" alt="#" /></span></span>
+                  <a href="" class="typewrite" data-period="2000" data-type='[ "Welcome to JF Aesthetics", "We Care Your Beauty", "We are Expert!" ]'>
                   <span class="wrap"></span>
                   </a>
                </h2>
@@ -59,7 +62,7 @@
 <div id="about" class="section wow fadeIn">
    <div class="container">
       <div class="heading">
-         <span class="icon-logo"><img src="{{ ($app) ? 'storage/'.$app->icon_logo_path:'images/icon-logo.png' }}" alt="#"></span>
+         <span class="icon-logo"><img src="{{ $iconValue ? config('app.url').'storage/'.$iconValue : 'images/icon-logo.png' }}" alt="#"></span>
          <h2>The Specialist Clinic</h2>
       </div>
       <!-- end title -->
@@ -193,7 +196,7 @@
   <div class="container">
 
    <div class="heading">
-         <span class="icon-logo"><img src="{{ ($app) ? 'storage/'.$app->icon_logo_path:'images/icon-logo.png' }}" alt="#"></span>
+         <span class="icon-logo"><img src="{{ $iconValue ? config('app.url').'storage/'.$iconValue : 'images/icon-logo.png' }}" alt="#"></span>
          <h2>The Specialist Clinic</h2>
       </div>
 
@@ -270,7 +273,7 @@
                         <div class="pricing-table">
                            <div class="pricing-table-header">
                               <h2>Shared Hosting</h2>
-                              <h3>$85/month</h3>
+                              <h3>PKR 85/month</h3>
                            </div>
                            <div class="pricing-table-features">
                               <p><i class="fa fa-envelope-o"></i> <strong>250</strong> Email Addresses</p>
@@ -288,7 +291,7 @@
                         <div class="pricing-table pricing-table-highlighted">
                            <div class="pricing-table-header grd1">
                               <h2>WordPress Hosting</h2>
-                              <h3>$59/year</h3>
+                              <h3>PKR 59/year</h3>
                            </div>
                            <div class="pricing-table-space"></div>
                            <div class="pricing-table-text">
@@ -310,7 +313,7 @@
                         <div class="pricing-table">
                            <div class="pricing-table-header">
                               <h2>Reseller Hosting</h2>
-                              <h3>$85/one-time</h3>
+                              <h3>PKR 85/one-time</h3>
                            </div>
                            <div class="pricing-table-features">
                               <p><i class="fa fa-envelope-o"></i> <strong>250</strong> Email Addresses</p>
@@ -334,7 +337,7 @@
                         <div class="pricing-table">
                            <div class="pricing-table-header">
                               <h2>Dedicated Server</h2>
-                              <h3>$85/month</h3>
+                              <h3>PKR 85/month</h3>
                            </div>
                            <div class="pricing-table-space"></div>
                            <div class="pricing-table-features">
@@ -353,7 +356,7 @@
                         <div class="pricing-table pricing-table-highlighted">
                            <div class="pricing-table-header grd1">
                               <h2>VPS Server</h2>
-                              <h3>$59/month</h3>
+                              <h3>PKR 59/month</h3>
                            </div>
                            <div class="pricing-table-space"></div>
                            <div class="pricing-table-text">
@@ -388,7 +391,7 @@
 <div id="testimonials" class="section wb wow fadeIn">
    <div class="container">
       <div class="heading">
-         <span class="icon-logo"><img src="{{ ($app) ? 'storage/'.$app->icon_logo_path:'images/icon-logo.png' }}" alt="#"></span>
+         <span class="icon-logo"><img src="{{ $iconValue ? config('app.url').'storage/'.$iconValue : 'images/icon-logo.png' }}" alt="#"></span>
          <h2>Testimonials</h2>
       </div>
       <!-- end title -->
@@ -463,14 +466,6 @@
    <!-- end container -->
 </div>
 <!-- end section -->
-<div id="getintouch" class="section wb wow fadeIn" style="padding-bottom:0;">
-   <div class="container">
-      <div class="heading">
-         <span class="icon-logo"><img src="{{ ($app) ? 'storage/'.$app->icon_logo_path:'images/icon-logo.png' }}" alt="#"></span>
-         <h2>Get in Touch</h2>
-      </div>
-   </div>
 @livewire('contactus')
-</div>
 
 @endsection

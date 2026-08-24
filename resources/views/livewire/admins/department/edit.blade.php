@@ -68,11 +68,11 @@
                         <div class="form-group">
                             <label for="hod">Head Of Department</label>
                             <select name="hod" wire:model.lazy="head" class="form-control" required>
-                                <option selected>Choose Head</option>
+                                <option wire:key="hod-choose" selected>Choose Head</option>
                                 @forelse ($hods as $hod)
-                                    <option value="{{ $hod->id }}">{{ $hod->doctor->employ->name }}</option>
+                                    <option wire:key="hod-{{ $hod->id }}" value="{{ $hod->id }}">{{ $hod->doctor->employ->name }}</option>
                                 @empty
-                                    <option value="" class="text-warning">No head Found!</option>
+                                    <option wire:key="hod-none" value="" class="text-warning">No head Found! (register one under HOD's first)</option>
                                 @endforelse
 
                             </select>
@@ -85,11 +85,11 @@
                             <label for="block">Department Block</label>
                             <select name="block" wire:model.lazy="block" aria-placeholder="Selct Block"
                                 class="form-control" required>
-                                <option selected>Choose block</option>
+                                <option wire:key="block-choose" selected>Choose block</option>
                                 @forelse ($blocks as $block)
-                                    <option value="{{ $block->id }}">{{ $block->blockname }}</option>
+                                    <option wire:key="block-{{ $block->id }}" value="{{ $block->id }}">{{ $block->blockname }}</option>
                                 @empty
-                                    <option class="text-warning">No Block Found!</option>
+                                    <option wire:key="block-none" class="text-warning">No Block Found!</option>
                                 @endforelse
 
                             </select>

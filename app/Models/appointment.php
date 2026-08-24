@@ -12,8 +12,10 @@ class appointment extends Model
     protected $fillable=[
         'patient_id',
         'doctor_id',
+        'nurse_id',
         'intime',
         'outtime',
+        'description',
     ];
 
     public function patient(){
@@ -22,6 +24,10 @@ class appointment extends Model
 
     public function doctor(){
         return $this->belongsTo(doctor::class);
+    }
+
+    public function nurse(){
+        return $this->belongsTo(nurse::class);
     }
 
     public function checkups(){

@@ -33,10 +33,13 @@ class RequestedAppointments extends Component
         $appointment = requestedAppointment::findOrFail($id);
         $this->edit_appointment_id = $id;
 
-        $this->patient = $appointment->patient_id;
+        $this->name = $appointment->name;
+        $this->email = $appointment->email;
+        $this->phone = $appointment->phone;
         $this->doctor = $appointment->doctor_id;
-        $this->start_time = $appointment->intime;
-        $this->end_time = $appointment->outtime;
+        $this->message = $appointment->message;
+        $this->address = $appointment->address;
+        $this->stime = $appointment->stime;
         $this->_page = "edit";
     }
 
@@ -67,13 +70,13 @@ class RequestedAppointments extends Component
 
             ]);
             //unset variables
-            $this->name;
-            $this->email;
-            $this->phone;
-            $this->doctor;
-            $this->message;
-            $this->address;
-            $this->stime;
+            $this->name = "";
+            $this->email = "";
+            $this->phone = "";
+            $this->doctor = "";
+            $this->message = "";
+            $this->address = "";
+            $this->stime = "";
             $this->_page = "index";
 
             session()->flash('message', 'Appointment Created successfully.');
@@ -83,22 +86,34 @@ class RequestedAppointments extends Component
     public function update($edit_appointment_id)
     {
         $this->validate([
-            'patient' => 'required|numeric',
-            'doctor' => 'required|numeric',
+            "name" => "required",
+            "email" => "required",
+            "phone" => "required",
+            "doctor" => "required",
+            "message" => "required",
+            "address" => "required",
+            "stime" => "required",
         ]);
 
         $appointment = requestedAppointment::findOrFail($edit_appointment_id);
-        $appointment->patient_id = $this->patient;
+        $appointment->name = $this->name;
+        $appointment->email = $this->email;
+        $appointment->phone = $this->phone;
         $appointment->doctor_id = $this->doctor;
-        $appointment->intime = $this->start_time;
-        $appointment->outtime = $this->end_time;
+        $appointment->message = $this->message;
+        $appointment->address = $this->address;
+        $appointment->stime = $this->stime;
         $appointment->save();
 
         //unset variables
-        $this->patient = "";
+        $this->name = "";
+        $this->email = "";
+        $this->phone = "";
         $this->doctor = "";
-        $this->start_time = "";
-        $this->end_time = "";
+        $this->message = "";
+        $this->address = "";
+        $this->stime = "";
+        $this->edit_appointment_id = "";
         $this->_page = "index";
         session()->flash('message', 'Appointment Updated successfully.');
     }
@@ -141,7 +156,7 @@ class RequestedAppointments extends Component
             ])->layout('admins.layouts.app');
         } elseif ($this->_page == "edit") {
             return view('livewire.admins.requested-appointments.edit', [
-                'appointment' => requestedAppointment::findOrFail($this->edit_operation_report_id),
+                'appointment' => requestedAppointment::findOrFail($this->edit_appointment_id),
                 'doctors' => doctor::all(),
                 'patients' => patient::all(),
             ])->layout('admins.layouts.app');

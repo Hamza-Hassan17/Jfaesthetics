@@ -51,20 +51,20 @@
     <header>
         <div class="header-top wow fadeIn">
             <div class="container">
-                <a class="navbar-brand" href="{{ url('/') }}"><img
-                        src="{{ config('app.url') . 'storage/' . $settings["logo"] }}"
-                        alt="logo image "></a>
+                <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}"><img
+                        src="{{ config('app.url') }}images/logo.png"
+                        alt="{{ $settings['title'] ?? config('app.name') }} logo"></a>
                 <div class="right-header">
                     <div class="header-info">
                         <div class="info-inner">
                             <span class="icontop"><img src="{{ config('app.url') }}images/phone-icon.png" alt="#"></span>
                             <span class="iconcont"><a
-                                    href="tel:{{ $settings["phone"] ?? '123 123 123' }}">{{ $settings["phone"] ?? '123 123 123' }}</a></span>
+                                    href="tel:{{ $settings["business_phone"] ?? '123 123 123' }}">{{ $settings["business_phone"] ?? '123 123 123' }}</a></span>
                         </div>
                         <div class="info-inner">
                             <span class="icontop"><i class="fa fa-envelope" aria-hidden="true"></i></span>
                             <span class="iconcont"><a data-scroll
-                                    href="mailto:{{ $settings["email"] ?? 'tauseed@test.com' }}">{{ $settings["email"] ?? 'tauseed@test.com' }}</a></span>
+                                    href="mailto:{{ $settings["business_email"] ?? 'tauseed@test.com' }}">{{ $settings["business_email"] ?? 'tauseed@test.com' }}</a></span>
                         </div>
                         <div class="info-inner">
                             <span class="icontop"><i class="fa fa-clock-o" aria-hidden="true"></i></span>
@@ -119,8 +119,8 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="logo padding">
-                        <a href="{{ url('/') }}"><img src="{{ 'storage/'.$settings["logo"] ??  config("app.url").'images/logo.png' }}"
-                                alt=""></a>
+                        <a href="{{ url('/') }}"><img src="{{ config('app.url') }}images/logo.png"
+                                alt="{{ $settings['title'] ?? config('app.name') }} logo"></a>
                         <p>{{ $settings["description"] ?? 'hi this isLocavore pork belly scen ester pine est chill wave microdosing pop uple itarian cliche artisan.' }}
                         </p>
                     </div>
@@ -132,10 +132,10 @@
                                 aria-hidden="true"></i>{{ $settings["address"] ?? 'distric abc P/O xyz sorana' }}
                         </p>
                         <p><i class="fa fa-paper-plane"
-                                aria-hidden="true"></i>{{ $settings["email"] ?? 'tauseed@test.com' }}
+                                aria-hidden="true"></i>{{ $settings["business_email"] ?? 'tauseed@test.com' }}
                         </p>
                         <p><i class="fa fa-phone"
-                                aria-hidden="true"></i>{{ $settings["phone"] ?? '123 123 123' }}</p>
+                                aria-hidden="true"></i>{{ $settings["business_phone"] ?? '123 123 123' }}</p>
                     </div>
                 </div>
                 @livewire('subscribe')
@@ -149,6 +149,7 @@
                     <div class="footer-text">
                         <p>© {{ date('Y') }} <a id="tw" href="{{ url('') }}"
                                 target="_blank">{{ env('APP_NAME') }}</a> , Inc</p>
+                        <p>Design and Developed by <a href="https://supersofttechnology.com/" target="_blank" rel="noopener">Supersoft Technologies</a></p>
                     </div>
                 </div>
                 <div class="col-md-4">

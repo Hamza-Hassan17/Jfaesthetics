@@ -20,7 +20,7 @@ class Operationreport extends Component
     public $patient;
     public $details;
     public $doctor;
-    public $status;
+    public $status = 'pending';
 
     public $edit_operation_report_id;
     public $button_text = "Add New Operation Report";
@@ -55,7 +55,7 @@ class Operationreport extends Component
                 'patient_id' => $this->patient,
                 'description' => $this->details,
                 'doctor_id' => $this->doctor,
-                'status' => $this->doctor,
+                'status' => $this->status,
             ]);
 
             $this->patient = "";

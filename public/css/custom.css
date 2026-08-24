@@ -751,7 +751,7 @@ body.clinic_version .footer .widget-title h3 {
     float: left;
     width: 100%;
     min-height: 450px;
-    background: yellow;
+    background: #148080;
 }
 .contact-section {
     position: relative;
@@ -1289,7 +1289,7 @@ nav.main-menu .navbar-toggle {
         float: left;
         width: 100%;
         min-height: 540px;
-        background: yellow;
+        background: #148080;
     }
     .contact-section #googleMap {
         height: 550px !important;

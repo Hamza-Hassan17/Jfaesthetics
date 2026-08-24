@@ -16,23 +16,23 @@ class SettingSeeder extends Seeder
         $settings = [
             [
                 'key' => 'title',
-                'value' => 'Hospital Management System'
+                'value' => 'JF Aesthetics'
             ],
             [
                 'key' => 'business_email',
-                'value' => 'testing@gmail.com'
+                'value' => 'info@jfaesthetics.pk'
             ],
             [
                 'key' => 'address',
-                'value' => 'xyz, abc, 1234, Nepal'
+                'value' => 'Defence Phase 5, Near Medicare Clinic, Karachi'
             ],
             [
                 'key' => 'business_phone',
-                'value' => '+911234567890'
+                'value' => '03327841753'
             ],
             [
                 'key' => 'working_horse',
-                'value' => '7:00 AM - 8:00 PM'
+                'value' => '12:00 PM - 9:00 PM'
             ],
             [
                 'key' => 'description',

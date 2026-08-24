@@ -9,7 +9,7 @@ class Appointmentform extends Component
     public $name;
     public $email;
     public $phone;
-    public $doctor;
+    public $doctor_id;
     public $stime;
     public $address;
     public $message;
@@ -21,7 +21,7 @@ class Appointmentform extends Component
             'email' => 'required|email',
             'stime' => 'required',
             'phone' => 'required|numeric|max:10000000000000',
-            'doctor' => 'required',
+            'doctor_id' => 'required',
             'address' => 'required',
             'message' => 'required|max:550',
             ]);
@@ -32,7 +32,7 @@ class Appointmentform extends Component
             'phone'         => $this->phone,
             'stime'       => $this->stime,
             'address'       => $this->address,
-            'doctor'       => $this->doctor,
+            'doctor_id'       => $this->doctor_id,
             'message' => $this->message,
         ]);
 
@@ -41,7 +41,7 @@ class Appointmentform extends Component
            $this->email="";
            $this->stime="";
            $this->phone="";
-           $this->doctor="";
+           $this->doctor_id="";
            $this->address="";
            $this->message="";
 

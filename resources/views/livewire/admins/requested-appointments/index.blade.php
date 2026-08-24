@@ -6,6 +6,7 @@
                     <h3 class="text-info">{{ env('APP_NAME') }} Requested Appointments</h3>
                 </div>
                 <div class="col-auto">
+                    @include('admins.partials.back-to-dashboard')
                     <button class="btn btn-primary" wire:click="show_create_form">Add New</button>
                 </div>
             </div>
@@ -50,6 +51,8 @@
                                     <td>{{ $request->message }}</td>
                                     <td>{{ $request->stime }}</td>
                                     <td class="text-right">
+                                        <button wire:click="edit({{ $request->id }})" title="edit request"
+                                            class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
 
                                         @if (
                                             !App\Models\patient::where([

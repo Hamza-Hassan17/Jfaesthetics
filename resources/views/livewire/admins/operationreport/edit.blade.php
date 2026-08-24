@@ -33,7 +33,7 @@
         <div class="form-group">
             <label for="Docter">Docter</label>
             <select name="Docter" class="form-control" wire:model.lazy="doctor">
-                <option>Choose Doctor</option>
+                <option value="">Choose Doctor</option>
                 @forelse ($doctors as $doctor)
                     <option value="{{ $doctor->id }}" @if ($doctor->id == $report->doctor_id) selected @endif>
                         {{ $doctor->employ->name }}</option>

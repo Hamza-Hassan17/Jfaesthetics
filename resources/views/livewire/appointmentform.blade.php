@@ -54,15 +54,16 @@
                 <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12">
                    <div class="row">
                       <div class="form-group">
-                         <select wire:model.lazy="doctor" name="doctor"  class="form-control">
+                         <select wire:model.lazy="doctor_id" name="doctor_id"  class="form-control">
+                          <option value="">Choose Doctor</option>
                           @forelse (\App\Models\doctor::all() as $doctor)
-                            <option value="{{ $doctor->name }}">{{ $doctor->name }}</option>
+                            <option value="{{ $doctor->id }}">{{ $doctor->employ->name ?? 'Unknown' }}</option>
                           @empty
                            <option>No Doctor Found!</option>
                           @endforelse
                          </select>
 
-                         @error('doctor') <span class="text-red-500 text-danger text-xs">{{ $message }}</span> @enderror
+                         @error('doctor_id') <span class="text-red-500 text-danger text-xs">{{ $message }}</span> @enderror
                       </div>
                    </div>
                 </div>

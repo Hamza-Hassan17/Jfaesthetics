@@ -1,8 +1,13 @@
 <div>
     <div class="content">
         <div class="container">
-            <div class="page-title">
-                <h3 class="text-info">{{ env('APP_NAME') }} Nurses</h3>
+            <div class="row page-title align-items-center">
+                <div class="col">
+                    <h3 class="text-info">{{ env('APP_NAME') }} Nurses</h3>
+                </div>
+                <div class="col-auto">
+                    @include('admins.partials.back-to-dashboard')
+                </div>
             </div>
             <div>
                 @if (session()->has('message'))
@@ -55,6 +60,7 @@
                         <div class="form-group">
                             <label for="Department">Gender</label>
                             <select name="Department" wire:model.lazy="gender" class="form-control">
+                                <option value="">Choose Gender</option>
                                 <option value="Male" class="text-red">{{ __('Male') }}</option>
                                 <option value="Female" class="text-red">{{ __('Female') }}</option>
                             </select>

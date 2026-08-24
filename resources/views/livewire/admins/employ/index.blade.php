@@ -6,6 +6,7 @@
                     <h3 class="text-info">{{ env('APP_NAME') }} Employees</h3>
                 </div>
                 <div class="col-auto">
+                    @include('admins.partials.back-to-dashboard')
                     <button class="btn btn-primary" wire:click="show_create_form">Add Employee</button>
                 </div>
             </div>
@@ -71,19 +72,20 @@
                                     <td>{{ $employee->name }}</td>
                                     <td>{{ $employee->email }}</td>
                                     <td>{{ \Str::title($employee->position) }}</td>
-                                    <td>${{ number_format($employee->salary, 2, '.', ',') }}</td>
+                                    <td>PKR {{ number_format($employee->salary, 2, '.', ',') }}</td>
                                     <td>{{ $employee->created_at->format('d/m/Y') }}</td>
                                     <td class="text-right">
                                         <button wire:click="show_edit_form({{ $employee->id }})"
                                             class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
-                                        <button wire:click="delete_confirm({{ $employee->id }})"
+                                        <button wire:click="delete({{ $employee->id }})"
+                                            onclick="return confirm('Are You Sure?')"
                                             class="btn btn-outline-danger btn-rounded"><i
                                                 class="fas fa-trash"></i></button>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspane="7" class="text-warning">{{ __('Null') }}</td>
+                                    <td colspan="7" class="text-warning">{{ __('No employees found.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

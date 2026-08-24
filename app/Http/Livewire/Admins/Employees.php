@@ -23,7 +23,7 @@ class Employees extends Component
     public $salary;
     public $position;
     public $address;
-    public $status;
+    public $status = 'active';
     public $image;
     public $existing_image;
     public $_page;
@@ -101,6 +101,7 @@ class Employees extends Component
         $this->reset();
         session()->flash('message', 'Employee added successfully.');
         $this->_page = "index";
+        $this->_filter = "all";
     }
 
     public function set_filter($filter)
@@ -142,10 +143,9 @@ class Employees extends Component
         $employ->save();
         $this->reset();
 
-
-
         session()->flash('message', 'Employee updated successfully.');
         $this->_page = "index";
+        $this->_filter = "all";
     }
 
     public function delete($id)

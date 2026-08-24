@@ -36,7 +36,6 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         Route::get('/operationsreport', App\Http\Livewire\Admins\Operationreport::class)->name('admin_operations_report');
         Route::get('/patients', App\Http\Livewire\Admins\Patients::class)->name('admin_patients');
         Route::get('/birthsreport', App\Http\Livewire\Admins\Birthreport::class)->name('admin_birth_report');
-        Route::get('/patientBills', App\Http\Livewire\Admins\Bills::class)->name('patient_bills');
         Route::get('/rooms', App\Http\Livewire\Admins\Rooms::class)->name('Rooms');
         Route::get('/beds', App\Http\Livewire\Admins\Beds::class)->name('patients_beds');
 
@@ -50,13 +49,26 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
 
         Route::get('/blocks', App\Http\Livewire\Admins\Blocks::class)->name('blocks');
 
-        Route::get('/admin/hods', App\Http\Livewire\Admins\Hods::class)->name('hods');
+        Route::get('/hods', App\Http\Livewire\Admins\Hods::class)->name('hods');
 
-        Route::get('/admin/requestedappointments', App\Http\Livewire\Admins\RequestedAppointments::class)->name('requestedAppointment');
+        Route::get('/requestedappointments', App\Http\Livewire\Admins\RequestedAppointments::class)->name('requestedAppointment');
+
+        Route::get('/services', App\Http\Livewire\Admins\Services::class)->name('admin_services');
 
         Route::get('/subscribers', App\Http\Livewire\Admins\Subscibers::class)->name('subscibers');
 
         Route::get('/contactedus', App\Http\Livewire\Admins\Contactedus::class)->name('contactedus');
+
+        Route::get('/invoices', App\Http\Livewire\Admins\Invoices::class)->name('admin_invoices');
+
+        Route::get('/invoices/{invoice}/print', function (App\Models\Invoice $invoice) {
+            return view('admins.invoices.print', [
+                'invoice' => $invoice->load(['items', 'payments', 'patient', 'doctor.employ']),
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_invoice_print');
+
+        Route::get('/doctor-performance-report', App\Http\Livewire\Admins\DoctorPerformanceReport::class)->name('admin_doctor_performance_report');
     });
 });
 

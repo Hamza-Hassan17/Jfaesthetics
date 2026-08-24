@@ -56,6 +56,7 @@
                         <div class="form-group">
                             <label for="Department">Gender</label>
                             <select name="Department" wire:model.lazy="gender" class="form-control">
+                                <option value="">Choose Gender</option>
                                 <option value="Male" class="text-red">{{ __('Male') }}</option>
                                 <option value="Female" class="text-red">{{ __('Female') }}</option>
                             </select>

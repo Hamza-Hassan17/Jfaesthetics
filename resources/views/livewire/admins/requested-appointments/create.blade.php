@@ -55,6 +55,7 @@
                         <div class="form-group">
                             <label for="Doctor">Select Doctor</label>
                             <select name="Doctor" wire:model.lazy="doctor" class="form-control" required>
+                                <option value="">Choose Doctor</option>
                                 @forelse ($doctors as $doctor)
                                     <option value="{{ $doctor->id }}">{{ $doctor->employ->name }}</option>
                                 @empty

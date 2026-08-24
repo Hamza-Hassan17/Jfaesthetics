@@ -86,7 +86,7 @@
 
 
         <div class="form-group">
-            <label for="Salary">Salary <small class="text-sm text-success">USD</small></label>
+            <label for="Salary">Salary <small class="text-sm text-success">PKR</small></label>
             <input type="number" min="1" name="Salary" wire:model.lazy="salary"
                 placeholder="Enter Employee Salary" class="form-control" required cols="30"
                 rows="5"></textarea>

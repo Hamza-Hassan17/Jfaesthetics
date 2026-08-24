@@ -23,6 +23,7 @@ class Birthreport extends Component
     public $patient;
     public $details;
     public $doctor;
+    public $gender;
 
     public $edit_birth_report_id;
     public $button_text = "Add New Birth Report";
@@ -40,17 +41,20 @@ class Birthreport extends Component
                 'patient' => 'required',
                 'doctor' => 'required',
                 'details' => 'required',
+                'gender' => 'required',
                 ]);
 
             ModelsBirthreport::create([
-                'patient'          => $this->patient,
+                'patient_id'          => $this->patient,
                 'description'         => $this->details,
-                'doctor'         => $this->doctor,
+                'doctor_id'         => $this->doctor,
+                'gender'         => $this->gender,
             ]);
 
             $this->patient="";
             $this->details="";
             $this->doctor="";
+            $this->gender="";
 
             session()->flash('message', 'Birth Report Created successfully.');
         }
@@ -62,9 +66,10 @@ class Birthreport extends Component
     {
         $birthreport = ModelsBirthreport::findOrFail($id);
         $this->edit_birth_report_id = $id;
-        $this->patient = $birthreport->patient;
+        $this->patient = $birthreport->patient_id;
         $this->details = $birthreport->description;
-        $this->doctor = $birthreport->doctor;
+        $this->doctor = $birthreport->doctor_id;
+        $this->gender = $birthreport->gender;
 
         $this->button_text="Update Birth Report";
     }
@@ -75,18 +80,21 @@ class Birthreport extends Component
                 'patient' => 'required',
                 'details' => 'required',
                 'doctor' => 'required',
+                'gender' => 'required',
             ]);
 
         $birthreport = ModelsBirthreport::findOrFail($id);
-        $birthreport->patient = $this->patient;
+        $birthreport->patient_id = $this->patient;
         $birthreport->description = $this->details;
-        $birthreport->doctor = $this->doctor;
+        $birthreport->doctor_id = $this->doctor;
+        $birthreport->gender = $this->gender;
 
         $birthreport->save();
 
         $this->patient="";
         $this->details="";
         $this->doctor="";
+        $this->gender="";
         $this->edit_birth_report_id="";
 
         session()->flash('message', 'Birth Report Updated Successfully.');
