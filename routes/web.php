@@ -69,6 +69,19 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         })->name('admin_invoice_print');
 
         Route::get('/doctor-performance-report', App\Http\Livewire\Admins\DoctorPerformanceReport::class)->name('admin_doctor_performance_report');
+
+        Route::get('/doctor-performance-report/print', function (Illuminate\Http\Request $request) {
+            $fromInput = $request->query('from') ?: now()->startOfMonth()->format('Y-m-d');
+            $toInput = $request->query('to') ?: now()->endOfMonth()->format('Y-m-d');
+            $doctorId = $request->query('doctor_id');
+
+            return view('admins.doctor-performance-report.print', [
+                'report' => App\Http\Livewire\Admins\DoctorPerformanceReport::buildReport($fromInput . ' 00:00:00', $toInput . ' 23:59:59', $doctorId),
+                'from' => $fromInput,
+                'to' => $toInput,
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_doctor_performance_report_print');
     });
 });
 

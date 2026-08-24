@@ -44,16 +44,13 @@ class DoctorPerformanceReport extends Component
         $this->period = 'custom';
     }
 
-    public function render()
+    public static function buildReport($from, $to, $doctorId = null)
     {
-        $from = $this->from . ' 00:00:00';
-        $to = $this->to . ' 23:59:59';
-
         $doctors = doctor::with('employ')
-            ->when($this->doctor_id, fn ($q) => $q->where('id', $this->doctor_id))
+            ->when($doctorId, fn ($q) => $q->where('id', $doctorId))
             ->get();
 
-        $report = $doctors->map(function ($doc) use ($from, $to) {
+        return $doctors->map(function ($doc) use ($from, $to) {
             $appointments = appointment::with('patient')
                 ->where('doctor_id', $doc->id)
                 ->whereBetween('intime', [$from, $to])
@@ -80,6 +77,14 @@ class DoctorPerformanceReport extends Component
                 ]),
             ];
         });
+    }
+
+    public function render()
+    {
+        $from = $this->from . ' 00:00:00';
+        $to = $this->to . ' 23:59:59';
+
+        $report = self::buildReport($from, $to, $this->doctor_id);
 
         return view('livewire.admins.doctor-performance-report', [
             'doctors' => doctor::with('employ')->get(),

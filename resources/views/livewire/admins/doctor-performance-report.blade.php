@@ -40,6 +40,7 @@
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Apply Filter</button>
+                        <a href="{{ route('admin_doctor_performance_report_print', ['from' => $from, 'to' => $to, 'doctor_id' => $doctor_id]) }}" target="_blank" class="btn btn-success ml-2"><i class="fas fa-print"></i> Print Report</a>
                     </form>
 
                     @forelse ($report as $row)
