@@ -49,7 +49,8 @@
                                 <h5 class="mb-0">{{ $row['doctor_name'] }}</h5>
                                 <div>
                                     <span class="badge badge-info mr-2">{{ $row['services_count'] }} services sold</span>
-                                    <span class="badge badge-secondary">{{ $row['appointments_count'] }} appointments</span>
+                                    <span class="badge badge-secondary mr-2">{{ $row['appointments_count'] }} appointments</span>
+                                    <a href="{{ route('admin_doctor_performance_report_print', ['from' => $from, 'to' => $to, 'doctor_id' => $row['doctor_id']]) }}" target="_blank" class="btn btn-outline-success btn-sm"><i class="fas fa-print"></i> Print</a>
                                 </div>
                             </div>
                             <div class="card-body">

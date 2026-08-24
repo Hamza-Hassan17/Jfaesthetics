@@ -63,6 +63,7 @@ class DoctorPerformanceReport extends Component
                 ->get();
 
             return [
+                'doctor_id' => $doc->id,
                 'doctor_name' => $doc->employ->name ?? 'Unknown',
                 'appointments_count' => $appointments->count(),
                 'appointments' => $appointments->map(fn ($a) => [
