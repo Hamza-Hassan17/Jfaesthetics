@@ -22,6 +22,20 @@
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <style>
+        #sidebar ul li a:hover,
+        #sidebar ul li.active > a {
+            color: #0a3535;
+            background: rgba(20, 128, 128, 0.1);
+            font-weight: 700;
+            border-right: 3px solid #148080;
+        }
+
+        #sidebar ul li a:hover i,
+        #sidebar ul li.active > a i {
+            color: #148080;
+        }
+    </style>
     @livewireStyles
 </head>
 
@@ -31,7 +45,7 @@
         <nav id="sidebar" class="mt-4">
             <ul class="mt-5 list-unstyled components text-secondary">
                 {{-- @auth --}}
-                <li>
+                <li class="{{ request()->routeIs('admin_dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
                 </li>
                 {{-- <li>
@@ -46,7 +60,7 @@
                 {{-- <li>
                     <a href="{{ route('admin_birth_report') }}"><i class="fas fa-file-alt"></i>Birth Report</a>
                 </li> --}}
-                <li>
+                <li class="{{ request()->routeIs('admin_patients') ? 'active' : '' }}">
                     <a href="{{ route('admin_patients') }}"><i class="fas fa-file-alt"></i>Patients</a>
                 </li>
                 {{-- Hidden per request: Nurses --}}
@@ -57,7 +71,7 @@
                 {{-- <li>
                     <a href="{{ route('appointment') }}"><i class="fas fa-file-alt"></i>Appointments</a>
                 </li> --}}
-                <li>
+                <li class="{{ request()->routeIs('employees') ? 'active' : '' }}">
                     <a href="{{ route('employees') }}"><i class="fas fa-file-alt"></i>Employees</a>
                 </li>
                 {{-- Hidden per request: Department --}}
@@ -72,17 +86,14 @@
                 {{-- <li>
                     <a href="{{ route('patients_beds') }}"><i class="fas fa-file-alt"></i>Beds</a>
                 </li> --}}
-                <li>
-                    <a href="{{ route('admin_invoices') }}"><i class="fas fa-file-invoice"></i>Invoices</a>
-                </li>
-                <li>
+                <li class="{{ request()->routeIs('admin_doctor_performance_report') ? 'active' : '' }}">
                     <a href="{{ route('admin_doctor_performance_report') }}"><i class="fas fa-chart-line"></i>Doctor Performance</a>
                 </li>
 
-                <li>
+                <li class="{{ request()->routeIs('medicinesStore') ? 'active' : '' }}">
                     <a href="{{ route('medicinesStore') }}"><i class="fas fa-file-alt"></i>Medicines Store</a>
                 </li>
-                <li>
+                <li class="{{ request()->routeIs('admin_services') ? 'active' : '' }}">
                     <a href="{{ route('admin_services') }}"><i class="fas fa-list"></i>Services</a>
                 </li>
                 {{-- Hidden per request: HOD's --}}
@@ -106,7 +117,10 @@
                 {{-- <li>
                     <a href="{{ route('contactedus') }}"><i class="fas fa-file-alt"></i>Contacted Messages</a>
                 </li> --}}
-                <li>
+                <li class="{{ request()->routeIs('admin_invoices*') ? 'active' : '' }}">
+                    <a href="{{ route('admin_invoices') }}"><i class="fas fa-file-invoice-dollar"></i>Reports</a>
+                </li>
+                <li class="{{ request()->routeIs('admin_settings') ? 'active' : '' }}">
                     <a href="{{ route('admin_settings') }}"><i class="fas fa-cog"></i>Settings</a>
                 </li>
             </ul>

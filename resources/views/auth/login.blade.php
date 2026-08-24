@@ -1,83 +1,87 @@
-@extends('layouts.app')
+@extends('layouts.auth')
+
+@section('title', 'Sign In')
 
 @section('content')
-    <div class="container mt-5 pt-5">
-        <h1 class="text-success p-3 text-center ">{{ env('APP_NAME') }}
-            <span class="card-header">{{ __('Login') }}</span>
-        </h1>
-        <div class="card-body p-5">
-            <div class="row justify-content-center">
-                <div class="col-lg-3"></div>
-                <div class="col-lg-6">
-                    <form method="POST" class="py-3" action="{{ route('login') }}">
-                        @csrf
-                        <div class="form-group">
-                            <label for="email" class="form-label">{{ __('E-Mail') }}</label>
-                            <input type="email" name="email" id="email" class="form-control"
-                                value="{{ old('email') }}" required>
-                            @error('email')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
+    <section class="auth-hero">
+        <div class="auth-card">
+            <div class="auth-card-left">
+                <div class="inner">
+                    <h2>{{ __('Welcome Back!') }}</h2>
+                    <p>{{ __('Sign in to access your dashboard and manage clinic operations.') }}</p>
+
+                    <div class="auth-feature">
+                        <span class="auth-feature-icon"><i class="fas fa-shield-alt"></i></span>
+                        <div>
+                            <h6>{{ __('Secure & Protected') }}</h6>
+                            <p>{{ __('Your data is safe with us') }}</p>
                         </div>
-                        <div class="form-group">
-                            <label for="password" class="form-label">{{ __('Password') }}</label>
-                            <input id="password" type="password"
-                                class="form-control @error('password') is-invalid @enderror" name="password" required
-                                autocomplete="current-password">
-                            @error('password')
-                                <span class="invalid-feedback" role="alert">
-                                    <strong>{{ $message }}</strong>
-                                </span>
-                            @enderror
+                    </div>
+                    <div class="auth-feature">
+                        <span class="auth-feature-icon"><i class="fas fa-bolt"></i></span>
+                        <div>
+                            <h6>{{ __('Fast & Reliable') }}</h6>
+                            <p>{{ __('Quick access to all features') }}</p>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="" id="flexCheckChecked" checked>
-                            <label class="form-check-label" for="flexCheckChecked">
-                                {{ __('Remember Me') }}
-                            </label>
-                            <div class="form-group mb-3">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Login') }}
-                                </button>
-                            </div>
-                            <div class="form-group">
-                                <div class="offset-md-4 text-center">
-                                    @if (Route::has('password.request'))
-                                        <a class="btn btn-link" href="{{ route('password.request') }}">
-                                            {{ __('Forgot Your Password?') }}
-                                        </a>
-                                    @endif
-                                </div>
-                            </div>
+                    </div>
+                    <div class="auth-feature">
+                        <span class="auth-feature-icon"><i class="fas fa-user-check"></i></span>
+                        <div>
+                            <h6>{{ __('User Friendly') }}</h6>
+                            <p>{{ __('Designed for a seamless experience') }}</p>
                         </div>
-                    </form>
+                    </div>
                 </div>
-                <div class="col-lg-3"></div>
+            </div>
+
+            <div class="auth-card-right">
+                <h3>{{ __('Sign In') }}</h3>
+                <p class="subtitle">{{ __('Enter your credentials to continue') }}</p>
+
+                <form method="POST" action="{{ route('login') }}" class="auth-form">
+                    @csrf
+
+                    <div class="form-group">
+                        <label for="email">{{ __('Email Address') }}</label>
+                        <input type="email" name="email" id="email"
+                            class="form-control @error('email') is-invalid @enderror"
+                            placeholder="{{ __('Enter your email address') }}" value="{{ old('email') }}" required
+                            autofocus>
+                        @error('email')
+                            <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">{{ __('Password') }}</label>
+                        <div class="password-field">
+                            <input type="password" name="password" id="password"
+                                class="form-control @error('password') is-invalid @enderror"
+                                placeholder="{{ __('Enter your password') }}" required autocomplete="current-password">
+                            <button type="button" class="toggle-password"
+                                onclick="togglePassword('password', 'togglePasswordIcon')">
+                                <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                            </button>
+                        </div>
+                        @error('password')
+                            <span class="invalid-feedback" role="alert"><strong>{{ $message }}</strong></span>
+                        @enderror
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="remember" id="remember"
+                                {{ old('remember') ? 'checked' : '' }}>
+                            <label class="form-check-label" for="remember">{{ __('Remember me') }}</label>
+                        </div>
+                        @if (Route::has('password.request'))
+                            <a class="forgot-link" href="{{ route('password.request') }}">{{ __('Forgot Password?') }}</a>
+                        @endif
+                    </div>
+
+                    <button type="submit" class="auth-submit-btn">{{ __('Sign In') }}</button>
+                </form>
             </div>
         </div>
-    </div>
-    <style>
-        .form-group input,
-        .form-group select {
-            float: left;
-            width: 100%;
-            border-radius: 0;
-            border: solid #ccc 1px;
-            padding: 2px 12px;
-            font-weight: 400;
-            font-size: 13px;
-            margin: 0px 0 0;
-            box-shadow: none;
-            color: #333;
-            height: 44px;
-        }
-        .form-group {
-            margin-bottom: 2em;
-        }
-        .p-3 {
-            padding: 3rem;
-        }
-    </style>
+    </section>
 @endsection
