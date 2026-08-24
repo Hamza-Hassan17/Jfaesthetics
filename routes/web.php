@@ -68,6 +68,16 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             ]);
         })->name('admin_invoice_print');
 
+        Route::get('/invoices-report/print', function (Illuminate\Http\Request $request) {
+            $filters = $request->only(['search', 'from', 'to', 'doctor_id', 'patient_id', 'status', 'service']);
+
+            return view('admins.invoices.print-list', [
+                'invoices' => App\Http\Livewire\Admins\Invoices::queryFilteredInvoices($filters),
+                'filters' => $filters,
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_invoices_print_list');
+
         Route::get('/doctor-performance-report', App\Http\Livewire\Admins\DoctorPerformanceReport::class)->name('admin_doctor_performance_report');
 
         Route::get('/doctor-performance-report/print', function (Illuminate\Http\Request $request) {

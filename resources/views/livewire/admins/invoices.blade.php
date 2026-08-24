@@ -291,16 +291,111 @@
 
                     {{-- ============ INDEX ============ --}}
                     @if ($_page === 'index')
+                        <form wire:submit.prevent="$refresh">
+                            <div class="form-group">
+                                <label>Search</label>
+                                <input type="text" wire:model.defer="search" class="form-control" placeholder="Search Invoice #, Patient, Doctor...">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-3">
+                                    <label>Date From</label>
+                                    <input type="date" wire:model.defer="filter_from" class="form-control">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label>Date To</label>
+                                    <input type="date" wire:model.defer="filter_to" class="form-control">
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label>Doctor</label>
+                                    <select wire:model.defer="filter_doctor_id" class="form-control">
+                                        <option value="">All Doctors</option>
+                                        @foreach ($doctors as $doc)
+                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label>Patient</label>
+                                    <select wire:model.defer="filter_patient_id" class="form-control">
+                                        <option value="">All Patients</option>
+                                        @foreach ($patients as $p)
+                                            <option value="{{ $p->id }}">{{ $p->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-3">
+                                    <label>Payment Status</label>
+                                    <select wire:model.defer="filter_status" class="form-control">
+                                        <option value="">All Status</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="partial">Partial</option>
+                                        <option value="unpaid">Unpaid</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
+                                    <label>Service</label>
+                                    <select wire:model.defer="filter_service" class="form-control">
+                                        <option value="">All Services</option>
+                                        @foreach ($services as $svc)
+                                            <option value="{{ $svc->name }}">{{ $svc->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                                    <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
+                                </div>
+                                <div>
+                                    <button type="button" wire:click="exportCsv" class="btn btn-outline-success"><i class="fas fa-file-excel"></i> Export Excel</button>
+                                    <a href="{{ route('admin_invoices_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-outline-danger"><i class="fas fa-file-pdf"></i> Export PDF</a>
+                                    <a href="{{ route('admin_invoices_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-outline-dark"><i class="fas fa-print"></i> Print</a>
+                                </div>
+                            </div>
+                        </form>
+
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-2">
+                                <div class="card p-3 text-center">
+                                    <div class="text-muted" style="font-size: 13px;">Total Invoices</div>
+                                    <div class="h4 mb-0">{{ $summary['total_invoices'] }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="card p-3 text-center">
+                                    <div class="text-muted" style="font-size: 13px;">Total Revenue</div>
+                                    <div class="h4 mb-0">PKR {{ number_format($summary['total_revenue'], 2) }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="card p-3 text-center">
+                                    <div class="text-muted" style="font-size: 13px;">Total Paid</div>
+                                    <div class="h4 mb-0">PKR {{ number_format($summary['total_paid'], 2) }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-2">
+                                <div class="card p-3 text-center">
+                                    <div class="text-muted" style="font-size: 13px;">Outstanding</div>
+                                    <div class="h4 mb-0">PKR {{ number_format($summary['outstanding'], 2) }}</div>
+                                </div>
+                            </div>
+                        </div>
+
                         <table class="table table-hover">
                             <thead>
                                 <tr>
                                     <th>Invoice #</th>
                                     <th>Patient</th>
                                     <th>Doctor</th>
+                                    <th>Services</th>
                                     <th>Grand Total</th>
                                     <th>Paid</th>
                                     <th>Unpaid</th>
                                     <th>Created On</th>
+                                    <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -310,10 +405,20 @@
                                         <td>{{ $invoice->invoice_number }}</td>
                                         <td>{{ $invoice->patient->name ?? 'N/A' }}</td>
                                         <td>{{ $invoice->doctor->employ->name ?? 'N/A' }}</td>
+                                        <td>{{ $invoice->items->pluck('service')->implode(', ') }}</td>
                                         <td>{{ number_format($invoice->grand_total, 2) }}</td>
                                         <td>{{ number_format($invoice->paid_total, 2) }}</td>
                                         <td>{{ number_format($invoice->unpaid_total, 2) }}</td>
                                         <td>{{ $invoice->created_at->format('d M Y') }}</td>
+                                        <td>
+                                            @if ($invoice->unpaid_total <= 0)
+                                                <span class="badge badge-success">Paid</span>
+                                            @elseif ($invoice->paid_total > 0)
+                                                <span class="badge badge-warning">Partial</span>
+                                            @else
+                                                <span class="badge badge-danger">Unpaid</span>
+                                            @endif
+                                        </td>
                                         <td>
                                             <button wire:click="view({{ $invoice->id }})" class="btn btn-outline-info btn-rounded"><i class="fas fa-eye"></i></button>
                                             <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="btn btn-outline-success btn-rounded"><i class="fas fa-print"></i></a>
@@ -321,7 +426,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr><td colspan="8" class="text-warning">No invoices generated yet.</td></tr>
+                                    <tr><td colspan="10" class="text-warning">No invoices found.</td></tr>
                                 @endforelse
                             </tbody>
                         </table>
