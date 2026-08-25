@@ -316,7 +316,6 @@
             <div class="jfd-card">
                 <div class="jfd-card-head">
                     <h5>Top Performing Doctors</h5>
-                    <a href="{{ route('admin_doctor_performance_report') }}" class="jfd-view-all">View All</a>
                 </div>
                 @forelse ($topPerformingDoctors as $doc)
                     <div class="jfd-doctor-row">
@@ -555,7 +554,6 @@
             <div class="jf-card">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="mb-0">Top Doctors</h5>
-                    <a href="{{ route('admin_doctor_performance_report') }}" class="badge-jf">View Report</a>
                 </div>
                 <div class="table-responsive">
                     <table class="table">

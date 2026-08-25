@@ -46,6 +46,7 @@
             text-align: center;
             font-style: italic;
         }
+        .invoice-logo { height: 55px; width: auto; margin-bottom: 10px; }
         .brand-center { text-align: center; margin-bottom: 20px; }
         .brand-center h1 { margin: 0 0 4px; font-size: 24px; color: #333; }
         .brand-center p { margin: 2px 0; font-size: 12px; color: #555; }
@@ -83,6 +84,8 @@
     </div>
     <div class="page">
         <div class="watermark">JF Aesthetics</div>
+
+        <img class="invoice-logo" src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
 
         <div class="brand-center">
             <h1>{{ $settings['title'] ?? config('app.name') }}</h1>

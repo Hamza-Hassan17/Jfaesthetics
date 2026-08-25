@@ -317,9 +317,10 @@
                 {{-- <li>
                     <a href="{{ route('patients_beds') }}"><i class="fas fa-file-alt"></i>Beds</a>
                 </li> --}}
-                <li class="{{ request()->routeIs('admin_doctor_performance_report') ? 'active' : '' }}">
+                {{-- Hidden per request: Doctor Performance --}}
+                {{-- <li class="{{ request()->routeIs('admin_doctor_performance_report') ? 'active' : '' }}">
                     <a href="{{ route('admin_doctor_performance_report') }}"><i class="fas fa-chart-line"></i>Doctor Performance</a>
-                </li>
+                </li> --}}
 
                 <li class="{{ request()->routeIs('medicinesStore') ? 'active' : '' }}">
                     <a href="{{ route('medicinesStore') }}"><i class="fas fa-file-alt"></i>Medicines Store</a>
@@ -464,7 +465,6 @@
                         'dashboard': '{{ route('admin_dashboard') }}',
                         'patients': '{{ route('admin_patients') }}',
                         'employees': '{{ route('employees') }}',
-                        'doctor performance': '{{ route('admin_doctor_performance_report') }}',
                         'medicines': '{{ route('medicinesStore') }}',
                         'medicine store': '{{ route('medicinesStore') }}',
                         'services': '{{ route('admin_services') }}',

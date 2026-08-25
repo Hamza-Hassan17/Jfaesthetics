@@ -92,14 +92,19 @@
                         <form wire:submit.prevent="generate_invoice">
                             <div class="form-group">
                                 <label>Patient</label>
-                                <select wire:model="patient_id" class="form-control">
-                                    <option value="">Choose Patient</option>
-                                    @forelse ($patients as $patient)
-                                        <option value="{{ $patient->id }}">{{ $patient->name }} (MR-{{ str_pad($patient->id, 5, '0', STR_PAD_LEFT) }})</option>
-                                    @empty
-                                        <option value="">No Patient Found!</option>
-                                    @endforelse
-                                </select>
+                                <div class="input-group">
+                                    <select wire:model="patient_id" class="form-control">
+                                        <option value="">Choose Patient</option>
+                                        @forelse ($patients as $patient)
+                                            <option value="{{ $patient->id }}">{{ $patient->name }} (MR-{{ str_pad($patient->id, 5, '0', STR_PAD_LEFT) }})</option>
+                                        @empty
+                                            <option value="">No Patient Found!</option>
+                                        @endforelse
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#quickAddPatientModal"><i class="fas fa-plus"></i> New Patient</button>
+                                    </div>
+                                </div>
                                 @error('patient_id') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                             </div>
 
@@ -125,13 +130,13 @@
                                     <thead>
                                         <tr>
                                             <th style="min-width: 260px;">Service/Product</th>
-                                            <th>Quantity</th>
-                                            <th>Session</th>
-                                            <th>Service Charges</th>
-                                            <th>Discount</th>
-                                            <th>Sub Total</th>
-                                            <th>Discount Amt</th>
-                                            <th>After Discount</th>
+                                            <th style="min-width: 90px;">Quantity</th>
+                                            <th style="min-width: 80px;">Session</th>
+                                            <th style="min-width: 120px;">Service Charges</th>
+                                            <th style="min-width: 170px;">Discount</th>
+                                            <th style="min-width: 100px;">Sub Total</th>
+                                            <th style="min-width: 100px;">Discount Amt</th>
+                                            <th style="min-width: 110px;">After Discount</th>
                                             <th></th>
                                         </tr>
                                     </thead>
@@ -162,7 +167,6 @@
                                                                 @endforeach
                                                             @endif
                                                         </select>
-                                                        <button type="button" class="btn btn-link btn-sm p-0 mt-1" wire:click="show_add_new({{ $index }})">+ Add new {{ $item['type'] }}</button>
                                                     @endif
                                                 </td>
                                                 <td><input type="number" min="1" class="form-control" wire:model.lazy="items.{{ $index }}.quantity"></td>
@@ -174,11 +178,15 @@
                                                         @endfor
                                                     </select>
                                                 </td>
-                                                <td><input type="number" step="0.01" min="0" class="form-control" wire:model.lazy="items.{{ $index }}.service_charges"></td>
+                                                <td>
+                                                    <input type="number" step="0.01" min="0" class="form-control"
+                                                        wire:model.lazy="items.{{ $index }}.service_charges"
+                                                        @if ($item['type'] !== 'custom') readonly style="background: #f4f6f6;" title="Price comes from the catalog. Use Discount to adjust." @endif>
+                                                </td>
                                                 <td>
                                                     <div class="input-group">
                                                         <input type="number" step="0.01" min="0" class="form-control" wire:model.lazy="items.{{ $index }}.discount_value">
-                                                        <select class="form-control" wire:model.lazy="items.{{ $index }}.discount_type" style="max-width: 90px;">
+                                                        <select class="form-control" wire:model.lazy="items.{{ $index }}.discount_type" style="min-width: 70px; max-width: 100px;">
                                                             <option value="flat">PKR</option>
                                                             <option value="percent">%</option>
                                                         </select>
@@ -193,27 +201,6 @@
                                             </tr>
                                             @error("items.$index.service") <tr><td colspan="9"><span class="text-danger text-xs">{{ $message }}</span></td></tr> @enderror
                                             @error("items.$index.quantity") <tr><td colspan="9"><span class="text-danger text-xs">{{ $message }}</span></td></tr> @enderror
-
-                                            @if ($adding_new_for_index === $index)
-                                                <tr class="bg-light">
-                                                    <td colspan="9">
-                                                        <div class="form-inline">
-                                                            <input type="text" class="form-control mr-2" wire:model.lazy="new_catalog_name" placeholder="Name">
-                                                            <input type="number" step="0.01" min="0" class="form-control mr-2" wire:model.lazy="new_catalog_price" placeholder="Price">
-                                                            @if ($item['type'] === 'medicine')
-                                                                <input type="text" class="form-control mr-2" wire:model.lazy="new_catalog_code" placeholder="Code">
-                                                                <input type="number" min="0" class="form-control mr-2" wire:model.lazy="new_catalog_quantity" placeholder="Starting quantity">
-                                                            @endif
-                                                            <button type="button" class="btn btn-success btn-sm mr-2" wire:click="save_new_catalog_item">Save</button>
-                                                            <button type="button" class="btn btn-secondary btn-sm" wire:click="cancel_add_new">Cancel</button>
-                                                        </div>
-                                                        @error('new_catalog_name') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                                        @error('new_catalog_price') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                                        @error('new_catalog_code') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                                        @error('new_catalog_quantity') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                                                    </td>
-                                                </tr>
-                                            @endif
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -274,6 +261,73 @@
                                 <button type="submit" class="btn btn-primary">Generate Invoice</button>
                             </div>
                         </form>
+
+                        <div class="modal fade" id="quickAddPatientModal" tabindex="-1" role="dialog" aria-hidden="true">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Quick Add Patient</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label>Name *</label>
+                                            <input type="text" class="form-control" wire:model.lazy="quick_patient_name">
+                                            @error('quick_patient_name') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Phone *</label>
+                                            <input type="text" class="form-control" wire:model.lazy="quick_patient_phone">
+                                            @error('quick_patient_phone') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Address</label>
+                                            <input type="text" class="form-control" wire:model.lazy="quick_patient_address">
+                                        </div>
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Gender</label>
+                                                <select class="form-control" wire:model.lazy="quick_patient_gender">
+                                                    <option value="">-</option>
+                                                    <option value="Male">Male</option>
+                                                    <option value="Female">Female</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group col-md-6">
+                                                <label>Age</label>
+                                                <input type="number" min="0" class="form-control" wire:model.lazy="quick_patient_age">
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Blood Group</label>
+                                            <select class="form-control" wire:model.lazy="quick_patient_bloodgroup">
+                                                <option value="">-</option>
+                                                <option>A+</option>
+                                                <option>A-</option>
+                                                <option>B+</option>
+                                                <option>B-</option>
+                                                <option>O+</option>
+                                                <option>O-</option>
+                                                <option>AB+</option>
+                                                <option>AB-</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" wire:click="add_quick_patient">Save &amp; Select</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            if (!window.__jfPatientQuickAddedBound) {
+                                window.__jfPatientQuickAddedBound = true;
+                                window.addEventListener('patient-quick-added', function () {
+                                    $('#quickAddPatientModal').modal('hide');
+                                });
+                            }
+                        </script>
                     @endif
 
                     {{-- ============ VIEW / PRINT PREVIEW ============ --}}

@@ -30,11 +30,12 @@ class Invoices extends Component
 
     public $view_invoice_id;
 
-    public $adding_new_for_index;
-    public $new_catalog_name;
-    public $new_catalog_price;
-    public $new_catalog_code;
-    public $new_catalog_quantity;
+    public $quick_patient_name;
+    public $quick_patient_phone;
+    public $quick_patient_address;
+    public $quick_patient_gender;
+    public $quick_patient_age;
+    public $quick_patient_bloodgroup;
 
     public function mount()
     {
@@ -127,70 +128,37 @@ class Invoices extends Component
         }
     }
 
-    public function show_add_new($index)
+    public function add_quick_patient()
     {
-        $this->adding_new_for_index = $index;
-        $this->new_catalog_name = '';
-        $this->new_catalog_price = '';
-        $this->new_catalog_code = '';
-        $this->new_catalog_quantity = '';
-    }
+        $this->validate([
+            'quick_patient_name' => 'required|string|min:2|max:50',
+            'quick_patient_phone' => 'required|numeric',
+            'quick_patient_address' => 'nullable|string',
+            'quick_patient_gender' => 'nullable|string',
+            'quick_patient_age' => 'nullable|numeric',
+            'quick_patient_bloodgroup' => 'nullable|string',
+        ]);
 
-    public function cancel_add_new()
-    {
-        $this->adding_new_for_index = null;
-    }
+        $newPatient = patient::create([
+            'name' => $this->quick_patient_name,
+            'phone' => $this->quick_patient_phone,
+            'address' => $this->quick_patient_address,
+            'gender' => $this->quick_patient_gender,
+            'age' => $this->quick_patient_age,
+            'bloodgroup' => $this->quick_patient_bloodgroup,
+        ]);
 
-    public function save_new_catalog_item()
-    {
-        $index = $this->adding_new_for_index;
-        $type = $this->items[$index]['type'];
+        $this->patient_id = $newPatient->id;
 
-        if ($type === 'service') {
-            $this->validate([
-                'new_catalog_name' => 'required|string',
-                'new_catalog_price' => 'required|numeric|min:0',
-            ]);
+        $this->quick_patient_name = '';
+        $this->quick_patient_phone = '';
+        $this->quick_patient_address = '';
+        $this->quick_patient_gender = '';
+        $this->quick_patient_age = '';
+        $this->quick_patient_bloodgroup = '';
 
-            $service = Service::create([
-                'name' => $this->new_catalog_name,
-                'price' => $this->new_catalog_price,
-            ]);
-
-            $this->items[$index]['catalog_id'] = $service->id;
-            $this->items[$index]['service'] = $service->name;
-            $this->items[$index]['service_charges'] = $service->price;
-        } elseif ($type === 'medicine') {
-            $this->validate([
-                'new_catalog_name' => 'required|string',
-                'new_catalog_price' => 'required|numeric|min:0',
-                'new_catalog_code' => 'required|string',
-                'new_catalog_quantity' => 'required|numeric|min:0',
-            ]);
-
-            $med = medicine::create([
-                'name' => $this->new_catalog_name,
-                'price' => $this->new_catalog_price,
-                'code' => $this->new_catalog_code,
-                'quantity' => $this->new_catalog_quantity,
-            ]);
-
-            if ($this->new_catalog_quantity > 0) {
-                StockMovement::create([
-                    'medicine_id' => $med->id,
-                    'change' => $this->new_catalog_quantity,
-                    'reason' => 'initial_stock',
-                    'user_id' => auth()->id(),
-                ]);
-            }
-
-            $this->items[$index]['catalog_id'] = $med->id;
-            $this->items[$index]['service'] = $med->name;
-            $this->items[$index]['service_charges'] = $med->price;
-        }
-
-        $this->adding_new_for_index = null;
-        session()->flash('message', 'Added to catalog and selected on this line.');
+        $this->dispatchBrowserEvent('patient-quick-added');
+        session()->flash('message', 'Patient added and selected for this invoice.');
     }
 
     public function add_payment()

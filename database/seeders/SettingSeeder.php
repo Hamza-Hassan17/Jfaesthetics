@@ -31,6 +31,10 @@ class SettingSeeder extends Seeder
                 'value' => '03327841753'
             ],
             [
+                'key' => 'website',
+                'value' => 'www.jfaesthetic.pk'
+            ],
+            [
                 'key' => 'working_horse',
                 'value' => '12:00 PM - 9:00 PM'
             ],

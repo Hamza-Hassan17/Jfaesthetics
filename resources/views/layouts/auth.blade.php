@@ -467,6 +467,9 @@
                     <p><i class="fas fa-map-marker-alt"></i> {{ $settings['address'] ?? 'Defence Phase 5, Near Medicare Clinic, Karachi' }}</p>
                     <p><i class="fas fa-envelope"></i> {{ $settings['business_email'] ?? 'info@jfaesthetics.com' }}</p>
                     <p><i class="fas fa-phone-alt"></i> {{ $settings['business_phone'] ?? '123 123 123' }}</p>
+                    @if (!empty($settings['website']))
+                        <p><i class="fas fa-globe"></i> <a href="https://{{ ltrim($settings['website'], '/') }}" target="_blank" rel="noopener" style="color: inherit;">{{ $settings['website'] }}</a></p>
+                    @endif
                 </div>
                 @livewire('subscribe')
             </div>

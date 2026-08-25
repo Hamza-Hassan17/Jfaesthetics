@@ -136,6 +136,10 @@
                         </p>
                         <p><i class="fa fa-phone"
                                 aria-hidden="true"></i>{{ $settings["business_phone"] ?? '123 123 123' }}</p>
+                        @if (!empty($settings["website"]))
+                            <p><i class="fa fa-globe"
+                                    aria-hidden="true"></i><a href="https://{{ ltrim($settings['website'], '/') }}" target="_blank" rel="noopener">{{ $settings["website"] }}</a></p>
+                        @endif
                     </div>
                 </div>
                 @livewire('subscribe')
