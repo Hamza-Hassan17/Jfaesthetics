@@ -1,3 +1,7 @@
+@php
+    $lowStockCount = \App\Models\medicine::whereColumn('quantity', '<=', 'low_stock_threshold')->count();
+    $adminSettings = \App\Models\Settings::pluck('value', 'key')->toArray();
+@endphp
 <!doctype html>
 
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -34,6 +38,169 @@
         #sidebar ul li a:hover i,
         #sidebar ul li.active > a i {
             color: #148080;
+        }
+
+        #sidebar {
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+
+        #sidebar ul.components {
+            overflow-y: auto;
+        }
+
+        .jf-support-card {
+            margin-top: auto;
+            flex-shrink: 0;
+            padding: 16px;
+        }
+
+        .jf-support-card .inner {
+            background: linear-gradient(135deg, rgba(20, 128, 128, 0.1), rgba(201, 162, 39, 0.08));
+            border: 1px solid rgba(20, 128, 128, 0.15);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .jf-support-card i.fa-life-ring {
+            font-size: 22px;
+            color: #148080;
+            margin-bottom: 8px;
+        }
+
+        .jf-support-card h6 {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #0a3535;
+            margin-bottom: 2px;
+        }
+
+        .jf-support-card p {
+            font-size: 12px;
+            color: #64777a;
+            margin-bottom: 10px;
+        }
+
+        .jf-support-card .btn-jf-support {
+            background: #148080;
+            color: #fff;
+            font-size: 12.5px;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .jf-support-card .btn-jf-support:hover {
+            background: #0d5c5c;
+            color: #fff;
+        }
+
+        .jf-sidebar-version {
+            text-align: center;
+            font-size: 11px;
+            color: #97a5a5;
+            padding: 8px 16px 16px;
+            flex-shrink: 0;
+        }
+
+        .jf-navbar-search {
+            position: relative;
+            width: 260px;
+        }
+
+        .jf-navbar-search input {
+            width: 100%;
+            height: 38px;
+            border-radius: 20px;
+            border: 1px solid #e6ecec;
+            background: #f6f9f9;
+            padding: 0 16px 0 38px;
+            font-size: 13px;
+        }
+
+        .jf-navbar-search input:focus {
+            outline: none;
+            border-color: #148080;
+            background: #fff;
+        }
+
+        .jf-navbar-search i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #97a5a5;
+            font-size: 13px;
+        }
+
+        .jf-navbar-icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid #e6ecec;
+            background: #fff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #4a5a5a;
+            position: relative;
+        }
+
+        .jf-navbar-icon-btn:hover {
+            background: #f6f9f9;
+            color: #148080;
+        }
+
+        .jf-navbar-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #e05353;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 3px;
+        }
+
+        .jf-navbar-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: rgba(20, 128, 128, 0.12);
+            color: #148080;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .jf-navbar-user-text {
+            line-height: 1.2;
+            text-align: left;
+        }
+
+        .jf-navbar-user-text .name {
+            font-weight: 700;
+            font-size: 13.5px;
+            color: #0a3535;
+            display: block;
+        }
+
+        .jf-navbar-user-text .role {
+            font-size: 11.5px;
+            color: #97a5a5;
+            display: block;
         }
     </style>
     @livewireStyles
@@ -124,6 +291,19 @@
                     <a href="{{ route('admin_settings') }}"><i class="fas fa-cog"></i>Settings</a>
                 </li>
             </ul>
+
+            <div class="jf-support-card">
+                <div class="inner">
+                    <i class="fas fa-life-ring"></i>
+                    <h6>Need Help?</h6>
+                    <p>Contact Support</p>
+                    <a href="mailto:{{ $adminSettings['business_email'] ?? 'info@jfaesthetics.com' }}" class="btn-jf-support">Get Support <i class="fas fa-arrow-right"></i></a>
+                </div>
+            </div>
+            <div class="jf-sidebar-version">
+                Version 1.0.0<br>
+                &copy; {{ date('Y') }} {{ $adminSettings['title'] ?? env('APP_NAME') }}
+            </div>
         </nav>
         <div id="body" class="active d-flex flex-column" style="min-height: 100vh;">
             <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white" style="position: relative;">
@@ -133,45 +313,42 @@
                     <img src="{{ config('app.url') }}images/logo.png" alt="logo" style="height: 40px; width: auto;">
                 </a>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="nav navbar-nav ml-auto">
-                        <li class="nav-item dropdown">
-                            <div class="nav-dropdown">
-                                <a href="" class="nav-item nav-link dropdown-toggle text-secondary"
-                                    data-toggle="dropdown"><i class="fas fa-link"></i> <span>Quick Access</span> <i
-                                        style="font-size: .8em;" class="fas fa-caret-down"></i></a>
-                                <div class="dropdown-menu dropdown-menu-right nav-link-menu">
-                                    <ul class="nav-list">
-                                        <li><a href="" class="dropdown-item"><i class="fas fa-list"></i> Access
-                                                Logs</a>
-                                        </li>
-                                        <div class="dropdown-divider"></div>
-                                        <li><a href="" class="dropdown-item"><i class="fas fa-database"></i> Back
-                                                ups</a></li>
-                                        <div class="dropdown-divider"></div>
-                                        <li><a href="" class="dropdown-item"><i
-                                                    class="fas fa-cloud-download-alt"></i>
-                                                Updates</a></li>
-                                        <div class="dropdown-divider"></div>
-                                        <li><a href="" class="dropdown-item"><i class="fas fa-user-shield"></i>
-                                                Roles</a></li>
-                                    </ul>
-                                </div>
+                    <ul class="nav navbar-nav ml-auto align-items-center" style="gap: 12px;">
+                        <li class="nav-item d-none d-lg-block">
+                            <div class="jf-navbar-search">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="jfNavbarQuickSearch" placeholder="Search anything..." autocomplete="off">
                             </div>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('medicinesStore') }}" class="jf-navbar-icon-btn" title="Low stock alerts">
+                                <i class="fas fa-bell"></i>
+                                @if ($lowStockCount > 0)
+                                    <span class="jf-navbar-badge">{{ $lowStockCount }}</span>
+                                @endif
+                            </a>
+                        </li>
+                        <li class="nav-item d-none d-md-block">
+                            <button type="button" id="jfFullscreenToggle" class="jf-navbar-icon-btn" title="Toggle fullscreen" style="border: 1px solid #e6ecec;">
+                                <i class="fas fa-expand"></i>
+                            </button>
                         </li>
                         <li class="nav-item dropdown">
                             <div class="nav-dropdown">
-                                <a href="" class="nav-item nav-link dropdown-toggle text-secondary"
-                                    data-toggle="dropdown"><i class="fas fa-user"></i>
-                                    <span>{{ auth()->user()->name ?? '' }}</span> <i style="font-size: .8em;"
-                                        class="fas fa-caret-down"></i></a>
+                                <a href="" class="nav-item nav-link dropdown-toggle text-secondary d-flex align-items-center"
+                                    data-toggle="dropdown" style="gap: 8px;">
+                                    <span class="jf-navbar-avatar"><i class="fas fa-user"></i></span>
+                                    <span class="jf-navbar-user-text d-none d-md-block">
+                                        <span class="name">{{ auth()->user()->name ?? 'Admin' }}</span>
+                                        <span class="role">Administrator</span>
+                                    </span>
+                                </a>
                                 <div class="dropdown-menu dropdown-menu-right nav-link-menu">
                                     <ul class="nav-list">
-                                        <li><a href="" class="dropdown-item"><i
+                                        <li><a href="{{ route('admin_settings') }}" class="dropdown-item"><i
                                                     class="fas fa-address-card"></i>
                                                 Profile</a></li>
-                                        <li><a href="" class="dropdown-item"><i class="fas fa-envelope"></i>
-                                                Messages</a></li>
-                                        <li><a href="" class="dropdown-item"><i class="fas fa-cog"></i>
+                                        <li><a href="{{ route('admin_settings') }}" class="dropdown-item"><i class="fas fa-cog"></i>
                                                 Settings</a>
                                         </li>
                                         <div class="dropdown-divider"></div>
@@ -211,6 +388,42 @@
             <script src="{{ config('app.url') }}assets/vendor/jquery/jquery.min.js"></script>
             <script src="{{ config('app.url') }}assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script src="{{ config('app.url') }}assets/js/script.js"></script>
+            <script>
+                document.getElementById('jfFullscreenToggle')?.addEventListener('click', function () {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen?.();
+                    } else {
+                        document.exitFullscreen?.();
+                    }
+                });
+
+                (function () {
+                    var quickNavRoutes = {
+                        'dashboard': '{{ route('admin_dashboard') }}',
+                        'patients': '{{ route('admin_patients') }}',
+                        'employees': '{{ route('employees') }}',
+                        'doctor performance': '{{ route('admin_doctor_performance_report') }}',
+                        'medicines': '{{ route('medicinesStore') }}',
+                        'medicine store': '{{ route('medicinesStore') }}',
+                        'services': '{{ route('admin_services') }}',
+                        'invoices': '{{ route('admin_invoices') }}',
+                        'reports': '{{ route('admin_invoices') }}',
+                        'settings': '{{ route('admin_settings') }}',
+                    };
+                    var input = document.getElementById('jfNavbarQuickSearch');
+                    input?.addEventListener('keydown', function (e) {
+                        if (e.key !== 'Enter') return;
+                        var term = this.value.trim().toLowerCase();
+                        if (!term) return;
+                        var matchKey = Object.keys(quickNavRoutes).find(function (key) {
+                            return key.includes(term) || term.includes(key);
+                        });
+                        if (matchKey) {
+                            window.location.href = quickNavRoutes[matchKey];
+                        }
+                    });
+                })();
+            </script>
         </div>
 </body>
 
