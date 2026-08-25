@@ -413,7 +413,7 @@
                     <a href="{{ route('admin_patients') }}" class="jfd-quick-action blue"><i class="fas fa-user-plus"></i> New Patient</a>
                     <a href="{{ route('admin_invoices') }}" class="jfd-quick-action green"><i class="fas fa-file-invoice"></i> New Invoice</a>
                     <a href="{{ route('appointment') }}" class="jfd-quick-action orange"><i class="fas fa-calendar-plus"></i> Appointment</a>
-                    <a href="{{ route('admin_doctor_performance_report') }}" class="jfd-quick-action purple"><i class="fas fa-chart-bar"></i> View Reports</a>
+                    <a href="{{ route('admin_reports') }}" class="jfd-quick-action purple"><i class="fas fa-chart-bar"></i> View Reports</a>
                 </div>
             </div>
         </div>

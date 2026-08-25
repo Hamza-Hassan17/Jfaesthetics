@@ -345,8 +345,8 @@
                 {{-- <li>
                     <a href="{{ route('contactedus') }}"><i class="fas fa-file-alt"></i>Contacted Messages</a>
                 </li> --}}
-                <li class="{{ request()->routeIs('admin_invoices*') ? 'active' : '' }}">
-                    <a href="{{ route('admin_invoices') }}"><i class="fas fa-file-invoice-dollar"></i>Reports</a>
+                <li class="{{ request()->routeIs('admin_reports*') ? 'active' : '' }}">
+                    <a href="{{ route('admin_reports') }}"><i class="fas fa-file-invoice-dollar"></i>Reports</a>
                 </li>
                 <li class="{{ request()->routeIs('admin_settings') ? 'active' : '' }}">
                     <a href="{{ route('admin_settings') }}"><i class="fas fa-cog"></i>Settings</a>
