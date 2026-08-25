@@ -60,6 +60,42 @@
             max-width: 100%;
         }
 
+        .jf-navbar-grid {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .jf-navbar-grid .jf-navbar-logo {
+            grid-column: 2;
+            justify-self: center;
+        }
+
+        .jf-navbar-grid .jf-navbar-logo img {
+            height: 36px;
+            width: auto;
+        }
+
+        .jf-navbar-grid .navbar-collapse {
+            grid-column: 3;
+        }
+
+        @media (max-width: 991px) {
+            .jf-navbar-grid {
+                grid-template-columns: auto auto;
+            }
+
+            .jf-navbar-grid .jf-navbar-logo {
+                grid-column: 2;
+                justify-self: end;
+            }
+
+            .jf-navbar-grid .navbar-collapse {
+                grid-column: 1 / -1;
+            }
+        }
+
         #sidebar ul.components {
             overflow-y: auto;
         }
@@ -323,9 +359,12 @@
             </div>
         </nav>
         <div id="body" class="active d-flex flex-column" style="min-height: 100vh;">
-            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white">
+            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid">
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
                         class="fas fa-bars"></i><span></span></button>
+                <a href="{{ route('admin_dashboard') }}" class="jf-navbar-logo">
+                    <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
+                </a>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="nav navbar-nav ml-auto align-items-center" style="gap: 12px;">
                         <li class="nav-item d-none d-lg-block">
