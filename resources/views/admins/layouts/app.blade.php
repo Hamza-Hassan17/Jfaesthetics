@@ -48,6 +48,18 @@
             height: 100vh;
         }
 
+        .jf-sidebar-logo {
+            padding: 18px 20px;
+            border-bottom: 1px solid #eef2f2;
+            flex-shrink: 0;
+        }
+
+        .jf-sidebar-logo img {
+            height: 38px;
+            width: auto;
+            max-width: 100%;
+        }
+
         #sidebar ul.components {
             overflow-y: auto;
         }
@@ -209,8 +221,13 @@
 <body class="clinic_version">
 
     <div class="wrapper">
-        <nav id="sidebar" class="mt-4">
-            <ul class="mt-5 list-unstyled components text-secondary">
+        <nav id="sidebar">
+            <div class="jf-sidebar-logo">
+                <a href="{{ route('admin_dashboard') }}">
+                    <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
+                </a>
+            </div>
+            <ul class="list-unstyled components text-secondary">
                 {{-- @auth --}}
                 <li class="{{ request()->routeIs('admin_dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
@@ -306,12 +323,9 @@
             </div>
         </nav>
         <div id="body" class="active d-flex flex-column" style="min-height: 100vh;">
-            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white" style="position: relative;">
+            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white">
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
                         class="fas fa-bars"></i><span></span></button>
-                <a href="{{ route('admin_dashboard') }}" class="d-flex align-items-center" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); white-space: nowrap;">
-                    <img src="{{ config('app.url') }}images/logo.png" alt="logo" style="height: 40px; width: auto;">
-                </a>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="nav navbar-nav ml-auto align-items-center" style="gap: 12px;">
                         <li class="nav-item d-none d-lg-block">
