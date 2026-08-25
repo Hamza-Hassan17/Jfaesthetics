@@ -42,7 +42,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 14px;
-            margin-bottom: 14px;
+            margin-bottom: 10px;
         }
         .jfd-header h2 { font-weight: 800; color: #0a3535; margin-bottom: 4px; font-size: 22px; }
         .jfd-header .sub { color: #64777a; font-size: 14px; margin-bottom: 0; }
@@ -159,7 +159,7 @@
         </div>
     </div>
 
-    <div class="row mb-3">
+    <div class="row mb-2">
         <div class="col-md-4 col-xl mb-3">
             <div class="jfd-stat-card">
                 <div class="jfd-stat-icon blue"><i class="fas fa-chart-bar"></i></div>
@@ -214,7 +214,7 @@
         </div>
     </div>
 
-    <div class="row mb-3">
+    <div class="row mb-2">
         <div class="col-lg-5 mb-3">
             <div class="jfd-card" wire:ignore>
                 <div class="jfd-card-head">

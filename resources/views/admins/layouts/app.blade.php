@@ -46,6 +46,7 @@
             position: sticky;
             top: 0;
             height: 100vh;
+            padding-top: 64px;
         }
 
         .jf-sidebar-logo {
@@ -65,6 +66,8 @@
             grid-template-columns: auto 1fr auto;
             align-items: center;
             gap: 16px;
+            min-height: 64px;
+            padding: 6px 24px;
         }
 
         .jf-navbar-grid .jf-navbar-logo {
@@ -97,7 +100,7 @@
         }
 
         #body > .jf-admin-content {
-            padding-top: 74px;
+            padding-top: 64px;
             padding-bottom: .5rem;
         }
 
