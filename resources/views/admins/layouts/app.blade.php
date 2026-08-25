@@ -96,6 +96,11 @@
             }
         }
 
+        #body > .jf-admin-content {
+            padding-top: 74px;
+            padding-bottom: .5rem;
+        }
+
         #sidebar ul.components {
             overflow-y: auto;
         }
@@ -294,6 +299,9 @@
                 <li class="{{ request()->routeIs('employees') ? 'active' : '' }}">
                     <a href="{{ route('employees') }}"><i class="fas fa-file-alt"></i>Employees</a>
                 </li>
+                <li class="{{ request()->routeIs('admin_invoices*') ? 'active' : '' }}">
+                    <a href="{{ route('admin_invoices') }}"><i class="fas fa-file-invoice"></i>Invoices</a>
+                </li>
                 {{-- Hidden per request: Department --}}
                 {{-- <li>
                     <a href="{{ route('departments') }}"><i class="fas fa-file-alt"></i>Department</a>
@@ -420,10 +428,8 @@
                     </ul>
                 </div>
             </nav>
-            <div class="content" style="flex: 1 0 auto;">
+            <div class="content jf-admin-content" style="flex: 1 0 auto;">
                 <div class="container">
-                    <br><br><br>
-
                     {{ $slot }}
 
                     @yield('admin_content')

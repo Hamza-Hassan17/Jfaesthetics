@@ -42,7 +42,7 @@
             align-items: center;
             flex-wrap: wrap;
             gap: 14px;
-            margin-bottom: 22px;
+            margin-bottom: 14px;
         }
         .jfd-header h2 { font-weight: 800; color: #0a3535; margin-bottom: 4px; font-size: 22px; }
         .jfd-header .sub { color: #64777a; font-size: 14px; margin-bottom: 0; }
@@ -64,14 +64,14 @@
             background: #fff;
             border: 1px solid #e9eef0;
             border-radius: 14px;
-            padding: 18px 20px;
+            padding: 14px 18px;
             height: 100%;
             box-shadow: 0 6px 18px rgba(10, 53, 53, 0.05);
         }
         .jfd-stat-icon {
-            width: 46px; height: 46px; border-radius: 12px;
+            width: 40px; height: 40px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 18px; margin-bottom: 12px;
+            font-size: 16px; margin-bottom: 8px;
         }
         .jfd-stat-icon.blue { background: rgba(33, 150, 243, .12); color: #2196F3; }
         .jfd-stat-icon.green { background: rgba(56, 176, 105, .12); color: #38b069; }
@@ -90,13 +90,13 @@
             background: #fff;
             border: 1px solid #e9eef0;
             border-radius: 14px;
-            padding: 20px;
+            padding: 16px;
             height: 100%;
             box-shadow: 0 6px 18px rgba(10, 53, 53, 0.05);
         }
         .jfd-card h5 { font-weight: 800; color: #0a3535; font-size: 15px; margin-bottom: 0; }
         .jfd-card .jfd-card-head {
-            display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;
         }
         .jfd-range-dropdown .btn {
             font-size: 12px; border: 1px solid #e6ecec; background: #fff; color: #4a5a5a;
@@ -105,7 +105,7 @@
         .jfd-view-all { font-size: 12px; font-weight: 700; color: #148080; text-decoration: none; }
         .jfd-view-all:hover { color: #0d5c5c; }
 
-        .jfd-doctor-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .jfd-doctor-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
         .jfd-doctor-row:last-child { margin-bottom: 0; }
         .jfd-doctor-avatar {
             width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex-shrink: 0;
@@ -116,7 +116,7 @@
         .jfd-doctor-meta { font-size: 11.5px; color: #97a5a5; }
         .jfd-doctor-revenue { font-weight: 800; font-size: 13.5px; color: #0a3535; text-align: right; }
 
-        .jfd-appt-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px dashed #eef2f2; }
+        .jfd-appt-row { display: flex; align-items: flex-start; gap: 12px; padding: 7px 0; border-bottom: 1px dashed #eef2f2; }
         .jfd-appt-row:last-child { border-bottom: none; }
         .jfd-appt-time { font-size: 12px; font-weight: 700; color: #148080; width: 66px; flex-shrink: 0; }
         .jfd-appt-avatar {
@@ -131,10 +131,10 @@
             padding: 3px 10px; border-radius: 20px; white-space: nowrap;
         }
 
-        .jfd-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .jfd-quick-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .jfd-quick-action {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            gap: 8px; padding: 18px 10px; border-radius: 12px; text-decoration: none; text-align: center;
+            gap: 6px; padding: 13px 10px; border-radius: 12px; text-decoration: none; text-align: center;
             font-size: 12.5px; font-weight: 700; transition: transform .15s ease;
         }
         .jfd-quick-action:hover { transform: translateY(-2px); text-decoration: none; }
@@ -159,7 +159,7 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row mb-3">
         <div class="col-md-4 col-xl mb-3">
             <div class="jfd-stat-card">
                 <div class="jfd-stat-icon blue"><i class="fas fa-chart-bar"></i></div>
@@ -214,7 +214,7 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row mb-3">
         <div class="col-lg-5 mb-3">
             <div class="jfd-card" wire:ignore>
                 <div class="jfd-card-head">
@@ -229,7 +229,7 @@
                         </div>
                     </div>
                 </div>
-                <canvas id="jfRevenueChart" height="180"></canvas>
+                <canvas id="jfRevenueChart" height="130"></canvas>
                 <script>
                     (function () {
                         var revenueChart = new Chart(document.getElementById('jfRevenueChart').getContext('2d'), {
@@ -287,7 +287,7 @@
                         </div>
                     </div>
                 </div>
-                <canvas id="jfDonutChart" height="200"></canvas>
+                <canvas id="jfDonutChart" height="160"></canvas>
                 <script>
                     (function () {
                         var donutChart = new Chart(document.getElementById('jfDonutChart').getContext('2d'), {
@@ -343,7 +343,7 @@
         </div>
     </div>
 
-    <div class="row mb-4">
+    <div class="row mb-3">
         <div class="col-lg-5 mb-3">
             <div class="jfd-card">
                 <div class="jfd-card-head">
