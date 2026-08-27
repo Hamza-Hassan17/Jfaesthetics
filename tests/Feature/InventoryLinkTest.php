@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Http\Livewire\Admins\Invoices;
+use App\Models\doctor;
+use App\Models\employee;
 use App\Models\medicine;
 use App\Models\patient;
 use App\Models\StockMovement;
@@ -23,6 +25,16 @@ class InventoryLinkTest extends TestCase
         ]);
     }
 
+    private function doctor(): doctor
+    {
+        $employee = employee::create([
+            'name' => 'Dr. Smith', 'email' => 'smith-inv@example.com', 'phone' => '456',
+            'position' => 'doctor', 'status' => 'active',
+        ]);
+
+        return doctor::create(['employee_id' => $employee->id]);
+    }
+
     /** @test */
     public function adding_a_medicine_line_item_deducts_stock_and_logs_the_movement()
     {
@@ -36,6 +48,7 @@ class InventoryLinkTest extends TestCase
         Livewire::test(Invoices::class)
             ->call('show_create_form')
             ->set('patient_id', $patient->id)
+            ->set('doctor_id', $this->doctor()->id)
             ->set('items.0.type', 'medicine')
             ->set('items.0.catalog_id', $med->id)
             ->set('items.0.quantity', 3)
@@ -65,6 +78,7 @@ class InventoryLinkTest extends TestCase
         Livewire::test(Invoices::class)
             ->call('show_create_form')
             ->set('patient_id', $patient->id)
+            ->set('doctor_id', $this->doctor()->id)
             ->set('items.0.type', 'medicine')
             ->set('items.0.catalog_id', $med->id)
             ->set('items.0.quantity', 10)

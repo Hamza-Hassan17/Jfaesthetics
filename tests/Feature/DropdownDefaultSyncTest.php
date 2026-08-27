@@ -44,15 +44,14 @@ class DropdownDefaultSyncTest extends TestCase
             'position' => 'Staff Nurse', 'registered' => 1,
         ]);
 
-        // Deliberately NOT setting patient/doctor/nurse — simulating a user who
-        // only fills the fields that don't already show a plausible value.
         Livewire::test(Appiontment::class)
-            ->set('patient', $patient->id)
-            ->set('doctor', $doctor->id)
-            ->set('nurse', $nurse->id)
-            ->set('start_timeee', '2026-09-01 09:00:00')
+            ->call('show_create_form')
+            ->set('patient_id', $patient->id)
+            ->set('doctor_id', $doctor->id)
+            ->set('nurse_id', $nurse->id)
+            ->set('intime', '2026-09-01T09:00')
             ->set('description', 'Routine checkup')
-            ->call('add_appointment')
+            ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('appointments', ['nurse_id' => $nurse->id]);

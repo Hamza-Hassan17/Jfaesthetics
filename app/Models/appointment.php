@@ -9,13 +9,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class appointment extends Model
 {
     use HasFactory;
+    protected $casts = [
+        'intime' => 'datetime',
+        'outtime' => 'datetime',
+    ];
+
     protected $fillable=[
         'patient_id',
+        'case_no',
         'doctor_id',
         'nurse_id',
+        'age',
+        'location',
         'intime',
         'outtime',
         'description',
+        'prescription',
     ];
 
     public function patient(){

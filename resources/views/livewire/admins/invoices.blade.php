@@ -46,6 +46,7 @@
             margin-right: 4px;
         }
         .jfr-icon-btn.view { background: rgba(33, 150, 243, .1); color: #2196F3; }
+        .jfr-icon-btn.edit { background: rgba(230, 140, 40, .1); color: #d47f1f; }
         .jfr-icon-btn.print { background: rgba(20, 128, 128, .1); color: #148080; }
         .jfr-icon-btn.delete { background: rgba(224, 83, 83, .1); color: #d43f3f; }
         .jfr-entries-info { color: #7a8a8a; font-size: 13px; margin-top: 10px; }
@@ -58,7 +59,7 @@
                         @if ($_page === 'index')
                             Invoices
                         @elseif ($_page === 'create')
-                            Generate New Invoice
+                            {{ $editing_invoice_id ? 'Edit Invoice' : 'Generate New Invoice' }}
                         @else
                             Invoice Details
                         @endif
@@ -258,7 +259,7 @@
                             </div>
 
                             <div class="form-group mt-3">
-                                <button type="submit" class="btn btn-primary">Generate Invoice</button>
+                                <button type="submit" class="btn btn-primary">{{ $editing_invoice_id ? 'Update Invoice' : 'Generate Invoice' }}</button>
                             </div>
                         </form>
 
@@ -441,8 +442,9 @@
                                                 </td>
                                                 <td>
                                                     <button wire:click="view({{ $invoice->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>
+                                                    <button wire:click="edit_invoice({{ $invoice->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
                                                     <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
-                                                    <button wire:click="delete({{ $invoice->id }})" onclick="return confirm('Are You Sure?')" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                    <button wire:click="prompt_delete({{ $invoice->id }})" data-toggle="modal" data-target="#confirmDeleteInvoiceModal" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
                                                 </td>
                                             </tr>
                                         @empty
@@ -461,6 +463,37 @@
                             </div>
                         </div>
                     @endif
+
+                    <div class="modal fade" id="confirmDeleteInvoiceModal" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Confirm Deletion</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p>Deleting an invoice cannot be undone. Re-enter your password to confirm.</p>
+                                    <div class="form-group">
+                                        <label>Your Password</label>
+                                        <input type="password" class="form-control" wire:model.lazy="confirm_delete_password">
+                                        @error('confirm_delete_password') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-danger" wire:click="delete">Delete Invoice</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <script>
+                        if (!window.__jfInvoiceDeleteConfirmedBound) {
+                            window.__jfInvoiceDeleteConfirmedBound = true;
+                            window.addEventListener('invoice-delete-confirmed', function () {
+                                $('#confirmDeleteInvoiceModal').modal('hide');
+                            });
+                        }
+                    </script>
                 </div>
             </div>
         </div>

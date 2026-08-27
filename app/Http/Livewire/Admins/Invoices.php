@@ -10,6 +10,7 @@ use App\Models\medicine;
 use App\Models\patient;
 use App\Models\Service;
 use App\Models\StockMovement;
+use App\Traits\LogsActivity;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -17,6 +18,7 @@ use Livewire\WithPagination;
 class Invoices extends Component
 {
     use WithPagination;
+    use LogsActivity;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -29,6 +31,7 @@ class Invoices extends Component
     public $payments = [];
 
     public $view_invoice_id;
+    public $editing_invoice_id;
 
     public $quick_patient_name;
     public $quick_patient_phone;
@@ -58,6 +61,7 @@ class Invoices extends Component
 
     public function resetForm()
     {
+        $this->editing_invoice_id = null;
         $this->patient_id = '';
         $this->doctor_id = '';
         $this->notes = '';
@@ -82,6 +86,47 @@ class Invoices extends Component
     {
         $this->view_invoice_id = $id;
         $this->_page = 'view';
+    }
+
+    public function edit_invoice($id)
+    {
+        $invoice = Invoice::with(['items', 'payments'])->findOrFail($id);
+
+        $this->editing_invoice_id = $invoice->id;
+        $this->patient_id = $invoice->patient_id;
+        $this->doctor_id = $invoice->doctor_id;
+        $this->notes = $invoice->notes;
+
+        $this->items = $invoice->items->map(function ($item) {
+            return [
+                'type' => $item->service_id ? 'service' : ($item->medicine_id ? 'medicine' : 'custom'),
+                'catalog_id' => $item->service_id ?: ($item->medicine_id ?: ''),
+                'service' => $item->service,
+                'quantity' => $item->quantity,
+                'session' => $item->session_number,
+                'service_charges' => $item->service_charges,
+                'discount_type' => $item->discount_type,
+                'discount_value' => $item->discount_value,
+            ];
+        })->all();
+
+        if (empty($this->items)) {
+            $this->items = [$this->blankItem()];
+        }
+
+        $this->payments = $invoice->payments->map(function ($payment) {
+            return [
+                'paid_on' => \Carbon\Carbon::parse($payment->paid_on)->format('Y-m-d'),
+                'amount' => $payment->amount,
+                'payment_mode' => $payment->payment_mode,
+            ];
+        })->all();
+
+        if (empty($this->payments)) {
+            $this->payments = [['paid_on' => now()->format('Y-m-d'), 'amount' => 0, 'payment_mode' => 'Cash']];
+        }
+
+        $this->_page = 'create';
     }
 
     public function add_item()
@@ -201,6 +246,8 @@ class Invoices extends Component
 
     public function generate_invoice()
     {
+        abort_unless(auth()->user()->hasPermission('invoices', $this->editing_invoice_id ? 'update' : 'create'), 403);
+
         $this->validate([
             'patient_id' => 'required',
             'doctor_id' => 'required',
@@ -215,13 +262,28 @@ class Invoices extends Component
             'payments.*.payment_mode' => 'required|string',
         ]);
 
+        // When editing, stock already held by this invoice's old items will be
+        // returned before the new items are applied, so it counts as available.
+        $reservedByThisInvoice = [];
+        if ($this->editing_invoice_id) {
+            $oldInvoice = Invoice::with('items')->find($this->editing_invoice_id);
+            if ($oldInvoice) {
+                foreach ($oldInvoice->items as $oldItem) {
+                    if ($oldItem->medicine_id) {
+                        $reservedByThisInvoice[$oldItem->medicine_id] = ($reservedByThisInvoice[$oldItem->medicine_id] ?? 0) + $oldItem->quantity;
+                    }
+                }
+            }
+        }
+
         // Stock check up front so we can show a clean validation error
         // rather than a mid-transaction failure.
         foreach ($this->items as $index => $item) {
             if ($item['type'] === 'medicine' && $item['catalog_id']) {
                 $med = medicine::find($item['catalog_id']);
-                if (!$med || $med->quantity < $item['quantity']) {
-                    $this->addError("items.$index.quantity", 'Not enough stock available for ' . ($med->name ?? 'this medicine') . ' (available: ' . ($med->quantity ?? 0) . ').');
+                $available = $med ? $med->quantity + ($reservedByThisInvoice[$med->id] ?? 0) : 0;
+                if (!$med || $available < $item['quantity']) {
+                    $this->addError("items.$index.quantity", 'Not enough stock available for ' . ($med->name ?? 'this medicine') . ' (available: ' . $available . ').');
                     return;
                 }
             }
@@ -229,15 +291,46 @@ class Invoices extends Component
 
         try {
             $invoice = DB::transaction(function () {
-                $invoiceNumber = date('y') . str_pad(Invoice::withTrashed()->max('id') + 1, 5, '0', STR_PAD_LEFT);
+                if ($this->editing_invoice_id) {
+                    $invoice = Invoice::findOrFail($this->editing_invoice_id);
+                    $invoice->update([
+                        'patient_id' => $this->patient_id,
+                        'doctor_id' => $this->doctor_id,
+                        'notes' => $this->notes,
+                    ]);
 
-                $invoice = Invoice::create([
-                    'invoice_number' => $invoiceNumber,
-                    'patient_id' => $this->patient_id,
-                    'doctor_id' => $this->doctor_id,
-                    'printed_by' => auth()->user()->name ?? null,
-                    'notes' => $this->notes,
-                ]);
+                    // Reverse stock deducted by the medicine items this invoice
+                    // previously had, before recreating items from the form.
+                    foreach ($invoice->items as $oldItem) {
+                        if ($oldItem->medicine_id) {
+                            $med = medicine::lockForUpdate()->find($oldItem->medicine_id);
+                            if ($med) {
+                                $med->increment('quantity', $oldItem->quantity);
+                                StockMovement::create([
+                                    'medicine_id' => $med->id,
+                                    'change' => $oldItem->quantity,
+                                    'reason' => 'invoice_edit_reversal',
+                                    'reference_type' => Invoice::class,
+                                    'reference_id' => $invoice->id,
+                                    'user_id' => auth()->id(),
+                                ]);
+                            }
+                        }
+                    }
+
+                    $invoice->items()->delete();
+                    $invoice->payments()->delete();
+                } else {
+                    $invoiceNumber = date('y') . str_pad(Invoice::withTrashed()->max('id') + 1, 5, '0', STR_PAD_LEFT);
+
+                    $invoice = Invoice::create([
+                        'invoice_number' => $invoiceNumber,
+                        'patient_id' => $this->patient_id,
+                        'doctor_id' => $this->doctor_id,
+                        'printed_by' => auth()->user()->name ?? null,
+                        'notes' => $this->notes,
+                    ]);
+                }
 
                 foreach ($this->items as $item) {
                     $subTotal = (float) $item['quantity'] * (float) $item['service_charges'];
@@ -301,6 +394,13 @@ class Invoices extends Component
             return;
         }
 
+        $this->logActivity(
+            $this->editing_invoice_id ? 'updated' : 'created',
+            'invoices',
+            $invoice->id,
+            ($this->editing_invoice_id ? 'Updated' : 'Created') . " invoice #{$invoice->invoice_number}."
+        );
+
         session()->flash('message', 'Invoice generated successfully.');
         $this->view_invoice_id = $invoice->id;
         $this->_page = 'view';
@@ -329,9 +429,45 @@ class Invoices extends Component
     public $new_amount;
     public $new_payment_mode = 'Cash';
 
-    public function delete($id)
+    public $confirm_delete_id;
+    public $confirm_delete_password;
+
+    public function prompt_delete($id)
     {
-        Invoice::findOrFail($id)->delete();
+        abort_unless(auth()->user()->hasPermission('invoices', 'delete'), 403);
+        $this->confirm_delete_id = $id;
+        $this->confirm_delete_password = '';
+        $this->resetErrorBag('confirm_delete_password');
+    }
+
+    /**
+     * Deleting an invoice is a high-risk financial action (RBAC spec 8.6,
+     * closest analog to "issuing a refund") — require the acting user to
+     * re-enter their own password immediately before it happens.
+     */
+    public function delete()
+    {
+        abort_unless(auth()->user()->hasPermission('invoices', 'delete'), 403);
+
+        if (!\Illuminate\Support\Facades\Hash::check($this->confirm_delete_password ?? '', auth()->user()->password)) {
+            $this->addError('confirm_delete_password', 'Incorrect password.');
+            return;
+        }
+
+        $invoice = Invoice::find($this->confirm_delete_id);
+        if (!$invoice) {
+            $this->confirm_delete_id = null;
+            return;
+        }
+
+        $invoiceNumber = $invoice->invoice_number;
+        $id = $invoice->id;
+        $invoice->delete();
+        $this->logActivity('deleted', 'invoices', $id, "Deleted invoice #{$invoiceNumber}.");
+
+        $this->confirm_delete_id = null;
+        $this->confirm_delete_password = '';
+        $this->dispatchBrowserEvent('invoice-delete-confirmed');
         session()->flash('message', 'Invoice deleted successfully.');
     }
 

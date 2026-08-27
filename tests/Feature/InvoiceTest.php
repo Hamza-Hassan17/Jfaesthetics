@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Http\Livewire\Admins\Invoices;
+use App\Models\doctor;
+use App\Models\employee;
 use App\Models\patient;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -26,6 +28,16 @@ class InvoiceTest extends TestCase
         ]);
     }
 
+    private function doctor(): doctor
+    {
+        $employee = employee::create([
+            'name' => 'Dr. Smith', 'email' => 'smith-invtest@example.com', 'phone' => '456',
+            'position' => 'doctor', 'status' => 'active',
+        ]);
+
+        return doctor::create(['employee_id' => $employee->id]);
+    }
+
     /** @test */
     public function generating_an_invoice_computes_grand_total_paid_and_unpaid_correctly()
     {
@@ -35,6 +47,7 @@ class InvoiceTest extends TestCase
         Livewire::test(Invoices::class)
             ->call('show_create_form')
             ->set('patient_id', $patient->id)
+            ->set('doctor_id', $this->doctor()->id)
             ->set('items.0.service', 'Carbon+PRP+Meso 3sessions')
             ->set('items.0.quantity', 1)
             ->set('items.0.service_charges', 40000)
@@ -63,6 +76,7 @@ class InvoiceTest extends TestCase
         Livewire::test(Invoices::class)
             ->call('show_create_form')
             ->set('patient_id', $patient->id)
+            ->set('doctor_id', $this->doctor()->id)
             ->set('items.0.service', 'Carbon+PRP+Meso 3sessions')
             ->set('items.0.quantity', 1)
             ->set('items.0.service_charges', 40000)
@@ -87,6 +101,7 @@ class InvoiceTest extends TestCase
         Livewire::test(Invoices::class)
             ->call('show_create_form')
             ->set('patient_id', $patient->id)
+            ->set('doctor_id', $this->doctor()->id)
             ->set('items.0.service', 'Carbon+PRP+Meso 3sessions')
             ->set('items.0.quantity', 1)
             ->set('items.0.session', 2)
