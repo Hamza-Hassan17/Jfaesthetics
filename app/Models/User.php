@@ -85,6 +85,32 @@ class User extends Authenticatable
     }
 
     /**
+     * Not every role has Dashboard access, so anywhere the app needs a
+     * generic "home" link (post-login redirect, the logo) should route
+     * here instead of hardcoding admin_dashboard — picks the first module
+     * this user's role can actually view.
+     */
+    public const LANDING_ROUTES = [
+        'dashboard' => 'admin_dashboard',
+        'appointments' => 'appointment',
+        'patients' => 'admin_patients',
+        'invoices' => 'admin_invoices',
+        'consultation_form' => 'admin_consultation_forms',
+        'reports' => 'admin_reports',
+    ];
+
+    public function landingRouteName(): string
+    {
+        foreach (self::LANDING_ROUTES as $module => $routeName) {
+            if ($this->hasAnyPermissionFor($module)) {
+                return $routeName;
+            }
+        }
+
+        return 'admin_dashboard';
+    }
+
+    /**
      * The rank-based hierarchy rule from the RBAC spec: this user can
      * manage (edit permissions of, assign, or delete) the given role only
      * if their own role strictly outranks it.

@@ -316,7 +316,7 @@
     <div class="wrapper">
         <nav id="sidebar">
             <div class="jf-sidebar-logo">
-                <a href="{{ route('admin_dashboard') }}">
+                <a href="{{ route(auth()->user()->landingRouteName()) }}">
                     <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
                 </a>
             </div>
@@ -451,7 +451,7 @@
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
                         class="fas fa-bars"></i><span></span></button>
                 <div class="jf-navbar-logo-wrap">
-                    <a href="{{ route('admin_dashboard') }}" class="jf-navbar-logo">
+                    <a href="{{ route(auth()->user()->landingRouteName()) }}" class="jf-navbar-logo">
                         <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
                     </a>
                 </div>

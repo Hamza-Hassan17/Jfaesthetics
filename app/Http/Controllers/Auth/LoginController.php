@@ -45,7 +45,7 @@ class LoginController extends Controller
     /**
      * Not every role has Dashboard access, so send each user to the first
      * module their role can actually view instead of hardcoding
-     * /admin/dashboard for everyone.
+     * /admin/dashboard for everyone. See User::landingRouteName().
      */
     public function redirectTo()
     {
@@ -55,21 +55,6 @@ class LoginController extends Controller
             return '/admin/dashboard';
         }
 
-        $landingRoutes = [
-            'dashboard' => 'admin_dashboard',
-            'appointments' => 'appointment',
-            'patients' => 'admin_patients',
-            'invoices' => 'admin_invoices',
-            'consultation_form' => 'admin_consultation_forms',
-            'reports' => 'admin_reports',
-        ];
-
-        foreach ($landingRoutes as $module => $routeName) {
-            if ($user->hasAnyPermissionFor($module)) {
-                return route($routeName);
-            }
-        }
-
-        return '/admin/dashboard';
+        return route($user->landingRouteName());
     }
 }
