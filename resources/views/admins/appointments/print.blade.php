@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Appointment - {{ $appointment->patient->name ?? 'Patient' }}</title>
+    <title>Doctor Visit - {{ $appointment->patient->name ?? 'Patient' }}</title>
     <style>
         @page { size: A4; margin: 12mm; }
         * { box-sizing: border-box; }
@@ -24,20 +24,30 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            padding: 14px 18px;
+            padding: 14px 22px;
             background: #f6f3ec;
-            border-bottom: 3px solid #148080;
         }
-        .card-header img { height: 55px; width: auto; }
-        .card-header .brand h1 { margin: 0 0 2px; font-size: 22px; color: #0a3535; }
-        .card-header .brand p { margin: 1px 0; font-size: 11.5px; color: #555; }
+        .card-header .logo-mark {
+            flex-shrink: 0;
+            width: 55px;
+            height: 55px;
+        }
+        .card-header .brand h1 {
+            margin: 0 0 4px;
+            font-size: 26px;
+            font-weight: 800;
+        }
+        .card-header .brand h1 .medi { color: #14213d; }
+        .card-header .brand h1 .life { color: #14213d; }
+        .card-header .brand h1 .clinics { color: #1e73be; }
+        .card-header .brand p { margin: 1px 0; font-size: 12px; color: #444; line-height: 1.4; }
         .band-title {
-            background: #0a3535;
+            background: #1e2a6e;
             color: #fff;
             text-align: center;
-            font-size: 34px;
+            font-size: 40px;
             font-weight: 800;
-            letter-spacing: .06em;
+            letter-spacing: .04em;
             padding: 10px 0;
             text-transform: uppercase;
         }
@@ -64,13 +74,13 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .04em;
-            color: #0a3535;
+            color: #1e2a6e;
             margin-bottom: 4px;
         }
         .notes-area {
             border: 1px solid #cfd8d8;
             border-radius: 6px;
-            min-height: 260mm;
+            min-height: 230mm;
             padding: 10px 14px;
             font-size: 13.5px;
             line-height: 26px;
@@ -98,11 +108,17 @@
     </div>
     <div class="page">
         <div class="card-header">
-            <img src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
+            {{-- TODO: swap for the real MediLife Clinics logo file once provided --}}
+            <svg class="logo-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="20" cy="16" r="7" fill="#1e2a6e"/>
+                <circle cx="44" cy="16" r="7" fill="#1e73be"/>
+                <path d="M8 40c2-10 10-14 24-14s22 4 24 14" stroke="#1e2a6e" stroke-width="4" fill="none" stroke-linecap="round"/>
+                <path d="M32 26v22M22 37h20" stroke="#1e73be" stroke-width="4" stroke-linecap="round"/>
+            </svg>
             <div class="brand">
-                <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
-                <p>{{ $settings['address'] ?? '' }}</p>
-                <p>Cell: {{ $settings['business_phone'] ?? '' }}</p>
+                <h1><span class="medi">MEDI</span><span class="life">LIFE</span> <span class="clinics">CLINICS</span></h1>
+                <p>63-C/2, 24th Commercial Street, Touheed Commercial Area, Phase V, DHA, Karachi.</p>
+                <p>Cell: 0321-2331421</p>
             </div>
         </div>
 
@@ -116,15 +132,19 @@
                 </div>
                 <div class="field-row">
                     <div class="field-cell"><span class="lbl">Appointment Date</span><span class="val">{{ $appointment->intime ? $appointment->intime->format('d M Y, h:i A') : '' }}</span></div>
+                    <div class="field-cell"></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-cell"><span class="lbl">Doctor</span><span class="val">{{ $appointment->doctor->employ->name ?? 'Dr. Fabreen Naz' }}</span></div>
                     <div class="field-cell"><span class="lbl">Age</span><span class="val">{{ $appointment->age ?: ($appointment->patient->age ?? '') }}</span></div>
                 </div>
                 <div class="field-row">
-                    <div class="field-cell"><span class="lbl">Doctor</span><span class="val">{{ $appointment->doctor->employ->name ?? 'N/A' }}</span></div>
-                    <div class="field-cell"><span class="lbl">Phone</span><span class="val">{{ $appointment->patient->phone ?? '' }}</span></div>
+                    <div class="field-cell"><span class="lbl">Location</span><span class="val">{{ $appointment->location ?: '' }}</span></div>
+                    <div class="field-cell"><span class="lbl">Phone</span><span class="val">{{ $appointment->phone ?: ($appointment->patient->phone ?? '') }}</span></div>
                 </div>
                 <div class="field-row">
-                    <div class="field-cell"><span class="lbl">Location</span><span class="val">{{ $appointment->location ?: '' }}</span></div>
                     <div class="field-cell"><span class="lbl">Purpose of Visit</span><span class="val">{{ $appointment->description ?: '' }}</span></div>
+                    <div class="field-cell"><span class="lbl">Consultation Fee</span><span class="val">Rs. {{ number_format($appointment->consultation_fee ?? 1500) }}</span></div>
                 </div>
             </div>
 
@@ -133,7 +153,7 @@
         </div>
 
         <div class="footer-note">
-            Ph: {{ $settings['business_phone'] ?? '' }} @if (!empty($settings['business_email'])) &nbsp;|&nbsp; Email: {{ $settings['business_email'] }} @endif
+            Ph: 021-35294822, 35294833 &nbsp;&nbsp;Email: drfabreennaz@hotmail.com
         </div>
     </div>
 </body>

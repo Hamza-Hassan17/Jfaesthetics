@@ -3,11 +3,9 @@
 namespace Tests\Feature;
 
 use App\Http\Livewire\Admins\Appiontment;
-use App\Models\doctor;
-use App\Models\employee;
-use App\Models\nurse;
 use App\Models\patient;
 use App\Models\User;
+use Database\Seeders\MediLifeDoctorSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -17,43 +15,33 @@ class AdminAppointmentTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function creating_an_admin_appointment_saves_intime_outtime_and_nurse_correctly()
+    public function creating_an_appointment_auto_assigns_the_fixed_medilife_doctor_and_fee()
     {
         $this->actingAs(User::factory()->create());
+        (new MediLifeDoctorSeeder())->run();
 
         $patient = patient::create([
-            'name' => 'Test Patient', 'email' => 'p@example.com', 'phone' => '123',
+            'name' => 'Test Patient', 'email' => 'p@example.com', 'phone' => '923001112233',
             'address' => 'Karachi', 'gender' => 'Female', 'age' => 30, 'bloodgroup' => 'O+',
-        ]);
-        $employee = employee::create([
-            'name' => 'Dr. Smith', 'email' => 'smith@example.com', 'phone' => '456',
-            'position' => 'doctor', 'status' => 'active',
-        ]);
-        $doctor = doctor::create(['employee_id' => $employee->id]);
-        $nurse = nurse::create([
-            'name' => 'Nurse Joy', 'email' => 'joy@example.com', 'phone' => '789',
-            'gender' => 'Female', 'address' => 'Karachi', 'qualification' => 'BSN',
-            'position' => 'Staff Nurse', 'registered' => 1,
         ]);
 
         Livewire::test(Appiontment::class)
             ->call('show_create_form')
             ->set('patient_id', $patient->id)
-            ->set('doctor_id', $doctor->id)
-            ->set('nurse_id', $nurse->id)
             ->set('intime', '2026-09-01T09:00')
-            ->set('outtime', '2026-09-01T09:30')
             ->set('description', 'Routine checkup')
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('appointments', [
             'patient_id' => $patient->id,
-            'doctor_id' => $doctor->id,
-            'nurse_id' => $nurse->id,
             'intime' => '2026-09-01 09:00:00',
-            'outtime' => '2026-09-01 09:30:00',
             'description' => 'Routine checkup',
+            'consultation_fee' => Appiontment::CONSULTATION_FEE,
         ]);
+
+        $appointment = \App\Models\appointment::where('patient_id', $patient->id)->first();
+        $this->assertEquals('Dr. Fabreen Naz', $appointment->doctor->employ->name);
+        $this->assertNotEmpty($appointment->case_no);
     }
 }

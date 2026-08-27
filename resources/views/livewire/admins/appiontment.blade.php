@@ -29,9 +29,9 @@
         <div class="container">
             <div class="row page-title row">
                 <div class="col">
-                    <h3 class="jfr-title">{{ env('APP_NAME') }}
+                    <h3 class="jfr-title">MediLife Clinics
                         @if ($_page === 'index')
-                            Appointments
+                            Doctor Visit Appointments
                         @elseif ($_page === 'create')
                             {{ $editing_id ? 'Edit Appointment' : 'New Appointment' }}
                         @else
@@ -84,8 +84,8 @@
                                     @error('patient_id') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <label>Case No.</label>
-                                    <input type="text" class="form-control" wire:model.lazy="case_no" placeholder="e.g. C-0001">
+                                    <label>Case No. <small class="text-muted">(auto-generated)</small></label>
+                                    <input type="text" class="form-control" value="{{ $case_no }}" readonly style="background: #f4f6f6;">
                                 </div>
                             </div>
 
@@ -97,26 +97,11 @@
                                 </div>
                                 <div class="form-group col-md-4">
                                     <label>Doctor</label>
-                                    <select wire:model="doctor_id" class="form-control">
-                                        <option value="">Choose Doctor</option>
-                                        @forelse ($doctors as $doc)
-                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
-                                        @empty
-                                            <option value="">No Doctor Found!</option>
-                                        @endforelse
-                                    </select>
-                                    @error('doctor_id') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                    <input type="text" class="form-control" value="{{ $medilifeDoctor->employ->name ?? 'Dr. Fabreen Naz' }}" readonly style="background: #f4f6f6;">
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <label>Prep Nurse (optional)</label>
-                                    <select wire:model="nurse_id" class="form-control">
-                                        <option value="">Choose Nurse</option>
-                                        @forelse ($nurses as $nurse)
-                                            <option value="{{ $nurse->id }}">{{ $nurse->name }}</option>
-                                        @empty
-                                            <option value="">No Nurse Found!</option>
-                                        @endforelse
-                                    </select>
+                                    <label>Phone</label>
+                                    <input type="text" class="form-control" wire:model.lazy="phone">
                                 </div>
                             </div>
 
@@ -130,8 +115,8 @@
                                     <input type="text" class="form-control" wire:model.lazy="location" placeholder="e.g. Main Clinic - DHA Phase 5">
                                 </div>
                                 <div class="form-group col-md-4">
-                                    <label>End Time (optional)</label>
-                                    <input type="datetime-local" class="form-control" wire:model.lazy="outtime">
+                                    <label>Consultation Fee</label>
+                                    <input type="text" class="form-control" value="Rs. {{ number_format(\App\Http\Livewire\Admins\Appiontment::CONSULTATION_FEE) }}" readonly style="background: #f4f6f6;">
                                 </div>
                             </div>
 
@@ -238,7 +223,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Phone</dt>
-                                        <dd>{{ $appointment->patient->phone ?? 'N/A' }}</dd>
+                                        <dd>{{ $appointment->phone ?: ($appointment->patient->phone ?? 'N/A') }}</dd>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -251,8 +236,8 @@
                                         <dd>{{ $appointment->doctor->employ->name ?? 'N/A' }}</dd>
                                     </div>
                                     <div class="col-md-3">
-                                        <dt>Prep Nurse</dt>
-                                        <dd>{{ $appointment->nurse->name ?? '-' }}</dd>
+                                        <dt>Consultation Fee</dt>
+                                        <dd>Rs. {{ number_format($appointment->consultation_fee) }}</dd>
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Location</dt>
