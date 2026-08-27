@@ -170,14 +170,24 @@
                                                         </select>
                                                     @endif
                                                 </td>
-                                                <td><input type="number" min="1" class="form-control" wire:model.lazy="items.{{ $index }}.quantity"></td>
                                                 <td>
-                                                    <select class="form-control" wire:model.lazy="items.{{ $index }}.session">
-                                                        <option value="">-</option>
-                                                        @for ($s = 1; $s <= 10; $s++)
-                                                            <option value="{{ $s }}">{{ $s }}</option>
-                                                        @endfor
-                                                    </select>
+                                                    @if ($item['type'] === 'service')
+                                                        <input type="text" class="form-control" value="" readonly style="background: #f4f6f6;" title="Not applicable for services — tracked by session instead.">
+                                                    @else
+                                                        <input type="number" min="1" class="form-control" wire:model.lazy="items.{{ $index }}.quantity">
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($item['type'] === 'medicine')
+                                                        <input type="text" class="form-control" value="" readonly style="background: #f4f6f6;" title="Not applicable for medicines.">
+                                                    @else
+                                                        <select class="form-control" wire:model.lazy="items.{{ $index }}.session">
+                                                            <option value="">-</option>
+                                                            @for ($s = 1; $s <= 10; $s++)
+                                                                <option value="{{ $s }}">{{ $s }}</option>
+                                                            @endfor
+                                                        </select>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <input type="number" step="0.01" min="0" class="form-control"

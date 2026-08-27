@@ -46,8 +46,9 @@
             text-align: center;
             font-style: italic;
         }
-        .invoice-logo { height: 55px; width: auto; margin-bottom: 10px; }
-        .brand-center { text-align: center; margin-bottom: 20px; }
+        .invoice-header { position: relative; min-height: 60px; margin-bottom: 20px; }
+        .invoice-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 55px; width: auto; }
+        .brand-center { text-align: center; }
         .brand-center h1 { margin: 0 0 4px; font-size: 24px; color: #333; }
         .brand-center p { margin: 2px 0; font-size: 12px; color: #555; }
         .info-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
@@ -85,12 +86,14 @@
     <div class="page">
         <div class="watermark">JF Aesthetics</div>
 
-        <img class="invoice-logo" src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
+        <div class="invoice-header">
+            <img class="invoice-logo" src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
 
-        <div class="brand-center">
-            <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
-            <p>Phone: {{ $settings['business_phone'] ?? '' }}</p>
-            <p>Address: {{ $settings['address'] ?? '' }}</p>
+            <div class="brand-center">
+                <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
+                <p>Phone: {{ $settings['business_phone'] ?? '' }}</p>
+                <p>Address: {{ $settings['address'] ?? '' }}</p>
+            </div>
         </div>
 
         <div class="info-row">
@@ -124,8 +127,8 @@
                 @foreach ($invoice->items as $item)
                     <tr>
                         <td>{{ $item->service }}</td>
-                        <td>{{ $item->quantity }}</td>
-                        <td>{{ $item->session_number ?? '-' }}</td>
+                        <td>{{ $item->service_id ? '-' : $item->quantity }}</td>
+                        <td>{{ $item->medicine_id ? '-' : ($item->session_number ?? '-') }}</td>
                         <td>{{ number_format($item->service_charges, 0) }}</td>
                         <td>{{ number_format($item->sub_total, 0) }}</td>
                         <td>

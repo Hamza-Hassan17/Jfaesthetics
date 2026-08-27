@@ -151,6 +151,15 @@ class Invoices extends Component
             if ($this->items[$index]['type'] === 'custom') {
                 $this->items[$index]['service_charges'] = 0;
             }
+            // Medicines are dispensed by quantity, not session number;
+            // services are tracked by session, not a variable quantity —
+            // fixed at 1 (not user-facing) so the sub_total math still
+            // works with the Quantity column hidden for service rows.
+            if ($this->items[$index]['type'] === 'medicine') {
+                $this->items[$index]['session'] = '';
+            } elseif ($this->items[$index]['type'] === 'service') {
+                $this->items[$index]['quantity'] = 1;
+            }
         }
 
         if (preg_match('/^items\.(\d+)\.catalog_id$/', $name) && $value !== '') {
