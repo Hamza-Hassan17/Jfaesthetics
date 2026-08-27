@@ -28,7 +28,12 @@
             padding: 14px 22px;
             background: #f6f3ec;
         }
-        .card-header .brand { text-align: left; }
+        .card-header .brand {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
         .card-header .logo-mark {
             flex-shrink: 0;
             width: 55px;

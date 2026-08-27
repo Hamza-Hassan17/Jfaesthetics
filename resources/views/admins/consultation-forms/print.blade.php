@@ -29,7 +29,12 @@
             background: #f6f3ec;
         }
         .card-header img { height: 55px; width: auto; }
-        .card-header .brand { text-align: left; }
+        .card-header .brand {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
         .card-header .brand h1 { margin: 0 0 4px; font-size: 24px; color: #0a3535; }
         .card-header .brand p { margin: 1px 0; font-size: 12px; color: #555; }
         .band-title {
