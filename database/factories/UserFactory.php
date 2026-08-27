@@ -29,8 +29,30 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
-            'role_id' => Role::firstOrCreate(['name' => 'admin'])->id,
+            'is_active' => true,
+            'role_id' => $this->superAdminRoleId(),
         ];
+    }
+
+    /**
+     * Tests don't run the RBAC seeder, so factory-created users would
+     * otherwise land in a permissionless role and get 403'd everywhere —
+     * default factory users to an unrestricted Super Admin role instead,
+     * seeding it (and every permission) on first use if it isn't there yet.
+     */
+    protected function superAdminRoleId()
+    {
+        $role = Role::firstOrCreate(
+            ['name' => 'Super Admin'],
+            ['rank' => 0, 'is_system_role' => true]
+        );
+
+        if ($role->permissions()->count() === 0) {
+            (new \Database\Seeders\RoleSeeder())->run();
+            $role->refresh();
+        }
+
+        return $role->id;
     }
 
     /**

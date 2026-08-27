@@ -46,22 +46,24 @@
             position: sticky;
             top: 0;
             height: 100vh;
-            padding-top: 64px;
         }
 
         .jf-sidebar-logo {
             padding: 18px 20px;
             border-bottom: 1px solid #eef2f2;
             flex-shrink: 0;
+            display: flex;
+            justify-content: center;
         }
 
         .jf-sidebar-logo img {
-            height: 38px;
+            height: 45px;
             width: auto;
             max-width: 100%;
         }
 
         .jf-navbar-grid {
+            position: relative;
             display: grid;
             grid-template-columns: auto 1fr auto;
             align-items: center;
@@ -70,13 +72,20 @@
             padding: 6px 24px;
         }
 
+        .jf-navbar-grid .jf-navbar-logo-wrap {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         .jf-navbar-grid .jf-navbar-logo {
-            grid-column: 2;
-            justify-self: center;
+            position: relative;
+            right: 45px;
         }
 
         .jf-navbar-grid .jf-navbar-logo img {
-            height: 36px;
+            height: 45px;
             width: auto;
         }
 
@@ -89,19 +98,59 @@
                 grid-template-columns: auto auto;
             }
 
-            .jf-navbar-grid .jf-navbar-logo {
-                grid-column: 2;
-                justify-self: end;
-            }
-
             .jf-navbar-grid .navbar-collapse {
                 grid-column: 1 / -1;
             }
         }
 
         #body > .jf-admin-content {
-            padding-top: 64px;
             padding-bottom: .5rem;
+        }
+
+        /* Header sits beside the sidebar (in the #body column) instead of
+           overlaying the full viewport, so the hamburger/logo live in the
+           header's own width rather than floating over the sidebar. */
+        .jf-navbar-grid.fixed-top {
+            position: sticky;
+            top: 0;
+            left: auto;
+            right: auto;
+            width: auto;
+            z-index: 1020;
+        }
+
+        /* #body is a flex sibling of the sidebar; flex items refuse to
+           shrink below their content's natural width unless min-width is
+           reset, so widening .container below can overflow past the
+           sidebar instead of actually fitting beside it. */
+        #body {
+            min-width: 0;
+        }
+
+        /* Denser, wider admin UI across the whole panel */
+        .jf-admin-content .container {
+            width: 100%;
+            max-width: 100%;
+            padding-top: 15px;
+        }
+
+        .jf-admin-content {
+            font-size: 0.9rem;
+        }
+
+        .jf-admin-content .form-control,
+        .jf-admin-content .btn,
+        .jf-admin-content table,
+        .jf-admin-content .table,
+        .jf-admin-content select,
+        .jf-admin-content .input-group-text,
+        .jf-admin-content .badge,
+        .jf-admin-content .card,
+        .jf-admin-content .modal-body,
+        .jf-admin-content .modal-title,
+        .jf-admin-content .alert,
+        .jf-admin-content label {
+            font-size: 0.9rem;
         }
 
         #sidebar ul.components {
@@ -273,9 +322,11 @@
             </div>
             <ul class="list-unstyled components text-secondary">
                 {{-- @auth --}}
+                @if (auth()->user()->hasAnyPermissionFor('dashboard'))
                 <li class="{{ request()->routeIs('admin_dashboard') ? 'active' : '' }}">
                     <a href="{{ route('admin_dashboard') }}"><i class="fas fa-home"></i> Dashboard</a>
                 </li>
+                @endif
                 {{-- <li>
                     <a href="{{ route('admin_docters') }}"><i class="fas fa-file-alt"></i>Docters</a>
                 </li> --}}
@@ -288,23 +339,35 @@
                 {{-- <li>
                     <a href="{{ route('admin_birth_report') }}"><i class="fas fa-file-alt"></i>Birth Report</a>
                 </li> --}}
+                @if (auth()->user()->hasAnyPermissionFor('patients'))
                 <li class="{{ request()->routeIs('admin_patients') ? 'active' : '' }}">
                     <a href="{{ route('admin_patients') }}"><i class="fas fa-file-alt"></i>Patients</a>
                 </li>
+                @endif
                 {{-- Hidden per request: Nurses --}}
                 {{-- <li>
                     <a href="{{ route('nurses') }}"><i class="fas fa-file-alt"></i>Nurses</a>
                 </li> --}}
-                {{-- Hidden per request: Appointments --}}
-                {{-- <li>
-                    <a href="{{ route('appointment') }}"><i class="fas fa-file-alt"></i>Appointments</a>
-                </li> --}}
+                @if (auth()->user()->hasAnyPermissionFor('appointments'))
+                <li class="{{ request()->routeIs('appointment') ? 'active' : '' }}">
+                    <a href="{{ route('appointment') }}"><i class="fas fa-calendar-check"></i>Appointments</a>
+                </li>
+                @endif
+                @if (auth()->user()->hasAnyPermissionFor('employees'))
                 <li class="{{ request()->routeIs('employees') ? 'active' : '' }}">
                     <a href="{{ route('employees') }}"><i class="fas fa-file-alt"></i>Employees</a>
                 </li>
+                @endif
+                @if (auth()->user()->hasAnyPermissionFor('invoices'))
                 <li class="{{ request()->routeIs('admin_invoices*') ? 'active' : '' }}">
                     <a href="{{ route('admin_invoices') }}"><i class="fas fa-file-invoice"></i>Invoices</a>
                 </li>
+                @endif
+                @if (auth()->user()->hasAnyPermissionFor('consultation_form'))
+                <li class="{{ request()->routeIs('admin_consultation_forms*') ? 'active' : '' }}">
+                    <a href="{{ route('admin_consultation_forms') }}"><i class="fas fa-notes-medical"></i>Consultation Form</a>
+                </li>
+                @endif
                 {{-- Hidden per request: Department --}}
                 {{-- <li>
                     <a href="{{ route('departments') }}"><i class="fas fa-file-alt"></i>Department</a>
@@ -322,12 +385,16 @@
                     <a href="{{ route('admin_doctor_performance_report') }}"><i class="fas fa-chart-line"></i>Doctor Performance</a>
                 </li> --}}
 
+                @if (auth()->user()->hasAnyPermissionFor('medicines_store'))
                 <li class="{{ request()->routeIs('medicinesStore') ? 'active' : '' }}">
                     <a href="{{ route('medicinesStore') }}"><i class="fas fa-file-alt"></i>Medicines Store</a>
                 </li>
+                @endif
+                @if (auth()->user()->hasAnyPermissionFor('services'))
                 <li class="{{ request()->routeIs('admin_services') ? 'active' : '' }}">
                     <a href="{{ route('admin_services') }}"><i class="fas fa-list"></i>Services</a>
                 </li>
+                @endif
                 {{-- Hidden per request: HOD's --}}
                 {{-- <li>
                     <a href="{{ route('hods') }}"><i class="fas fa-file-alt"></i>HOD's</a>
@@ -349,12 +416,21 @@
                 {{-- <li>
                     <a href="{{ route('contactedus') }}"><i class="fas fa-file-alt"></i>Contacted Messages</a>
                 </li> --}}
+                @if (auth()->user()->hasAnyPermissionFor('reports'))
                 <li class="{{ request()->routeIs('admin_reports*') ? 'active' : '' }}">
                     <a href="{{ route('admin_reports') }}"><i class="fas fa-file-invoice-dollar"></i>Reports</a>
                 </li>
+                @endif
+                @if (auth()->user()->hasAnyPermissionFor('settings'))
                 <li class="{{ request()->routeIs('admin_settings') ? 'active' : '' }}">
                     <a href="{{ route('admin_settings') }}"><i class="fas fa-cog"></i>Settings</a>
                 </li>
+                @endif
+                @if (auth()->user()->hasAnyPermissionFor('roles'))
+                <li class="{{ request()->routeIs('admin_roles_permissions') ? 'active' : '' }}">
+                    <a href="{{ route('admin_roles_permissions') }}"><i class="fas fa-user-shield"></i>Roles &amp; Permissions</a>
+                </li>
+                @endif
             </ul>
 
             <div class="jf-support-card">
@@ -374,9 +450,11 @@
             <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid">
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
                         class="fas fa-bars"></i><span></span></button>
-                <a href="{{ route('admin_dashboard') }}" class="jf-navbar-logo">
-                    <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
-                </a>
+                <div class="jf-navbar-logo-wrap">
+                    <a href="{{ route('admin_dashboard') }}" class="jf-navbar-logo">
+                        <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
+                    </a>
+                </div>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">
                     <ul class="nav navbar-nav ml-auto align-items-center" style="gap: 12px;">
                         <li class="nav-item d-none d-lg-block">
@@ -469,6 +547,7 @@
                         'medicine store': '{{ route('medicinesStore') }}',
                         'services': '{{ route('admin_services') }}',
                         'invoices': '{{ route('admin_invoices') }}',
+                        'consultation form': '{{ route('admin_consultation_forms') }}',
                         'reports': '{{ route('admin_invoices') }}',
                         'settings': '{{ route('admin_settings') }}',
                     };

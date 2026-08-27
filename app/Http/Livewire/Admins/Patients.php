@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admins;
 
 use App\Models\patient;
+use App\Traits\LogsActivity;
 use Livewire\Component;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManagerStatic;
@@ -14,6 +15,7 @@ class Patients extends Component
 {
     use WithFileUploads;
     use WithPagination;
+    use LogsActivity;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -28,6 +30,10 @@ class Patients extends Component
     public $edit_photo;
     public $edit_patient_id;
     public $button_text = "Add New Patient";
+
+    // Re-authentication before a destructive action, per RBAC spec 8.6.
+    public $confirm_delete_id;
+    public $confirm_delete_password;
 
     public $_page;
     public function mount()
@@ -67,6 +73,8 @@ class Patients extends Component
             $this->update($this->edit_patient_id);
 
         } else {
+            abort_unless(auth()->user()->hasPermission('patients', 'create'), 403);
+
             $this->validate([
                 'name' => 'required||min:6|max:50',
                 'email' => 'required|email',
@@ -78,7 +86,7 @@ class Patients extends Component
                 'photo' => 'nullable|max:3072',
             ]);
 
-            patient::create([
+            $newPatient = patient::create([
                 'name' => $this->name,
                 'email' => $this->email,
                 'phone' => $this->phone,
@@ -88,6 +96,7 @@ class Patients extends Component
                 'bloodgroup' => $this->bloodgroup,
                 'photo_path' => $this->storeImage(),
             ]);
+            $this->logActivity('created', 'patients', $newPatient->id, "Created patient '{$newPatient->name}'.");
             //unset variables
             $this->name = "";
             $this->email = "";
@@ -119,6 +128,8 @@ class Patients extends Component
 
     public function update($id)
     {
+        abort_unless(auth()->user()->hasPermission('patients', 'update'), 403);
+
         $this->validate([
             'name' => 'required||min:6|max:50',
             'email' => 'required|email',
@@ -145,6 +156,7 @@ class Patients extends Component
         }
 
         $patient->save();
+        $this->logActivity('updated', 'patients', $patient->id, "Updated patient '{$patient->name}'.");
 
         $this->name = "";
         $this->email = "";
@@ -163,11 +175,43 @@ class Patients extends Component
         $this->_page = "index";
     }
 
-    public function delete($id)
+    public function prompt_delete($id)
     {
-        $patient = patient::find($id);
+        abort_unless(auth()->user()->hasPermission('patients', 'delete'), 403);
+        $this->confirm_delete_id = $id;
+        $this->confirm_delete_password = '';
+        $this->resetErrorBag('confirm_delete_password');
+    }
+
+    /**
+     * Deleting a patient record is a high-risk action (RBAC spec 8.6) —
+     * require the acting user to re-enter their own password immediately
+     * before it happens, not just click through a JS confirm() dialog.
+     */
+    public function delete()
+    {
+        abort_unless(auth()->user()->hasPermission('patients', 'delete'), 403);
+
+        if (!\Illuminate\Support\Facades\Hash::check($this->confirm_delete_password ?? '', auth()->user()->password)) {
+            $this->addError('confirm_delete_password', 'Incorrect password.');
+            return;
+        }
+
+        $patient = patient::find($this->confirm_delete_id);
+        if (!$patient) {
+            $this->confirm_delete_id = null;
+            return;
+        }
+
+        $name = $patient->name;
+        $id = $patient->id;
         Storage::disk('public')->delete($patient->photo_path);
         $patient->delete();
+        $this->logActivity('deleted', 'patients', $id, "Deleted patient '{$name}'.");
+
+        $this->confirm_delete_id = null;
+        $this->confirm_delete_password = '';
+        $this->dispatchBrowserEvent('patient-delete-confirmed');
         session()->flash('message', 'Patient Deleted Successfully.');
     }
 

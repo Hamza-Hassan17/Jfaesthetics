@@ -48,8 +48,8 @@
                                     <td class="text-right">
                                         <button wire:click="show_edit_form({{ $patient->id }})"
                                             class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
-                                        <button wire:click="delete({{ $patient->id }})"
-                                            onclick="return confirm('{{ __('Are You Sure ?') }}')"
+                                        <button wire:click="prompt_delete({{ $patient->id }})"
+                                            data-toggle="modal" data-target="#confirmDeletePatientModal"
                                             class="btn btn-outline-danger btn-rounded"><i
                                                 class="fas fa-trash"></i></button>
                                     </td>
@@ -72,3 +72,34 @@
                 </div>
             </div>
         </div>
+
+        <div class="modal fade" id="confirmDeletePatientModal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Confirm Deletion</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Deleting a patient record cannot be undone. Re-enter your password to confirm.</p>
+                        <div class="form-group">
+                            <label>Your Password</label>
+                            <input type="password" class="form-control" wire:model.lazy="confirm_delete_password">
+                            @error('confirm_delete_password') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" wire:click="delete">Delete Patient</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            if (!window.__jfPatientDeleteConfirmedBound) {
+                window.__jfPatientDeleteConfirmedBound = true;
+                window.addEventListener('patient-delete-confirmed', function () {
+                    $('#confirmDeletePatientModal').modal('hide');
+                });
+            }
+        </script>

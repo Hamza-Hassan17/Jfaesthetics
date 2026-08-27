@@ -23,6 +23,8 @@ class Services extends Component
         if ($this->edit_service_id) {
             $this->update($this->edit_service_id);
         } else {
+            abort_unless(auth()->user()->hasPermission('services', 'create'), 403);
+
             $this->validate([
                 'name' => 'required',
                 'price' => 'required|numeric|min:0',
@@ -51,6 +53,8 @@ class Services extends Component
 
     public function update($id)
     {
+        abort_unless(auth()->user()->hasPermission('services', 'update'), 403);
+
         $this->validate([
             'name' => 'required',
             'price' => 'required|numeric|min:0',
@@ -71,6 +75,8 @@ class Services extends Component
 
     public function delete($id)
     {
+        abort_unless(auth()->user()->hasPermission('services', 'delete'), 403);
+
         Service::findOrFail($id)->delete();
         session()->flash('message', 'Service Deleted Successfully.');
     }

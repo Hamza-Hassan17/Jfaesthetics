@@ -66,6 +66,8 @@ class Employees extends Component
 
     public function add_employee()
     {
+        abort_unless(auth()->user()->hasPermission('employees', 'create'), 403);
+
         $this->validate([
             "name" => "required|string",
             "email" => "required|email|unique:employees,email",
@@ -110,6 +112,8 @@ class Employees extends Component
     }
     public function update_employee()
     {
+        abort_unless(auth()->user()->hasPermission('employees', 'update'), 403);
+
         $this->validate([
             "name" => "required|string",
             "email" => "required|email",
@@ -150,6 +154,8 @@ class Employees extends Component
 
     public function delete($id)
     {
+        abort_unless(auth()->user()->hasPermission('employees', 'delete'), 403);
+
         $employ = Employee::find($id);
 
         if ($employ) {

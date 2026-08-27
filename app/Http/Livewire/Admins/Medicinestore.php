@@ -34,6 +34,8 @@ class Medicinestore extends Component
             $this->update($this->edit_medicine_id);
 
         }else{
+            abort_unless(auth()->user()->hasPermission('medicines_store', 'create'), 403);
+
             $this->validate([
                 'name' => 'required',
                 'price' => 'required|numeric',
@@ -87,6 +89,8 @@ class Medicinestore extends Component
 
     public function update($id)
     {
+        abort_unless(auth()->user()->hasPermission('medicines_store', 'update'), 403);
+
         $this->validate([
                 'name' => 'required',
                 'price' => 'required|numeric',
@@ -120,6 +124,8 @@ class Medicinestore extends Component
 
      public function delete($id)
     {
+        abort_unless(auth()->user()->hasPermission('medicines_store', 'delete'), 403);
+
         medicine::findOrFail($id)->delete();
         session()->flash('message', 'Medicine Deleted Successfully.');
 
@@ -137,6 +143,8 @@ class Medicinestore extends Component
 
     public function add_stock()
     {
+        abort_unless(auth()->user()->hasPermission('medicines_store', 'update'), 403);
+
         $this->validate([
             'stock_in_quantity' => 'required|numeric|min:1',
             'stock_in_cost' => 'nullable|numeric|min:0',

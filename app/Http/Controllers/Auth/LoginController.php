@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
@@ -22,13 +22,6 @@ class LoginController extends Controller
     use AuthenticatesUsers;
 
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
-    protected $redirectTo = RouteServiceProvider::HOME;
-
-    /**
      * Create a new controller instance.
      *
      * @return void
@@ -36,5 +29,47 @@ class LoginController extends Controller
     public function __construct()
     {
         $this->middleware('guest')->except('logout');
+    }
+
+    /**
+     * Deactivated accounts (is_active = false) must not be able to log in
+     * at all — folding this into the credentials query means Laravel's
+     * normal "these credentials do not match" response covers it too,
+     * without leaking whether the account exists but is disabled.
+     */
+    protected function credentials(Request $request)
+    {
+        return array_merge($request->only($this->username(), 'password'), ['is_active' => true]);
+    }
+
+    /**
+     * Not every role has Dashboard access, so send each user to the first
+     * module their role can actually view instead of hardcoding
+     * /admin/dashboard for everyone.
+     */
+    public function redirectTo()
+    {
+        $user = auth()->user();
+
+        if (!$user || !$user->role) {
+            return '/admin/dashboard';
+        }
+
+        $landingRoutes = [
+            'dashboard' => 'admin_dashboard',
+            'appointments' => 'appointment',
+            'patients' => 'admin_patients',
+            'invoices' => 'admin_invoices',
+            'consultation_form' => 'admin_consultation_forms',
+            'reports' => 'admin_reports',
+        ];
+
+        foreach ($landingRoutes as $module => $routeName) {
+            if ($user->hasAnyPermissionFor($module)) {
+                return route($routeName);
+            }
+        }
+
+        return '/admin/dashboard';
     }
 }
