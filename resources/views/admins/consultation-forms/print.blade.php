@@ -23,11 +23,13 @@
         .card-header {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 16px;
             padding: 14px 22px;
             background: #f6f3ec;
         }
         .card-header img { height: 55px; width: auto; }
+        .card-header .brand { text-align: left; }
         .card-header .brand h1 { margin: 0 0 4px; font-size: 24px; color: #0a3535; }
         .card-header .brand p { margin: 1px 0; font-size: 12px; color: #555; }
         .band-title {
