@@ -70,60 +70,62 @@
                     {{-- ============ CREATE / EDIT ============ --}}
                     @if ($_page === 'create')
                         <form wire:submit.prevent="save">
-                            <div class="form-group">
+                            <div class="form-group" style="max-width: 220px;">
                                 <label>Date</label>
-                                <input type="date" class="form-control" wire:model.lazy="consultation_date" style="max-width: 220px;">
+                                <input type="date" class="form-control" wire:model.lazy="consultation_date">
                                 @error('consultation_date') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                             </div>
 
-                            <h5 class="mt-4">Patient Details</h5>
-                            <hr class="mt-1">
-                            <div class="form-group">
-                                <label>Patient</label>
-                                <div class="input-group">
-                                    <select wire:model="patient_id" class="form-control">
-                                        <option value="">Choose Patient</option>
-                                        @forelse ($patients as $patient)
-                                            <option value="{{ $patient->id }}">{{ $patient->name }} (MR-{{ str_pad($patient->id, 5, '0', STR_PAD_LEFT) }})</option>
-                                        @empty
-                                            <option value="">No Patient Found!</option>
-                                        @endforelse
-                                    </select>
-                                    <div class="input-group-append">
-                                        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#quickAddPatientModal"><i class="fas fa-plus"></i> New Patient</button>
+                            <div class="form-row">
+                                <div class="form-group col-md-7">
+                                    <label>Patient Name</label>
+                                    <div class="input-group">
+                                        <select wire:model="patient_id" class="form-control">
+                                            <option value="">Choose Patient</option>
+                                            @forelse ($patients as $patient)
+                                                <option value="{{ $patient->id }}">{{ $patient->name }} (MR-{{ str_pad($patient->id, 5, '0', STR_PAD_LEFT) }})</option>
+                                            @empty
+                                                <option value="">No Patient Found!</option>
+                                            @endforelse
+                                        </select>
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#quickAddPatientModal"><i class="fas fa-plus"></i> New Patient</button>
+                                        </div>
                                     </div>
+                                    @error('patient_id') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                                 </div>
-                                @error('patient_id') <span class="text-danger text-xs">{{ $message }}</span> @enderror
-                            </div>
-
-                            <h5 class="mt-4">Consultation For</h5>
-                            <hr class="mt-1">
-                            <div class="form-group cf-check-group">
-                                @foreach (\App\Http\Livewire\Admins\ConsultationForms::CONSULTATION_FOR_OPTIONS as $option)
-                                    <label>
-                                        <input type="checkbox" wire:model="consultation_for" value="{{ $option }}"> {{ $option }}
-                                    </label>
-                                @endforeach
-                            </div>
-
-                            <h5 class="mt-4">Medical History</h5>
-                            <hr class="mt-1">
-                            <div class="form-group cf-check-group">
-                                @foreach (\App\Http\Livewire\Admins\ConsultationForms::MEDICAL_HISTORY_OPTIONS as $option)
-                                    <label>
-                                        <input type="checkbox" wire:model="medical_history" value="{{ $option }}"> {{ $option }}
-                                    </label>
-                                @endforeach
-                            </div>
-                            @if (in_array('Other', $medical_history))
-                                <div class="form-group" style="max-width: 400px;">
-                                    <input type="text" class="form-control" wire:model.lazy="medical_history_other" placeholder="Please specify">
+                                <div class="form-group col-md-5">
+                                    <label>Phone No.</label>
+                                    <input type="text" class="form-control" wire:model.lazy="phone">
                                 </div>
-                            @endif
+                            </div>
 
-                            <h5 class="mt-4">For Female Patients</h5>
-                            <hr class="mt-1">
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Consultation For</label>
+                                    <select wire:model="consultation_for" class="form-control">
+                                        <option value="">-</option>
+                                        @foreach (\App\Http\Livewire\Admins\ConsultationForms::CONSULTATION_FOR_OPTIONS as $option)
+                                            <option value="{{ $option }}">{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Medical History</label>
+                                    <select wire:model="medical_history" class="form-control">
+                                        <option value="">-</option>
+                                        @foreach (\App\Http\Livewire\Admins\ConsultationForms::MEDICAL_HISTORY_OPTIONS as $option)
+                                            <option value="{{ $option }}">{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if ($medical_history === 'Other')
+                                        <input type="text" class="form-control mt-1" wire:model.lazy="medical_history_other" placeholder="Please specify">
+                                    @endif
+                                </div>
+                            </div>
+
                             <div class="form-group cf-check-group">
+                                <label class="d-block mb-1"><strong>For Female Patients</strong></label>
                                 @foreach (\App\Http\Livewire\Admins\ConsultationForms::FEMALE_STATUS_OPTIONS as $option)
                                     <label>
                                         <input type="checkbox" wire:model="female_status" value="{{ $option }}"> {{ $option }}
@@ -131,38 +133,40 @@
                                 @endforeach
                             </div>
 
-                            <h5 class="mt-4">Declaration</h5>
-                            <hr class="mt-1">
                             <div class="form-group">
-                                <label>
+                                <label class="mb-1"><strong>Declaration</strong></label>
+                                <label class="d-block font-weight-normal">
                                     <input type="checkbox" wire:model="declaration_confirmed">
                                     I confirm that the information provided above is true and complete to the best of my knowledge.
                                 </label>
                             </div>
-                            <div class="form-group" style="max-width: 400px;">
-                                <label>Patient Signature (typed full name)</label>
-                                <input type="text" class="form-control" wire:model.lazy="patient_signature_name">
-                            </div>
-                            <div class="form-group" style="max-width: 400px;">
-                                <label>Consultant</label>
-                                <select wire:model="consultant_id" class="form-control">
-                                    <option value="">Choose Consultant</option>
-                                    @forelse ($doctors as $doc)
-                                        <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
-                                    @empty
-                                        <option value="">No Doctor Found!</option>
-                                    @endforelse
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Recommended Treatment</label>
-                                <textarea class="form-control" wire:model.lazy="recommended_treatment" rows="3"></textarea>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Patient Signature (typed full name)</label>
+                                    <input type="text" class="form-control" wire:model.lazy="patient_signature_name">
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>Consultant</label>
+                                    <select wire:model="consultant_id" class="form-control">
+                                        <option value="">Choose Consultant</option>
+                                        @forelse ($doctors as $doc)
+                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
+                                        @empty
+                                            <option value="">No Doctor Found!</option>
+                                        @endforelse
+                                    </select>
+                                </div>
                             </div>
 
-                            <h5 class="mt-4">Notes</h5>
-                            <hr class="mt-1">
                             <div class="form-group">
-                                <textarea class="form-control" wire:model.lazy="notes" rows="3" placeholder="Any additional notes"></textarea>
+                                <label>Recommended Treatment</label>
+                                <textarea class="form-control" wire:model.lazy="recommended_treatment" rows="2"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <textarea class="form-control" wire:model.lazy="notes" rows="6" placeholder="Any additional notes"></textarea>
                             </div>
 
                             <div class="form-group mt-3">
@@ -250,7 +254,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <dt>Phone</dt>
-                                            <dd>{{ $form->patient->phone ?? 'N/A' }}</dd>
+                                            <dd>{{ $form->phone ?: ($form->patient->phone ?? 'N/A') }}</dd>
                                         </div>
                                         <div class="col-md-4">
                                             <dt>Date</dt>
@@ -272,11 +276,11 @@
                                         </div>
                                     </div>
                                     <dt>Consultation For</dt>
-                                    <dd>{{ !empty($form->consultation_for) ? implode(', ', $form->consultation_for) : '-' }}</dd>
+                                    <dd>{{ $form->consultation_for ?: '-' }}</dd>
 
                                     <dt>Medical History</dt>
                                     <dd>
-                                        {{ !empty($form->medical_history) ? implode(', ', $form->medical_history) : '-' }}
+                                        {{ $form->medical_history ?: '-' }}
                                         @if ($form->medical_history_other) ({{ $form->medical_history_other }}) @endif
                                     </dd>
 
@@ -321,7 +325,7 @@
                                         <tr>
                                             <td>{{ $item->patient->name ?? 'N/A' }}</td>
                                             <td>{{ $item->consultant->employ->name ?? '-' }}</td>
-                                            <td>{{ !empty($item->consultation_for) ? implode(', ', $item->consultation_for) : '-' }}</td>
+                                            <td>{{ $item->consultation_for ?: '-' }}</td>
                                             <td>{{ optional($item->consultation_date)->format('d M Y') }}</td>
                                             <td>
                                                 <button wire:click="view({{ $item->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>

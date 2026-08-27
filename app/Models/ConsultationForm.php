@@ -12,6 +12,7 @@ class ConsultationForm extends Model
 
     protected $fillable = [
         'patient_id',
+        'phone',
         'consultant_id',
         'consultation_date',
         'consultation_for',
@@ -26,12 +27,34 @@ class ConsultationForm extends Model
     ];
 
     protected $casts = [
-        'consultation_for' => 'array',
-        'medical_history' => 'array',
         'female_status' => 'array',
         'declaration_confirmed' => 'boolean',
         'consultation_date' => 'date',
     ];
+
+    // Single-select dropdowns now, but stored under _single-suffixed
+    // columns (the migration avoided renameColumn(), which needs
+    // doctrine/dbal — not installed here) — these accessors/mutators keep
+    // the clean "consultation_for" / "medical_history" name everywhere else.
+    public function getConsultationForAttribute()
+    {
+        return $this->attributes['consultation_for_single'] ?? null;
+    }
+
+    public function setConsultationForAttribute($value)
+    {
+        $this->attributes['consultation_for_single'] = $value;
+    }
+
+    public function getMedicalHistoryAttribute()
+    {
+        return $this->attributes['medical_history_single'] ?? null;
+    }
+
+    public function setMedicalHistoryAttribute($value)
+    {
+        $this->attributes['medical_history_single'] = $value;
+    }
 
     public function patient()
     {

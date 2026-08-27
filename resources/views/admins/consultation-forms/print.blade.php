@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <title>Consultation Form - {{ $form->patient->name ?? 'Patient' }}</title>
     <style>
-        @page { size: A4; margin: 15mm; }
+        @page { size: A4; margin: 12mm; }
         * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -17,70 +17,88 @@
             min-height: 297mm;
             margin: 10mm auto;
             background: #fff;
-            padding: 15mm;
             box-shadow: 0 0 8px rgba(0,0,0,.2);
-            position: relative;
             overflow: hidden;
         }
-        .watermark {
-            position: absolute;
-            top: 30%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 72px;
-            font-weight: 700;
-            color: rgba(20, 128, 127, 0.08);
-            white-space: nowrap;
-            z-index: 0;
-            pointer-events: none;
-            print-color-adjust: exact;
-            -webkit-print-color-adjust: exact;
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 22px;
+            background: #f6f3ec;
         }
-        .page > *:not(.watermark) { position: relative; z-index: 1; }
-        .invoice-logo { height: 55px; width: auto; margin-bottom: 10px; }
-        .brand-center { text-align: center; margin-bottom: 10px; }
-        .brand-center h1 { margin: 0 0 4px; font-size: 22px; color: #333; }
-        .brand-center p { margin: 2px 0; font-size: 12px; color: #555; }
-        .form-title {
+        .card-header img { height: 55px; width: auto; }
+        .card-header .brand h1 { margin: 0 0 4px; font-size: 24px; color: #0a3535; }
+        .card-header .brand p { margin: 1px 0; font-size: 12px; color: #555; }
+        .band-title {
+            background: #0a3535;
+            color: #fff;
             text-align: center;
-            font-size: 15px;
+            font-size: 30px;
+            font-weight: 800;
+            letter-spacing: .04em;
+            padding: 9px 0;
+            text-transform: uppercase;
+        }
+        .card-body { padding: 16px 20px 22px; }
+        .field-grid {
+            border: 1px solid #cfd8d8;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+        .field-row { display: flex; border-bottom: 1px solid #cfd8d8; }
+        .field-row:last-child { border-bottom: none; }
+        .field-cell {
+            flex: 1;
+            padding: 7px 14px;
+            font-size: 12.5px;
+            border-right: 1px solid #cfd8d8;
+        }
+        .field-cell:last-child { border-right: none; }
+        .field-cell .lbl { color: #7a8a8a; font-size: 10px; text-transform: uppercase; letter-spacing: .04em; display: block; margin-bottom: 1px; }
+        .field-cell .val { font-size: 13px; color: #222; }
+        .section-label {
+            font-size: 11.5px;
             font-weight: 700;
-            letter-spacing: .06em;
-            margin: 4px 0 22px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #0a3535;
+            margin: 10px 0 4px;
         }
-        .field-line { font-size: 13px; margin: 10px 0; }
-        .field-line .lbl { font-weight: 400; }
-        .field-line .fill {
-            display: inline-block;
-            border-bottom: 1px solid #333;
-            min-width: 160px;
-            padding: 0 4px 2px;
+        .compact-block {
+            border: 1px solid #cfd8d8;
+            border-radius: 6px;
+            padding: 7px 14px;
+            font-size: 12.5px;
+            margin-bottom: 10px;
         }
-        .inline-fields { display: flex; flex-wrap: wrap; gap: 6px 34px; margin: 10px 0; }
-        .inline-fields .field-line { margin: 0; }
-        .section-label { font-weight: 700; font-size: 13.5px; margin-top: 20px; }
-        .checklist-row { display: flex; flex-wrap: wrap; gap: 6px 26px; font-size: 13px; margin-top: 8px; }
-        .checklist-row > span:before { content: "\2610  "; }
-        .checklist-row > span.checked:before { content: "\2611  "; font-weight: 700; }
-        .checklist-row > span.checked { font-weight: 600; }
-        .block-fill {
+        .sign-row { display: flex; gap: 20px; margin-bottom: 10px; }
+        .sign-row .field-cell { border: 1px solid #cfd8d8; border-radius: 6px; }
+        .notes-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #0a3535;
+            margin-bottom: 4px;
+        }
+        .notes-area {
+            border: 1px solid #cfd8d8;
+            border-radius: 6px;
+            min-height: 120mm;
+            padding: 10px 14px;
             font-size: 13px;
-            margin-top: 8px;
-            min-height: 18px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 4px;
+            line-height: 26px;
+            background-image: repeating-linear-gradient(to bottom, transparent, transparent 25px, #e2e8e8 26px);
+            white-space: pre-wrap;
         }
-        .declaration-text { font-size: 12.5px; margin-top: 8px; color: #333; }
-        .sign-row { display: flex; justify-content: space-between; margin-top: 40px; gap: 30px; }
-        .sign-row .field-line { flex: 1; margin: 0; }
-        .sign-row .fill { display: block; margin-top: 22px; min-width: 0; }
         .footer-note {
-            margin-top: 30px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
+            text-align: center;
             font-size: 10.5px;
             color: #777;
-            text-align: center;
+            padding: 8px 0 4px;
+            border-top: 1px solid #eee;
             font-style: italic;
         }
         .print-bar { text-align: center; margin: 10px 0; }
@@ -96,81 +114,66 @@
         <button onclick="window.print()">Print / Save as PDF</button>
     </div>
     <div class="page">
-        <div class="watermark">JF Aesthetics</div>
-
-        <img class="invoice-logo" src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
-
-        <div class="brand-center">
-            <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
-            <p>Phone: {{ $settings['business_phone'] ?? '' }}</p>
-            <p>Address: {{ $settings['address'] ?? '' }}</p>
+        <div class="card-header">
+            <img src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
+            <div class="brand">
+                <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
+                <p>{{ $settings['address'] ?? '' }}</p>
+                <p>Phone: {{ $settings['business_phone'] ?? '' }}</p>
+            </div>
         </div>
 
-        <div class="form-title">Patient Consultation Form</div>
+        <div class="band-title">Patient Consultation Form</div>
 
-        <div class="field-line">
-            <span class="lbl">Date:</span>
-            <span class="fill">{{ optional($form->consultation_date)->format('d/m/Y') }}</span>
-        </div>
-
-        <div class="section-label">Patient Details</div>
-        <div class="inline-fields">
-            <div class="field-line"><span class="lbl">Name:</span> <span class="fill">{{ $form->patient->name ?? 'N/A' }}</span></div>
-            <div class="field-line"><span class="lbl">Age:</span> <span class="fill" style="min-width: 60px;">{{ $form->patient->age ?? 'N/A' }}</span></div>
-            <div class="field-line"><span class="lbl">Gender:</span> <span class="fill" style="min-width: 100px;">{{ $form->patient->gender ?? 'N/A' }}</span></div>
-        </div>
-        <div class="field-line"><span class="lbl">Phone:</span> <span class="fill">{{ $form->patient->phone ?? 'N/A' }}</span></div>
-
-        <div class="section-label">Consultation For</div>
-        <div class="checklist-row">
-            @foreach (\App\Http\Livewire\Admins\ConsultationForms::CONSULTATION_FOR_OPTIONS as $option)
-                <span class="{{ in_array($option, $form->consultation_for ?? []) ? 'checked' : '' }}">{{ $option }}</span>
-            @endforeach
-        </div>
-
-        <div class="section-label">Medical History</div>
-        <div class="checklist-row">
-            @foreach (\App\Http\Livewire\Admins\ConsultationForms::MEDICAL_HISTORY_OPTIONS as $option)
-                @if ($option !== 'Other')
-                    <span class="{{ in_array($option, $form->medical_history ?? []) ? 'checked' : '' }}">{{ $option }}</span>
+        <div class="card-body">
+            <div class="field-grid">
+                <div class="field-row">
+                    <div class="field-cell"><span class="lbl">Patient Name</span><span class="val">{{ $form->patient->name ?? 'N/A' }}</span></div>
+                    <div class="field-cell"><span class="lbl">Phone No.</span><span class="val">{{ $form->phone ?: ($form->patient->phone ?? '') }}</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-cell"><span class="lbl">Date</span><span class="val">{{ optional($form->consultation_date)->format('d M Y') }}</span></div>
+                    <div class="field-cell"><span class="lbl">Age / Gender</span><span class="val">{{ $form->patient->age ?? '-' }} / {{ $form->patient->gender ?? '-' }}</span></div>
+                </div>
+                <div class="field-row">
+                    <div class="field-cell"><span class="lbl">Consultation For</span><span class="val">{{ $form->consultation_for ?: '-' }}</span></div>
+                    <div class="field-cell">
+                        <span class="lbl">Medical History</span>
+                        <span class="val">{{ $form->medical_history ?: '-' }}@if ($form->medical_history_other) ({{ $form->medical_history_other }})@endif</span>
+                    </div>
+                </div>
+                @if ($form->patient->gender === 'Female' || !empty($form->female_status))
+                    <div class="field-row">
+                        <div class="field-cell" style="flex: 1 0 100%;">
+                            <span class="lbl">For Female Patients</span>
+                            <span class="val">
+                                @foreach (\App\Http\Livewire\Admins\ConsultationForms::FEMALE_STATUS_OPTIONS as $option)
+                                    {!! in_array($option, $form->female_status ?? []) ? '&#9745;' : '&#9744;' !!} {{ $option }}&nbsp;&nbsp;
+                                @endforeach
+                            </span>
+                        </div>
+                    </div>
                 @endif
-            @endforeach
-            <span class="{{ in_array('Other', $form->medical_history ?? []) ? 'checked' : '' }}">Other: <span class="fill" style="min-width: 140px;">{{ $form->medical_history_other ?: '' }}</span></span>
-        </div>
-
-        @if ($form->patient->gender === 'Female' || !empty($form->female_status))
-            <div class="section-label">For Female Patients</div>
-            <div class="checklist-row">
-                @foreach (\App\Http\Livewire\Admins\ConsultationForms::FEMALE_STATUS_OPTIONS as $option)
-                    <span class="{{ in_array($option, $form->female_status ?? []) ? 'checked' : '' }}">{{ $option }}</span>
-                @endforeach
             </div>
-        @endif
 
-        <div class="section-label">Declaration</div>
-        <div class="declaration-text">
-            I confirm that the information provided above is true and complete to the best of my knowledge.
-            @if ($form->declaration_confirmed) (Confirmed) @endif
-        </div>
-
-        <div class="sign-row">
-            <div class="field-line">
-                <span class="lbl">Patient Signature:</span>
-                <span class="fill">{{ $form->patient_signature_name ?: '' }}</span>
+            <div class="compact-block">
+                {!! $form->declaration_confirmed ? '&#9745;' : '&#9744;' !!}
+                I confirm that the information provided above is true and complete to the best of my knowledge.
             </div>
-            <div class="field-line">
-                <span class="lbl">Consultant:</span>
-                <span class="fill">{{ $form->consultant->employ->name ?? '' }}</span>
+
+            <div class="sign-row">
+                <div class="field-cell" style="flex: 1;"><span class="lbl">Patient Signature</span><span class="val">{{ $form->patient_signature_name ?: '' }}</span></div>
+                <div class="field-cell" style="flex: 1;"><span class="lbl">Consultant</span><span class="val">{{ $form->consultant->employ->name ?? '' }}</span></div>
             </div>
-        </div>
 
-        <div class="field-line" style="margin-top: 20px;">
-            <span class="lbl">Recommended Treatment:</span>
-            <span class="fill" style="min-width: 300px;">{{ $form->recommended_treatment ?: '' }}</span>
-        </div>
+            <div class="compact-block">
+                <span class="lbl" style="text-transform: uppercase; color: #7a8a8a; font-size: 10px;">Recommended Treatment</span><br>
+                {{ $form->recommended_treatment ?: '-' }}
+            </div>
 
-        <div class="section-label">Notes</div>
-        <div class="block-fill">{{ $form->notes ?: '' }}</div>
+            <div class="notes-label">Notes</div>
+            <div class="notes-area">{{ $form->notes }}</div>
+        </div>
 
         <div class="footer-note">
             This is a computer-generated document, there is no sign and stamp required, and it is not valid for use in any court of law or government office.

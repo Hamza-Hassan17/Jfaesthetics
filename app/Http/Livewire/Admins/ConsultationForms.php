@@ -22,10 +22,11 @@ class ConsultationForms extends Component
     public $view_id;
 
     public $patient_id;
+    public $phone;
     public $consultant_id;
     public $consultation_date;
-    public $consultation_for = [];
-    public $medical_history = [];
+    public $consultation_for;
+    public $medical_history;
     public $medical_history_other;
     public $female_status = [];
     public $declaration_confirmed = false;
@@ -73,10 +74,11 @@ class ConsultationForms extends Component
     {
         $this->editing_id = null;
         $this->patient_id = '';
+        $this->phone = '';
         $this->consultant_id = '';
         $this->consultation_date = now()->format('Y-m-d');
-        $this->consultation_for = [];
-        $this->medical_history = [];
+        $this->consultation_for = '';
+        $this->medical_history = '';
         $this->medical_history_other = '';
         $this->female_status = [];
         $this->declaration_confirmed = false;
@@ -101,6 +103,16 @@ class ConsultationForms extends Component
         $this->assertOwnsForm(ConsultationForm::findOrFail($id));
         $this->view_id = $id;
         $this->_page = 'view';
+    }
+
+    public function updated($name, $value)
+    {
+        if ($name === 'patient_id' && $value !== '' && !$this->phone) {
+            $patient = patient::find($value);
+            if ($patient && $patient->phone) {
+                $this->phone = $patient->phone;
+            }
+        }
     }
 
     /**
@@ -132,10 +144,11 @@ class ConsultationForms extends Component
 
         $this->editing_id = $form->id;
         $this->patient_id = $form->patient_id;
+        $this->phone = $form->phone;
         $this->consultant_id = $form->consultant_id;
         $this->consultation_date = optional($form->consultation_date)->format('Y-m-d') ?? now()->format('Y-m-d');
-        $this->consultation_for = $form->consultation_for ?? [];
-        $this->medical_history = $form->medical_history ?? [];
+        $this->consultation_for = $form->consultation_for;
+        $this->medical_history = $form->medical_history;
         $this->medical_history_other = $form->medical_history_other;
         $this->female_status = $form->female_status ?? [];
         $this->declaration_confirmed = (bool) $form->declaration_confirmed;
@@ -167,6 +180,9 @@ class ConsultationForms extends Component
         ]);
 
         $this->patient_id = $newPatient->id;
+        if ($this->quick_patient_phone) {
+            $this->phone = $this->quick_patient_phone;
+        }
 
         $this->quick_patient_name = '';
         $this->quick_patient_phone = '';
@@ -193,10 +209,11 @@ class ConsultationForms extends Component
 
         $this->validate([
             'patient_id' => 'required',
+            'phone' => 'nullable|string',
             'consultant_id' => 'nullable',
             'consultation_date' => 'required|date',
-            'consultation_for' => 'nullable|array',
-            'medical_history' => 'nullable|array',
+            'consultation_for' => 'nullable|string',
+            'medical_history' => 'nullable|string',
             'medical_history_other' => 'nullable|string',
             'female_status' => 'nullable|array',
             'declaration_confirmed' => 'nullable|boolean',
@@ -207,10 +224,11 @@ class ConsultationForms extends Component
 
         $data = [
             'patient_id' => $this->patient_id,
+            'phone' => $this->phone ?: null,
             'consultant_id' => $this->consultant_id ?: null,
             'consultation_date' => $this->consultation_date,
-            'consultation_for' => $this->consultation_for,
-            'medical_history' => $this->medical_history,
+            'consultation_for' => $this->consultation_for ?: null,
+            'medical_history' => $this->medical_history ?: null,
             'medical_history_other' => $this->medical_history_other,
             'female_status' => $this->female_status,
             'declaration_confirmed' => $this->declaration_confirmed,
