@@ -108,6 +108,17 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             ]);
         })->name('admin_reports_print_list')->middleware('permission:reports');
 
+        Route::get('/reports/appointments', App\Http\Livewire\Admins\AppointmentReport::class)->name('admin_reports_appointments')->middleware('permission:reports');
+
+        Route::get('/reports/appointments/print', function (Illuminate\Http\Request $request) {
+            $filters = $request->only(['from', 'to', 'status', 'patient_id']);
+
+            return view('admins.appointments.print-list', [
+                'appointments' => App\Http\Livewire\Admins\AppointmentReport::queryFilteredAppointments($filters)->get(),
+                'filters' => $filters,
+            ]);
+        })->name('admin_reports_appointments_print_list')->middleware('permission:reports');
+
         Route::get('/doctor-performance-report', App\Http\Livewire\Admins\DoctorPerformanceReport::class)->name('admin_doctor_performance_report')->middleware('permission:reports');
 
         Route::get('/doctor-performance-report/print', function (Illuminate\Http\Request $request) {

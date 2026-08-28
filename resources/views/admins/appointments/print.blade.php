@@ -157,7 +157,7 @@
                 </div>
                 <div class="field-row">
                     <div class="field-cell"><span class="lbl">Appointment Date</span><span class="val">{{ $appointment->intime ? $appointment->intime->format('d M Y, h:i A') : '' }}</span></div>
-                    <div class="field-cell"><span class="lbl">Status</span><span class="val">{{ ucfirst($appointment->status ?? 'pending') }}</span></div>
+                    <div class="field-cell"><span class="lbl">Status</span><span class="val">{{ ucfirst(str_replace('_', ' ', $appointment->status ?? 'booked')) }}</span></div>
                 </div>
                 <div class="field-row">
                     <div class="field-cell"><span class="lbl">Doctor</span><span class="val">{{ $appointment->doctor->employ->name ?? 'Dr. Fabreen Naz' }}</span></div>

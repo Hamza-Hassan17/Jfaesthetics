@@ -9,33 +9,17 @@
             margin-bottom: 24px;
             box-shadow: 0 6px 18px rgba(10, 53, 53, 0.05);
         }
-        .jfr-filter-card .form-control,
-        .jfr-filter-card .input-group-text {
-            border-radius: 8px;
-            border-color: #e1e7e7;
-        }
+        .jfr-filter-card .form-control { border-radius: 8px; border-color: #e1e7e7; }
         .jfr-filter-card .form-control:focus {
             border-color: #148080;
             box-shadow: 0 0 0 3px rgba(20, 128, 128, 0.12);
         }
         .jfr-actions-row { margin-bottom: 18px; }
-        .btn-jfr-teal {
-            background: #148080;
-            border-color: #148080;
-            color: #fff;
-        }
+        .btn-jfr-teal { background: #148080; border-color: #148080; color: #fff; }
         .btn-jfr-teal:hover { background: #0d5c5c; border-color: #0d5c5c; color: #fff; }
-        .btn-jfr-outline-teal {
-            background: #fff;
-            border: 1px solid #148080;
-            color: #148080;
-        }
+        .btn-jfr-outline-teal { background: #fff; border: 1px solid #148080; color: #148080; }
         .btn-jfr-outline-teal:hover { background: #148080; color: #fff; }
-        .btn-jfr-pdf {
-            background: #e05353;
-            border-color: #e05353;
-            color: #fff;
-        }
+        .btn-jfr-pdf { background: #e05353; border-color: #e05353; color: #fff; }
         .btn-jfr-pdf:hover { background: #c53d3d; border-color: #c53d3d; color: #fff; }
         .jfr-stat-card {
             display: flex;
@@ -89,9 +73,10 @@
             font-size: 11.5px;
             font-weight: 700;
         }
-        .jfr-badge-paid { background: rgba(56, 176, 105, .12); color: #2f9c5c; }
-        .jfr-badge-partial { background: rgba(230, 140, 40, .12); color: #d47f1f; }
-        .jfr-badge-unpaid { background: rgba(224, 83, 83, .12); color: #d43f3f; }
+        .jfr-badge-booked { background: rgba(33, 150, 243, .12); color: #2196F3; }
+        .jfr-badge-completed { background: rgba(56, 176, 105, .12); color: #2f9c5c; }
+        .jfr-badge-cancelled { background: rgba(224, 83, 83, .12); color: #d43f3f; }
+        .jfr-badge-no_show { background: rgba(230, 140, 40, .12); color: #d47f1f; }
         .jfr-icon-btn {
             width: 32px;
             height: 32px;
@@ -110,7 +95,7 @@
         <div class="container">
             <div class="row page-title row">
                 <div class="col">
-                    <h3 class="jfr-title">{{ env('APP_NAME') }} Reports</h3>
+                    <h3 class="jfr-title">MediLife Clinics Reports</h3>
                 </div>
                 <div class="col-auto">
                     @include('admins.partials.back-to-dashboard')
@@ -125,15 +110,6 @@
 
                     <div class="jfr-filter-card">
                         <form wire:submit.prevent="$refresh">
-                            <div class="form-group">
-                                <label>Search</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                                    </div>
-                                    <input type="text" wire:model.defer="search" class="form-control border-left-0" placeholder="Search Invoice #, Patient, Doctor...">
-                                </div>
-                            </div>
                             <div class="form-row">
                                 <div class="form-group col-md-3">
                                     <label>Date From</label>
@@ -144,11 +120,11 @@
                                     <input type="date" wire:model.defer="filter_to" class="form-control">
                                 </div>
                                 <div class="form-group col-md-3">
-                                    <label>Doctor</label>
-                                    <select wire:model.defer="filter_doctor_id" class="form-control">
-                                        <option value="">All Doctors</option>
-                                        @foreach ($doctors as $doc)
-                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
+                                    <label>Status</label>
+                                    <select wire:model.defer="filter_status" class="form-control">
+                                        <option value="">All Status</option>
+                                        @foreach (\App\Http\Livewire\Admins\AppointmentReport::STATUS_LABELS as $value => $label)
+                                            <option value="{{ $value }}">{{ $label }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -162,26 +138,6 @@
                                     </select>
                                 </div>
                             </div>
-                            <div class="form-row">
-                                <div class="form-group col-md-3">
-                                    <label>Payment Status</label>
-                                    <select wire:model.defer="filter_status" class="form-control">
-                                        <option value="">All Status</option>
-                                        <option value="paid">Paid</option>
-                                        <option value="partial">Partial</option>
-                                        <option value="unpaid">Unpaid</option>
-                                    </select>
-                                </div>
-                                <div class="form-group col-md-3">
-                                    <label>Service</label>
-                                    <select wire:model.defer="filter_service" class="form-control">
-                                        <option value="">All Services</option>
-                                        @foreach ($services as $svc)
-                                            <option value="{{ $svc->name }}">{{ $svc->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
                             <div class="d-flex justify-content-between align-items-center mb-3 jfr-actions-row flex-wrap">
                                 <div class="mb-2">
                                     <button type="submit" class="btn btn-jfr-teal"><i class="fas fa-search"></i> Search</button>
@@ -189,8 +145,8 @@
                                 </div>
                                 <div class="mb-2">
                                     <button type="button" wire:click="exportCsv" class="btn btn-jfr-outline-teal"><i class="fas fa-file-excel"></i> Export Excel</button>
-                                    <a href="{{ route('admin_reports_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-jfr-pdf"><i class="fas fa-file-pdf"></i> Export PDF</a>
-                                    <a href="{{ route('admin_reports_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-outline-dark"><i class="fas fa-print"></i> Print</a>
+                                    <a href="{{ route('admin_reports_appointments_print_list', array_filter(['from' => $filter_from, 'to' => $filter_to, 'status' => $filter_status, 'patient_id' => $filter_patient_id])) }}" target="_blank" class="btn btn-jfr-pdf"><i class="fas fa-file-pdf"></i> Export PDF</a>
+                                    <a href="{{ route('admin_reports_appointments_print_list', array_filter(['from' => $filter_from, 'to' => $filter_to, 'status' => $filter_status, 'patient_id' => $filter_patient_id])) }}" target="_blank" class="btn btn-outline-dark"><i class="fas fa-print"></i> Print</a>
                                 </div>
                             </div>
                         </form>
@@ -199,28 +155,28 @@
                     <div class="row mb-4">
                         <div class="col-md-3 mb-3">
                             <div class="jfr-stat-card">
-                                <span class="jfr-stat-icon jfr-blue"><i class="fas fa-file-invoice"></i></span>
+                                <span class="jfr-stat-icon jfr-blue"><i class="fas fa-calendar-check"></i></span>
                                 <div>
-                                    <div class="jfr-stat-label">Total Invoices</div>
-                                    <div class="jfr-stat-value">{{ $summary['total_invoices'] }}</div>
+                                    <div class="jfr-stat-label">Total Appointments</div>
+                                    <div class="jfr-stat-value">{{ $metrics['total'] }}</div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="jfr-stat-card">
-                                <span class="jfr-stat-icon jfr-green"><i class="fas fa-money-bill-wave"></i></span>
+                                <span class="jfr-stat-icon jfr-purple"><i class="fas fa-users"></i></span>
                                 <div>
-                                    <div class="jfr-stat-label">Total Revenue</div>
-                                    <div class="jfr-stat-value">{{ number_format($summary['total_revenue'], 2) }}</div>
+                                    <div class="jfr-stat-label">Unique Patients</div>
+                                    <div class="jfr-stat-value">{{ $metrics['unique_patients'] }}</div>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-3 mb-3">
                             <div class="jfr-stat-card">
-                                <span class="jfr-stat-icon jfr-purple"><i class="fas fa-check-circle"></i></span>
+                                <span class="jfr-stat-icon jfr-green"><i class="fas fa-check-circle"></i></span>
                                 <div>
-                                    <div class="jfr-stat-label">Total Paid</div>
-                                    <div class="jfr-stat-value">{{ number_format($summary['total_paid'], 2) }}</div>
+                                    <div class="jfr-stat-label">Completed</div>
+                                    <div class="jfr-stat-value">{{ $metrics['completed'] }}</div>
                                 </div>
                             </div>
                         </div>
@@ -228,8 +184,8 @@
                             <div class="jfr-stat-card">
                                 <span class="jfr-stat-icon jfr-orange"><i class="fas fa-exclamation-circle"></i></span>
                                 <div>
-                                    <div class="jfr-stat-label">Outstanding</div>
-                                    <div class="jfr-stat-value">{{ number_format($summary['outstanding'], 2) }}</div>
+                                    <div class="jfr-stat-label">Cancelled / No Show</div>
+                                    <div class="jfr-stat-value">{{ $metrics['cancelled_no_show'] }}</div>
                                 </div>
                             </div>
                         </div>
@@ -240,55 +196,41 @@
                             <table class="table table-hover jfr-table mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Invoice #</th>
+                                        <th>Case No.</th>
                                         <th>Patient</th>
-                                        <th>Doctor</th>
-                                        <th>Services</th>
-                                        <th>Grand Total</th>
-                                        <th>Paid</th>
-                                        <th>Unpaid</th>
-                                        <th>Created On</th>
+                                        <th>Appointment Date</th>
                                         <th>Status</th>
+                                        <th>Purpose of Visit</th>
+                                        <th>Consultation Fee</th>
                                         <th>Print</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse ($invoices as $invoice)
+                                    @forelse ($appointments as $appointment)
                                         <tr>
-                                            <td>{{ $invoice->invoice_number }}</td>
-                                            <td>{{ $invoice->patient->name ?? 'N/A' }}</td>
-                                            <td>{{ $invoice->doctor->employ->name ?? 'N/A' }}</td>
-                                            <td>{{ $invoice->items->pluck('service')->implode(', ') }}</td>
-                                            <td>{{ number_format($invoice->grand_total, 2) }}</td>
-                                            <td>{{ number_format($invoice->paid_total, 2) }}</td>
-                                            <td>{{ number_format($invoice->unpaid_total, 2) }}</td>
-                                            <td>{{ $invoice->created_at->format('d M Y') }}</td>
+                                            <td>{{ $appointment->case_no ?: '-' }}</td>
+                                            <td>{{ $appointment->patient->name ?? 'N/A' }}</td>
+                                            <td>{{ $appointment->intime ? $appointment->intime->format('d M Y h:i A') : '-' }}</td>
+                                            <td><span class="jfr-badge jfr-badge-{{ $appointment->status }}">{{ \App\Http\Livewire\Admins\AppointmentReport::STATUS_LABELS[$appointment->status] ?? ucfirst($appointment->status) }}</span></td>
+                                            <td>{{ \Illuminate\Support\Str::limit($appointment->description, 40) }}</td>
+                                            <td>Rs. {{ number_format($appointment->consultation_fee, 0) }}</td>
                                             <td>
-                                                @if ($invoice->unpaid_total <= 0)
-                                                    <span class="jfr-badge jfr-badge-paid">Paid</span>
-                                                @elseif ($invoice->paid_total > 0)
-                                                    <span class="jfr-badge jfr-badge-partial">Partial</span>
-                                                @else
-                                                    <span class="jfr-badge jfr-badge-unpaid">Unpaid</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
+                                                <a href="{{ route('admin_appointment_print', $appointment->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="10" class="text-warning">No invoices found.</td></tr>
+                                        <tr><td colspan="7" class="text-warning">No appointments found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
                         </div>
                         <div class="d-flex justify-content-between align-items-center flex-wrap px-3">
-                            @if ($invoices->total() > 0)
-                                <div class="jfr-entries-info">Showing {{ $invoices->firstItem() }} to {{ $invoices->lastItem() }} of {{ $invoices->total() }} entries</div>
+                            @if ($appointments->total() > 0)
+                                <div class="jfr-entries-info">Showing {{ $appointments->firstItem() }} to {{ $appointments->lastItem() }} of {{ $appointments->total() }} entries</div>
                             @else
                                 <div class="jfr-entries-info">No entries found</div>
                             @endif
-                            <div>{{ $invoices->links() }}</div>
+                            <div>{{ $appointments->links() }}</div>
                         </div>
                     </div>
                 </div>

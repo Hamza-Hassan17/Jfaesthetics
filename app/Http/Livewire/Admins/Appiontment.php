@@ -69,7 +69,7 @@ class Appiontment extends Component
         $this->editing_id = null;
         $this->patient_id = '';
         $this->case_no = $this->nextCaseNo();
-        $this->status = 'pending';
+        $this->status = 'booked';
         $this->age = '';
         $this->phone = '';
         $this->location = '';
@@ -177,7 +177,7 @@ class Appiontment extends Component
         $this->validate([
             'patient_id' => 'required|numeric',
             'case_no' => 'nullable|string',
-            'status' => 'required|in:pending,completed',
+            'status' => 'required|in:booked,completed,cancelled,no_show',
             'age' => 'nullable|numeric',
             'phone' => 'nullable|string',
             'location' => 'nullable|string',
@@ -189,7 +189,7 @@ class Appiontment extends Component
         $data = [
             'patient_id' => $this->patient_id,
             'case_no' => $this->case_no ?: null,
-            'status' => $this->status ?: 'pending',
+            'status' => $this->status ?: 'booked',
             'doctor_id' => $doctor->id,
             'age' => $this->age ?: null,
             'phone' => $this->phone ?: null,

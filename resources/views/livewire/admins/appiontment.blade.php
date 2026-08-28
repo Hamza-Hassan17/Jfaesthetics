@@ -98,8 +98,10 @@
                                 <div class="form-group col-md-3">
                                     <label>Status</label>
                                     <select class="form-control" wire:model="status">
-                                        <option value="pending">Pending</option>
+                                        <option value="booked">Booked</option>
                                         <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                        <option value="no_show">No Show</option>
                                     </select>
                                 </div>
                                 <div class="form-group col-md-3">
@@ -240,7 +242,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Status</dt>
-                                        <dd>{{ ucfirst($appointment->status ?? 'pending') }}</dd>
+                                        <dd>{{ ucfirst(str_replace('_', ' ', $appointment->status ?? 'booked')) }}</dd>
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Doctor</dt>
@@ -278,6 +280,7 @@
                                         <th>Case No.</th>
                                         <th>Doctor</th>
                                         <th>Appointment Date</th>
+                                        <th>Status</th>
                                         <th>Purpose</th>
                                         <th>Actions</th>
                                     </tr>
@@ -289,6 +292,7 @@
                                             <td>{{ $item->case_no ?: '-' }}</td>
                                             <td>{{ $item->doctor->employ->name ?? 'N/A' }}</td>
                                             <td>{{ $item->intime ? $item->intime->format('d M Y h:i A') : '-' }}</td>
+                                            <td>{{ ucfirst(str_replace('_', ' ', $item->status ?? 'booked')) }}</td>
                                             <td>{{ \Illuminate\Support\Str::limit($item->description, 40) }}</td>
                                             <td>
                                                 <button wire:click="view({{ $item->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>
@@ -298,7 +302,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="6">No appointments found.</td></tr>
+                                        <tr><td colspan="7">No appointments found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>

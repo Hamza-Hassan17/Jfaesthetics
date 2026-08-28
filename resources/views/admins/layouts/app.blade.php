@@ -519,7 +519,7 @@
             </div>
 
             <footer class="text-center text-muted py-3" style="font-size: 13px; border-top: 1px solid #e6ecf5; background: #fff; flex-shrink: 0;">
-                Designed and Developed by Supersoft Technologies
+                Designed and Developed by <a href="https://supersofttechnology.com/" target="_blank" rel="noopener" class="text-muted" style="text-decoration: underline;">Supersoft Technologies</a>
             </footer>
 
             @livewireScripts
