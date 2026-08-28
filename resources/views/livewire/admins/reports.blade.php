@@ -125,16 +125,16 @@
 
                     <div class="jfr-filter-card">
                         <form wire:submit.prevent="$refresh">
-                            <div class="form-group">
-                                <label>Search</label>
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                                    </div>
-                                    <input type="text" wire:model.defer="search" class="form-control border-left-0" placeholder="Search Invoice #...">
-                                </div>
-                            </div>
                             <div class="form-row">
+                                <div class="form-group col-md-3">
+                                    <label>Search</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                                        </div>
+                                        <input type="text" wire:model.defer="search" class="form-control border-left-0" placeholder="Invoice #...">
+                                    </div>
+                                </div>
                                 <div class="form-group col-md-3">
                                     <label>Date From</label>
                                     <input type="date" wire:model.defer="filter_from" class="form-control">
@@ -152,6 +152,8 @@
                                         @endforeach
                                     </select>
                                 </div>
+                            </div>
+                            <div class="form-row">
                                 <div class="form-group col-md-3">
                                     <label>Patient</label>
                                     <select wire:model.defer="filter_patient_id" class="form-control">
@@ -161,8 +163,6 @@
                                         @endforeach
                                     </select>
                                 </div>
-                            </div>
-                            <div class="form-row">
                                 <div class="form-group col-md-3">
                                     <label>Payment Status</label>
                                     <select wire:model.defer="filter_status" class="form-control">
@@ -188,8 +188,6 @@
                                     <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
                                 </div>
                                 <div class="mb-2">
-                                    <button type="button" wire:click="exportCsv" class="btn btn-jfr-outline-teal"><i class="fas fa-file-excel"></i> Export Excel</button>
-                                    <a href="{{ route('admin_reports_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-jfr-pdf"><i class="fas fa-file-pdf"></i> Export PDF</a>
                                     <a href="{{ route('admin_reports_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-outline-dark"><i class="fas fa-print"></i> Print</a>
                                 </div>
                             </div>

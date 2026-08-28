@@ -85,31 +85,6 @@ class Reports extends Component
         return $invoices;
     }
 
-    public function exportCsv()
-    {
-        $filtered = self::queryFilteredInvoices($this->currentFilters());
-
-        return response()->streamDownload(function () use ($filtered) {
-            $handle = fopen('php://output', 'w');
-            fputcsv($handle, ['Invoice #', 'Patient', 'Doctor', 'Services', 'Grand Total', 'Paid', 'Unpaid', 'Created On', 'Status']);
-            foreach ($filtered as $invoice) {
-                $status = $invoice->unpaid_total <= 0 ? 'Paid' : ($invoice->paid_total > 0 ? 'Partial' : 'Unpaid');
-                fputcsv($handle, [
-                    $invoice->invoice_number,
-                    $invoice->patient->name ?? 'N/A',
-                    $invoice->doctor->employ->name ?? 'N/A',
-                    $invoice->items->pluck('service')->implode(', '),
-                    number_format($invoice->grand_total, 2, '.', ''),
-                    number_format($invoice->paid_total, 2, '.', ''),
-                    number_format($invoice->unpaid_total, 2, '.', ''),
-                    $invoice->created_at->format('d M Y'),
-                    $status,
-                ]);
-            }
-            fclose($handle);
-        }, 'invoices-report-' . now()->format('Ymd-His') . '.csv');
-    }
-
     public function render()
     {
         $filtered = self::queryFilteredInvoices($this->currentFilters());
