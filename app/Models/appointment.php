@@ -17,9 +17,12 @@ class appointment extends Model
     protected $fillable=[
         'patient_id',
         'case_no',
+        'status',
         'doctor_id',
         'nurse_id',
         'age',
+        'phone',
+        'consultation_fee',
         'location',
         'intime',
         'outtime',

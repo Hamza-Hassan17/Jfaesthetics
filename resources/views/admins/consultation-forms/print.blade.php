@@ -18,8 +18,24 @@
             margin: 10mm auto;
             background: #fff;
             box-shadow: 0 0 8px rgba(0,0,0,.2);
+            position: relative;
             overflow: hidden;
         }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 64px;
+            font-weight: 700;
+            color: rgba(20, 128, 127, 0.07);
+            white-space: nowrap;
+            z-index: 0;
+            pointer-events: none;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+        .page > *:not(.watermark) { position: relative; z-index: 1; }
         .card-header {
             display: flex;
             align-items: center;
@@ -121,6 +137,8 @@
         <button onclick="window.print()">Print / Save as PDF</button>
     </div>
     <div class="page">
+        <div class="watermark">JF Aesthetics</div>
+
         <div class="card-header">
             <img src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
             <div class="brand">

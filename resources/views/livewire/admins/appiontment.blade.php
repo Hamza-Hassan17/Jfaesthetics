@@ -90,16 +90,23 @@
                             </div>
 
                             <div class="form-row">
-                                <div class="form-group col-md-4">
+                                <div class="form-group col-md-3">
                                     <label>Appointment Date</label>
                                     <input type="datetime-local" class="form-control" wire:model.lazy="intime">
                                     @error('intime') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                                 </div>
-                                <div class="form-group col-md-4">
+                                <div class="form-group col-md-3">
+                                    <label>Status</label>
+                                    <select class="form-control" wire:model="status">
+                                        <option value="pending">Pending</option>
+                                        <option value="completed">Completed</option>
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-3">
                                     <label>Doctor</label>
                                     <input type="text" class="form-control" value="{{ $medilifeDoctor->employ->name ?? 'Dr. Fabreen Naz' }}" readonly style="background: #f4f6f6;">
                                 </div>
-                                <div class="form-group col-md-4">
+                                <div class="form-group col-md-3">
                                     <label>Phone</label>
                                     <input type="text" class="form-control" wire:model.lazy="phone">
                                 </div>
@@ -230,6 +237,10 @@
                                     <div class="col-md-3">
                                         <dt>Appointment Date</dt>
                                         <dd>{{ $appointment->intime->format('d M Y h:i A') }}</dd>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <dt>Status</dt>
+                                        <dd>{{ ucfirst($appointment->status ?? 'pending') }}</dd>
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Doctor</dt>

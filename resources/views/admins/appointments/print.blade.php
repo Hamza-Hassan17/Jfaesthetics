@@ -18,8 +18,24 @@
             margin: 10mm auto;
             background: #fff;
             box-shadow: 0 0 8px rgba(0,0,0,.2);
+            position: relative;
             overflow: hidden;
         }
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-35deg);
+            font-size: 64px;
+            font-weight: 700;
+            color: rgba(30, 42, 110, 0.07);
+            white-space: nowrap;
+            z-index: 0;
+            pointer-events: none;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+        .page > *:not(.watermark) { position: relative; z-index: 1; }
         .card-header {
             display: flex;
             align-items: center;
@@ -114,6 +130,8 @@
         <button onclick="window.print()">Print / Save as PDF</button>
     </div>
     <div class="page">
+        <div class="watermark">MEDI LIFE</div>
+
         <div class="card-header">
             {{-- TODO: swap for the real MediLife Clinics logo file once provided --}}
             <svg class="logo-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
@@ -139,7 +157,7 @@
                 </div>
                 <div class="field-row">
                     <div class="field-cell"><span class="lbl">Appointment Date</span><span class="val">{{ $appointment->intime ? $appointment->intime->format('d M Y, h:i A') : '' }}</span></div>
-                    <div class="field-cell"></div>
+                    <div class="field-cell"><span class="lbl">Status</span><span class="val">{{ ucfirst($appointment->status ?? 'pending') }}</span></div>
                 </div>
                 <div class="field-row">
                     <div class="field-cell"><span class="lbl">Doctor</span><span class="val">{{ $appointment->doctor->employ->name ?? 'Dr. Fabreen Naz' }}</span></div>
