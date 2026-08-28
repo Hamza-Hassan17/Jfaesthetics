@@ -26,7 +26,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 64px;
+            font-size: 78px;
             font-weight: 700;
             color: rgba(30, 42, 110, 0.07);
             white-space: nowrap;
@@ -130,7 +130,7 @@
         <button onclick="window.print()">Print / Save as PDF</button>
     </div>
     <div class="page">
-        <div class="watermark">MEDI LIFE</div>
+        <div class="watermark">MEDI LIFE CLINICS</div>
 
         <div class="card-header">
             {{-- TODO: swap for the real MediLife Clinics logo file once provided --}}

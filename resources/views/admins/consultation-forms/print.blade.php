@@ -26,7 +26,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 64px;
+            font-size: 92px;
             font-weight: 700;
             color: rgba(20, 128, 127, 0.07);
             white-space: nowrap;
