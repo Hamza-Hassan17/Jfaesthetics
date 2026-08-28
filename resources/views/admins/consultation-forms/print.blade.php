@@ -167,23 +167,23 @@
                         <span class="val">{{ $form->medical_history ?: '-' }}@if ($form->medical_history_other) ({{ $form->medical_history_other }})@endif</span>
                     </div>
                 </div>
-                @if ($form->patient->gender === 'Female' || !empty($form->female_status))
-                    <div class="field-row">
-                        <div class="field-cell" style="flex: 1 0 100%;">
-                            <span class="lbl">For Female Patients</span>
-                            <span class="val">
-                                @foreach (\App\Http\Livewire\Admins\ConsultationForms::FEMALE_STATUS_OPTIONS as $option)
-                                    {!! in_array($option, $form->female_status ?? []) ? '&#9745;' : '&#9744;' !!} {{ $option }}&nbsp;&nbsp;
-                                @endforeach
-                            </span>
-                        </div>
+                <div class="field-row">
+                    <div class="field-cell">
+                        <span class="lbl">For Female Patients</span>
+                        <span class="val">
+                            @foreach (\App\Http\Livewire\Admins\ConsultationForms::FEMALE_STATUS_OPTIONS as $option)
+                                {!! in_array($option, $form->female_status ?? []) ? '&#9745;' : '&#9744;' !!} {{ $option }}&nbsp;&nbsp;
+                            @endforeach
+                        </span>
                     </div>
-                @endif
-            </div>
-
-            <div class="compact-block">
-                {!! $form->declaration_confirmed ? '&#9745;' : '&#9744;' !!}
-                I confirm that the information provided above is true and complete to the best of my knowledge.
+                    <div class="field-cell">
+                        <span class="lbl">Declaration</span>
+                        <span class="val">
+                            {!! $form->declaration_confirmed ? '&#9745;' : '&#9744;' !!}
+                            I confirm that the information provided above is true and complete to the best of my knowledge.
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div class="sign-row">
@@ -196,7 +196,7 @@
                 {{ $form->recommended_treatment ?: '-' }}
             </div>
 
-            <div class="notes-label">Notes</div>
+            <div class="notes-label">Notes / Rx</div>
             <div class="notes-area">{{ $form->notes }}</div>
         </div>
 
