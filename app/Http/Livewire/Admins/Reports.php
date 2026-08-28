@@ -60,13 +60,7 @@ class Reports extends Component
         $status = $filters['status'] ?? null;
 
         $invoices = Invoice::with(['patient', 'doctor.employ', 'items', 'payments'])
-            ->when($search, function ($q) use ($search) {
-                $q->where(function ($q2) use ($search) {
-                    $q2->where('invoice_number', 'like', "%{$search}%")
-                        ->orWhereHas('patient', fn ($q3) => $q3->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('doctor.employ', fn ($q3) => $q3->where('name', 'like', "%{$search}%"));
-                });
-            })
+            ->when($search, fn ($q) => $q->where('invoice_number', 'like', "%{$search}%"))
             ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
             ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
             ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))

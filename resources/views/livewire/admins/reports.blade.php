@@ -131,7 +131,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                                     </div>
-                                    <input type="text" wire:model.defer="search" class="form-control border-left-0" placeholder="Search Invoice #, Patient, Doctor...">
+                                    <input type="text" wire:model.defer="search" class="form-control border-left-0" placeholder="Search Invoice #...">
                                 </div>
                             </div>
                             <div class="form-row">
