@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admins;
 
+use App\Http\Livewire\Admins\Appiontment;
 use App\Models\doctor;
 use App\Models\employee;
 use Livewire\Component;
@@ -158,17 +159,29 @@ class Employees extends Component
 
         $employ = Employee::find($id);
 
-        if ($employ) {
-            if ($employ->image) {
-                \Storage::delete($employ->image);
-            }
-
-            $employ->delete();
-
-            session()->flash('message', 'Employee deleted successfully.');
-        } else {
+        if (!$employ) {
             session()->flash('message', 'Employee not found.');
+            return;
         }
+
+        /**
+         * The MediLife Appointments tab is hardcoded to this one doctor
+         * (looked up by email — see Appiontment::MEDILIFE_DOCTOR_EMAIL).
+         * Deleting them breaks appointment creation entirely, so block it
+         * here rather than let it happen and fail later.
+         */
+        if ($employ->email === Appiontment::MEDILIFE_DOCTOR_EMAIL) {
+            session()->flash('error', 'Dr. Fabreen Naz cannot be deleted — the MediLife Appointments tab depends on this doctor record.');
+            return;
+        }
+
+        if ($employ->image) {
+            \Storage::delete($employ->image);
+        }
+
+        $employ->delete();
+
+        session()->flash('message', 'Employee deleted successfully.');
     }
 
 

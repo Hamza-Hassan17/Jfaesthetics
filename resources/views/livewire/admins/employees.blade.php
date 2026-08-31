@@ -13,6 +13,14 @@
                         </button>
                     </div>
                 @endif
+                @if (session()->has('error'))
+                    <div class="alert alert-danger">
+                        {{ session('error') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                @endif
             </div>
             <div class="box box-primary">
                 <div class="box-body">
@@ -53,10 +61,12 @@
                                         <button wire:click="edit({{ $employee->id }})"
                                             class="btn btn-outline-info btn-rounded"><i
                                                 class="fas fa-pen"></i></button>
-                                        <button wire:click="delete({{ $employee->id }})"
-                                            onclick="return confirm('{{ __('Are You Sure ?') }}')"
-                                            class="btn btn-outline-danger btn-rounded"><i
-                                                class="fas fa-trash"></i></button>
+                                        @if ($employee->email !== \App\Http\Livewire\Admins\Appiontment::MEDILIFE_DOCTOR_EMAIL)
+                                            <button wire:click="delete({{ $employee->id }})"
+                                                onclick="return confirm('{{ __('Are You Sure ?') }}')"
+                                                class="btn btn-outline-danger btn-rounded"><i
+                                                    class="fas fa-trash"></i></button>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty
