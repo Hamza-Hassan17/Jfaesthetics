@@ -31,7 +31,7 @@
             font-size: 78px;
             font-weight: 700;
             color: #d8d8d8;
-            z-index: 999;
+            z-index: 0;
             pointer-events: none;
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
