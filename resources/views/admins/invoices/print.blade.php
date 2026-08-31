@@ -61,14 +61,14 @@
         th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
         th { background: #f4f4f4; }
         .section-title { margin-top: 25px; font-size: 15px; font-weight: 600; color: #333; }
-        .totals-payment { display: flex; justify-content: space-between; margin-top: 10px; gap: 20px; }
+        .totals-payment { display: flex; justify-content: space-between; margin-top: -10px; gap: 20px; }
         .payment-history { flex: 1; }
         .summary { width: 260px; }
         .summary table td { border: none; padding: 4px 0; font-size: 13px; }
         .summary table td.label { color: #444; }
         .summary table td.value { text-align: right; font-weight: 600; }
-        .summary table tr.grand td { border-top: 1px solid #999; padding-top: 8px; font-size: 14px; }
-        .notes { margin-top: 25px; font-size: 12px; color: #444; }
+        .summary table tr.grand td { border-top: 1px solid #999; pa-5ing-top: 8px; font-size: 14px; }
+        .notes { margin-top: -5px; font-size: 12px; color: #444; }
         .notes ul { margin: 6px 0 0; padding-left: 18px; }
         .notes li { margin-bottom: 4px; }
         .print-bar { text-align: center; margin: 10px 0; }
@@ -91,7 +91,7 @@
 
             <div class="brand-center">
                 <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
-                <p>Phone: {{ $settings['business_phone'] ?? '' }}</p>
+                <p>UAN: {{ $settings['business_phone'] ?? '' }}</p>
                 <p>Address: {{ $settings['address'] ?? '' }}</p>
             </div>
         </div>
@@ -184,8 +184,6 @@
                     <li>{{ $invoice->notes }}</li>
                 @endif
                 <li>All payments are non refundable.</li>
-                <li>Please arrive 10 minutes before your scheduled appointment time.</li>
-                <li>Results and downtime may vary from patient to patient.</li>
                 <li>Please retain this invoice for tracking remaining sessions in a package.</li>
                 <li>For any billing queries, please contact the clinic within 7 days of this invoice date.</li>
             </ul>

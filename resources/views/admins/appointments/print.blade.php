@@ -41,7 +41,7 @@
             align-items: center;
             justify-content: center;
             gap: 16px;
-            padding: 14px 22px;
+            padding: 0px;
             background: #f6f3ec;
         }
         .card-header .brand {
@@ -51,9 +51,12 @@
             align-items: center;
         }
         .card-header .logo-mark {
-            flex-shrink: 0;
-            width: 55px;
-            height: 55px;
+            display: block;
+            width: 75%;
+            height: auto;
+            max-height: 90px;
+            object-fit: cover;
+            object-position: center;
         }
         .card-header .brand h1 {
             margin: 0 0 4px;
@@ -71,7 +74,7 @@
             font-size: 40px;
             font-weight: 800;
             letter-spacing: .04em;
-            padding: 10px 0;
+            padding: 0px 0;
             text-transform: uppercase;
         }
         .card-body { padding: 18px 20px 24px; }
@@ -134,17 +137,7 @@
 
         <div class="card-header">
             {{-- TODO: swap for the real MediLife Clinics logo file once provided --}}
-            <svg class="logo-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="20" cy="16" r="7" fill="#1e2a6e"/>
-                <circle cx="44" cy="16" r="7" fill="#1e73be"/>
-                <path d="M8 40c2-10 10-14 24-14s22 4 24 14" stroke="#1e2a6e" stroke-width="4" fill="none" stroke-linecap="round"/>
-                <path d="M32 26v22M22 37h20" stroke="#1e73be" stroke-width="4" stroke-linecap="round"/>
-            </svg>
-            <div class="brand">
-                <h1><span class="medi">MEDI</span><span class="life">LIFE</span> <span class="clinics">CLINICS</span></h1>
-                <p>63-C/2, 24th Commercial Street, Touheed Commercial Area, Phase V, DHA, Karachi.</p>
-                <p>Cell: 0321-2331421</p>
-            </div>
+            <img class="logo-mark" src="{{ asset('images/medilife-logo.png') }}" alt="MediLife Clinics">
         </div>
 
         <div class="band-title">Doctor Visit</div>

@@ -131,8 +131,9 @@
 
                             <div class="form-group">
                                 <label>Purpose of Visit</label>
-                                <textarea class="form-control" wire:model.lazy="description" rows="2" placeholder="Reason for this appointment"></textarea>
-                                @error('description') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                    <input type="text" class="form-control" value="Skin Treatment" readonly disabled>
+                                    <input type="hidden" wire:model="description" value="Skin Treatment">
+                                    @error('description') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="form-group">

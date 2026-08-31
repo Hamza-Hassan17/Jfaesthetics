@@ -74,7 +74,7 @@ class Appiontment extends Component
         $this->phone = '';
         $this->location = '';
         $this->intime = now()->format('Y-m-d\TH:i');
-        $this->description = '';
+        $this->description = 'Skin Treatment';
         $this->prescription = '';
     }
 
