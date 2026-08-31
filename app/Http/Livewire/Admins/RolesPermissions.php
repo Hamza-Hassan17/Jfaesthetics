@@ -310,7 +310,7 @@ class RolesPermissions extends Component
             'selectablePermissionIds' => $this->editing_role_id
                 ? $this->selectablePermissionIdsFor($actingUser, Role::find($this->editing_role_id) ?? new Role(['rank' => 99]))
                 : $this->selectablePermissionIdsFor($actingUser, new Role(['rank' => $this->role_rank])),
-            'doctors' => doctor::with('employ')->get(),
+            'doctors' => doctor::with('employ')->whereHas('employ')->get(),
             'activityLogs' => $this->_tab === 'activity' && $actingUser->isSuperAdmin()
                 ? ActivityLog::with('user')->latest()->paginate(25)
                 : null,

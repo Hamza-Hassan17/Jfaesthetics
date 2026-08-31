@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admins;
 
+use App\Models\employee;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
@@ -39,6 +40,10 @@ class Invoices extends Component
     public $quick_patient_gender;
     public $quick_patient_age;
     public $quick_patient_bloodgroup;
+
+    public $quick_doctor_name;
+    public $quick_doctor_email;
+    public $quick_doctor_phone;
 
     public function mount()
     {
@@ -213,6 +218,44 @@ class Invoices extends Component
 
         $this->dispatchBrowserEvent('patient-quick-added');
         session()->flash('message', 'Patient added and selected for this invoice.');
+    }
+
+    /**
+     * Quick-add mirrors Employees::add_employee()'s doctor path (a
+     * "doctor" is just an employee with position=doctor plus a linked
+     * doctor row) but skips the fields that page requires (salary,
+     * qualification, image) since none of them are actually required
+     * at the database level — keeps this modal as lightweight as the
+     * quick-add-patient one.
+     */
+    public function add_quick_doctor()
+    {
+        $this->validate([
+            'quick_doctor_name' => 'required|string|min:2|max:50',
+            'quick_doctor_email' => 'required|email|unique:employees,email',
+            'quick_doctor_phone' => 'required|string|unique:employees,phone',
+        ]);
+
+        $newEmployee = employee::create([
+            'name' => $this->quick_doctor_name,
+            'email' => $this->quick_doctor_email,
+            'phone' => $this->quick_doctor_phone,
+            'position' => 'doctor',
+            'status' => 'active',
+        ]);
+
+        $newDoctor = doctor::create([
+            'employee_id' => $newEmployee->id,
+        ]);
+
+        $this->doctor_id = $newDoctor->id;
+
+        $this->quick_doctor_name = '';
+        $this->quick_doctor_email = '';
+        $this->quick_doctor_phone = '';
+
+        $this->dispatchBrowserEvent('doctor-quick-added');
+        session()->flash('message', 'Doctor added and selected for this invoice.');
     }
 
     public function add_payment()
@@ -492,7 +535,7 @@ class Invoices extends Component
         if ($this->_page === 'create') {
             return view('livewire.admins.invoices', [
                 'patients' => patient::all(),
-                'doctors' => doctor::with('employ')->get(),
+                'doctors' => doctor::with('employ')->whereHas('employ')->get(),
                 'services' => Service::all(),
                 'medicines' => medicine::all(),
             ])->layout('admins.layouts.app');

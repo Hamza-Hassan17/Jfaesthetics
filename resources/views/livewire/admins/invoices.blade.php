@@ -111,14 +111,19 @@
 
                             <div class="form-group">
                                 <label>Doctor</label>
-                                <select wire:model="doctor_id" class="form-control">
-                                    <option value="">Choose Doctor</option>
-                                    @forelse ($doctors as $doc)
-                                        <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
-                                    @empty
-                                        <option value="">No Doctor Found!</option>
-                                    @endforelse
-                                </select>
+                                <div class="input-group">
+                                    <select wire:model="doctor_id" class="form-control">
+                                        <option value="">Choose Doctor</option>
+                                        @forelse ($doctors as $doc)
+                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
+                                        @empty
+                                            <option value="">No Doctor Found!</option>
+                                        @endforelse
+                                    </select>
+                                    <div class="input-group-append">
+                                        <button type="button" class="btn btn-outline-primary" data-toggle="modal" data-target="#quickAddDoctorModal"><i class="fas fa-plus"></i> New Doctor</button>
+                                    </div>
+                                </div>
                                 @error('doctor_id') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                             </div>
 
@@ -336,6 +341,46 @@
                                 window.__jfPatientQuickAddedBound = true;
                                 window.addEventListener('patient-quick-added', function () {
                                     $('#quickAddPatientModal').modal('hide');
+                                });
+                            }
+                        </script>
+
+                        <div class="modal fade" id="quickAddDoctorModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Quick Add Doctor</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label>Name *</label>
+                                            <input type="text" class="form-control" wire:model.lazy="quick_doctor_name">
+                                            @error('quick_doctor_name') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Email *</label>
+                                            <input type="email" class="form-control" wire:model.lazy="quick_doctor_email">
+                                            @error('quick_doctor_email') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group">
+                                            <label>Phone *</label>
+                                            <input type="text" class="form-control" wire:model.lazy="quick_doctor_phone">
+                                            @error('quick_doctor_phone') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" wire:click="add_quick_doctor">Save &amp; Select</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            if (!window.__jfDoctorQuickAddedBound) {
+                                window.__jfDoctorQuickAddedBound = true;
+                                window.addEventListener('doctor-quick-added', function () {
+                                    $('#quickAddDoctorModal').modal('hide');
                                 });
                             }
                         </script>

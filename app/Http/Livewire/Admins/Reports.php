@@ -106,7 +106,7 @@ class Reports extends Component
         return view('livewire.admins.reports', [
             'invoices' => $invoicesPaginated,
             'summary' => $summary,
-            'doctors' => doctor::with('employ')->get(),
+            'doctors' => doctor::with('employ')->whereHas('employ')->get(),
             'patients' => patient::all(),
             'services' => Service::all(),
         ])->layout('admins.layouts.app');

@@ -47,6 +47,7 @@ class DoctorPerformanceReport extends Component
     public static function buildReport($from, $to, $doctorId = null)
     {
         $doctors = doctor::with('employ')
+            ->whereHas('employ')
             ->when($doctorId, fn ($q) => $q->where('id', $doctorId))
             ->get();
 
@@ -88,7 +89,7 @@ class DoctorPerformanceReport extends Component
         $report = self::buildReport($from, $to, $this->doctor_id);
 
         return view('livewire.admins.doctor-performance-report', [
-            'doctors' => doctor::with('employ')->get(),
+            'doctors' => doctor::with('employ')->whereHas('employ')->get(),
             'report' => $report,
         ])->layout('admins.layouts.app');
     }

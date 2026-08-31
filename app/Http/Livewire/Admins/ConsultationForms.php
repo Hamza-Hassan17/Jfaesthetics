@@ -277,7 +277,7 @@ class ConsultationForms extends Component
         if ($this->_page === 'create') {
             return view('livewire.admins.consultation-forms', [
                 'patients' => patient::all(),
-                'doctors' => doctor::with('employ')->get(),
+                'doctors' => doctor::with('employ')->whereHas('employ')->get(),
             ])->layout('admins.layouts.app');
         }
 

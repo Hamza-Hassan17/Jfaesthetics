@@ -112,7 +112,7 @@ class Dashboard extends Component
 
         $lowStockMedicines = medicine::whereColumn('quantity', '<=', 'low_stock_threshold')->orderBy('quantity')->take(5)->get();
 
-        $topDoctors = doctor::with('employ')->get()->map(function ($doc) use ($from, $to) {
+        $topDoctors = doctor::with('employ')->whereHas('employ')->get()->map(function ($doc) use ($from, $to) {
             $appointmentsCount = appointment::where('doctor_id', $doc->id)->whereBetween('intime', [$from, $to])->count();
             $servicesCount = InvoiceItem::whereHas('invoice', function ($q) use ($doc, $from, $to) {
                 $q->where('doctor_id', $doc->id)->whereBetween('created_at', [$from, $to]);
@@ -178,7 +178,7 @@ class Dashboard extends Component
             : $monthCollected;
 
         // ---------- Top Performing Doctors (this month, with revenue trend) ----------
-        $topPerformingDoctors = doctor::with('employ')->get()->map(function ($doc) use ($thisMonthStart, $thisMonthEnd, $lastMonthStart, $lastMonthEnd) {
+        $topPerformingDoctors = doctor::with('employ')->whereHas('employ')->get()->map(function ($doc) use ($thisMonthStart, $thisMonthEnd, $lastMonthStart, $lastMonthEnd) {
             $revenueThisMonthForDoc = (float) Invoice::where('doctor_id', $doc->id)
                 ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])
                 ->with('items')->get()->sum(fn ($invoice) => $invoice->grand_total);
