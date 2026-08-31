@@ -25,32 +25,22 @@
             position: absolute;
             top: 58%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 92px;
+            width: 60%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            text-align: center;
+            line-height: 1.15;
+            font-size: 88px;
             font-weight: 700;
             color: rgba(20, 128, 127, 0.14);
-            white-space: nowrap;
             z-index: 0;
             pointer-events: none;
             print-color-adjust: exact;
             -webkit-print-color-adjust: exact;
         }
         .page > *:not(.watermark) { position: relative; z-index: 1; }
-        .card-header {
-            display: flex;
-            align-items: center;
-            justify-content: flex-start;
-            gap: 16px;
-            padding: 14px 20px;
-            background: #f6f3ec;
-        }
-        .card-header img { height: 55px; width: auto; }
-        .card-header .brand {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: flex-start;
-        }
+        .card-header { position: relative; min-height: 60px; padding: 14px 20px; background: #f6f3ec; }
+        .card-header img { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); height: 55px; width: auto; }
+        .card-header .brand { text-align: center; }
         .card-header .brand h1 { margin: 0 0 4px; font-size: 24px; color: #0a3535; }
         .card-header .brand p { margin: 1px 0; font-size: 12px; color: #555; }
         .band-title {

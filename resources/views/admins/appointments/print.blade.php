@@ -20,16 +20,20 @@
             box-shadow: 0 0 8px rgba(0,0,0,.2);
             position: relative;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
         .watermark {
             position: absolute;
-            top: 58%;
+            top: 55%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 78px;
+            width: 60%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            text-align: center;
+            line-height: 1.15;
+            font-size: 64px;
             font-weight: 700;
             color: rgba(30, 42, 110, 0.14);
-            white-space: nowrap;
             z-index: 0;
             pointer-events: none;
             print-color-adjust: exact;
@@ -77,7 +81,7 @@
             padding: 0px 0;
             text-transform: uppercase;
         }
-        .card-body { padding: 18px 20px 24px; }
+        .card-body { padding: 18px 20px 24px; display: flex; flex-direction: column; flex: 1; }
         .field-grid {
             border: 1px solid #cfd8d8;
             border-radius: 6px;
@@ -106,6 +110,7 @@
         .notes-area {
             border: 1px solid #cfd8d8;
             border-radius: 6px;
+            flex: 1;
             min-height: 70mm;
             padding: 10px 14px;
             font-size: 13.5px;
@@ -123,7 +128,7 @@
         .print-bar { text-align: center; margin: 10px 0; }
         @media print {
             body { background: #fff; }
-            .page { box-shadow: none; margin: 0; width: auto; min-height: auto; }
+            .page { box-shadow: none; margin: 0; width: auto; min-height: 273mm; height: 273mm; }
             .print-bar { display: none; }
         }
     </style>

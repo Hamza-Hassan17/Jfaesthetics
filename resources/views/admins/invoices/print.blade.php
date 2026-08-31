@@ -26,11 +26,13 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 140px;
+            width: 60%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            text-align: center;
+            line-height: 1.15;
+            font-size: 88px;
             font-weight: 700;
             color: rgba(20, 128, 127, 0.16);
-            white-space: nowrap;
             z-index: 0;
             pointer-events: none;
             print-color-adjust: exact;
