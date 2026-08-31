@@ -23,12 +23,12 @@
         }
         .watermark {
             position: absolute;
-            top: 50%;
+            top: 58%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-35deg);
             font-size: 78px;
             font-weight: 700;
-            color: rgba(30, 42, 110, 0.07);
+            color: rgba(30, 42, 110, 0.14);
             white-space: nowrap;
             z-index: 0;
             pointer-events: none;
@@ -106,7 +106,7 @@
         .notes-area {
             border: 1px solid #cfd8d8;
             border-radius: 6px;
-            min-height: 230mm;
+            min-height: 70mm;
             padding: 10px 14px;
             font-size: 13.5px;
             line-height: 26px;

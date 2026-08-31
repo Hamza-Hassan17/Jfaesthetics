@@ -24,12 +24,12 @@
         }
         .watermark {
             position: absolute;
-            top: 30%;
+            top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-35deg);
-            font-size: 72px;
+            font-size: 140px;
             font-weight: 700;
-            color: rgba(20, 128, 127, 0.08);
+            color: rgba(20, 128, 127, 0.16);
             white-space: nowrap;
             z-index: 0;
             pointer-events: none;
@@ -51,6 +51,7 @@
         .brand-center { text-align: center; }
         .brand-center h1 { margin: 0 0 4px; font-size: 24px; color: #333; }
         .brand-center p { margin: 2px 0; font-size: 12px; color: #555; }
+        .brand-center .address-line { max-width: 320px; margin: 2px auto; }
         .info-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
         .info-row > div { flex: 1; }
         .patient-info p { margin: 2px 0; font-size: 13px; }
@@ -68,7 +69,7 @@
         .summary table td.label { color: #444; }
         .summary table td.value { text-align: right; font-weight: 600; }
         .summary table tr.grand td { border-top: 1px solid #999; pa-5ing-top: 8px; font-size: 14px; }
-        .notes { margin-top: -5px; font-size: 12px; color: #444; }
+        .notes { padding-top: 16px; font-size: 12px; color: #444; }
         .notes ul { margin: 6px 0 0; padding-left: 18px; }
         .notes li { margin-bottom: 4px; }
         .print-bar { text-align: center; margin: 10px 0; }
@@ -92,7 +93,7 @@
             <div class="brand-center">
                 <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
                 <p>UAN: {{ $settings['business_phone'] ?? '' }}</p>
-                <p>Address: {{ $settings['address'] ?? '' }}</p>
+                <p class="address-line">Address: {{ $settings['address'] ?? '' }}</p>
             </div>
         </div>
 

@@ -23,12 +23,12 @@
         }
         .watermark {
             position: absolute;
-            top: 50%;
+            top: 58%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-35deg);
             font-size: 92px;
             font-weight: 700;
-            color: rgba(20, 128, 127, 0.07);
+            color: rgba(20, 128, 127, 0.14);
             white-space: nowrap;
             z-index: 0;
             pointer-events: none;
@@ -39,9 +39,9 @@
         .card-header {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 16px;
-            padding: 14px 22px;
+            padding: 14px 20px;
             background: #f6f3ec;
         }
         .card-header img { height: 55px; width: auto; }
@@ -49,7 +49,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
         }
         .card-header .brand h1 { margin: 0 0 4px; font-size: 24px; color: #0a3535; }
         .card-header .brand p { margin: 1px 0; font-size: 12px; color: #555; }
