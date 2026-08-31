@@ -191,11 +191,6 @@
                 <div class="field-cell" style="flex: 1;"><span class="lbl">Consultant</span><span class="val">{{ $form->consultant->employ->name ?? '' }}</span></div>
             </div>
 
-            <div class="compact-block">
-                <span class="lbl" style="text-transform: uppercase; color: #7a8a8a; font-size: 10px;">Recommended Treatment</span><br>
-                {{ $form->recommended_treatment ?: '-' }}
-            </div>
-
             <div class="notes-label">Notes / Rx</div>
             <div class="notes-area">{{ $form->notes }}</div>
         </div>
