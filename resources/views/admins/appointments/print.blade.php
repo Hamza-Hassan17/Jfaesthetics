@@ -29,7 +29,7 @@
             left: 50%;
             transform: translate(-50%, -50%) rotate(-30deg);
             white-space: nowrap;
-            font-size: 50px;
+            font-size: 58px;
             font-weight: 700;
             color: #d0d0d8;
             z-index: 999;

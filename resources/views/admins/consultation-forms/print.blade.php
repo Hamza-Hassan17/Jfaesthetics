@@ -27,7 +27,7 @@
             left: 50%;
             transform: translate(-50%, -50%) rotate(-30deg);
             white-space: nowrap;
-            font-size: 78px;
+            font-size: 81px;
             font-weight: 700;
             color: #d8d8d8;
             z-index: 999;
