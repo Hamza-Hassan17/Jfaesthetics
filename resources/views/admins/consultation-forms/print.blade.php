@@ -25,13 +25,11 @@
             position: absolute;
             top: 58%;
             left: 50%;
-            width: 60%;
             transform: translate(-50%, -50%) rotate(-30deg);
-            text-align: center;
-            line-height: 1.15;
-            font-size: 88px;
+            white-space: nowrap;
+            font-size: 78px;
             font-weight: 700;
-            color: rgba(20, 128, 127, 0.14);
+            color: #d8d8d8;
             z-index: 0;
             pointer-events: none;
             print-color-adjust: exact;
