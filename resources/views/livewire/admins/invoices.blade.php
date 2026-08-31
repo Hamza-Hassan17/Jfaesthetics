@@ -359,7 +359,7 @@
                                             @error('quick_doctor_name') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                                         </div>
                                         <div class="form-group">
-                                            <label>Email *</label>
+                                            <label>Email</label>
                                             <input type="email" class="form-control" wire:model.lazy="quick_doctor_email">
                                             @error('quick_doctor_email') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                                         </div>

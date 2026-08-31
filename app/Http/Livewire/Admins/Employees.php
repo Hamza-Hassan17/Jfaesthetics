@@ -71,7 +71,7 @@ class Employees extends Component
 
         $this->validate([
             "name" => "required|string",
-            "email" => "required|email|unique:employees,email",
+            "email" => "nullable|email|unique:employees,email",
             "phone" => "required|string|unique:employees,phone",
             "salary" => "required|numeric",
             "address" => "required|string",
@@ -117,7 +117,7 @@ class Employees extends Component
 
         $this->validate([
             "name" => "required|string",
-            "email" => "required|email",
+            "email" => "nullable|email",
             "phone" => "required|string",
             "salary" => "required|numeric",
             "address" => "required|string",

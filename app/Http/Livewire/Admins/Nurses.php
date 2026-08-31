@@ -41,7 +41,7 @@ class Nurses extends Component
         }else{
             $this->validate([
                 'name' => 'required||min:6|max:50',
-                'email' => 'required|email',
+                'email' => 'nullable|email',
                 'position' => 'required',
                 'registered' => 'required',
                 'address' => 'required',
@@ -109,7 +109,7 @@ class Nurses extends Component
     {
         $this->validate([
                 'name' => 'required||min:6|max:50',
-                'email' => 'required|email',
+                'email' => 'nullable|email',
                 'address' => 'required',
                 'phone' => 'required',
                 'position' => 'required',

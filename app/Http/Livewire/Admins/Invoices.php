@@ -232,7 +232,7 @@ class Invoices extends Component
     {
         $this->validate([
             'quick_doctor_name' => 'required|string|min:2|max:50',
-            'quick_doctor_email' => 'required|email|unique:employees,email',
+            'quick_doctor_email' => 'nullable|email|unique:employees,email',
             'quick_doctor_phone' => 'required|string|unique:employees,phone',
         ]);
 

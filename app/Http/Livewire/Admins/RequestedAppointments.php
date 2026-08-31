@@ -52,7 +52,7 @@ class RequestedAppointments extends Component
         } else {
             $this->validate([
                 "name" => "required",
-                "email" => "required",
+                "email" => "nullable|email",
                 "phone" => "required",
                 "doctor" => "required",
                 "message" => "required",

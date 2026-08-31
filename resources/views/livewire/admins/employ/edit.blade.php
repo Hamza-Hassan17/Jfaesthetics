@@ -14,7 +14,7 @@
         <div class="form-group">
             <label for="Email">Email</label>
             <input type="email" name="Email" wire:model.lazy="email" placeholder="Enter Employee Email"
-                class="form-control" required cols="30" rows="5"></textarea>
+                class="form-control" cols="30" rows="5"></textarea>
         </div>
         @error('email')
             <span class="text-red-500 text-danger text-xs">{{ $message }}</span>

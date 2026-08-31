@@ -77,7 +77,7 @@ class Patients extends Component
 
             $this->validate([
                 'name' => 'required||min:6|max:50',
-                'email' => 'required|email',
+                'email' => 'nullable|email',
                 'address' => 'required',
                 'phone' => 'required|numeric|max:10000000000000',
                 'gender' => 'required',
