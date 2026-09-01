@@ -56,6 +56,7 @@ class Patients extends Component
         $this->email = $patient->email;
         $this->address = $patient->address;
         $this->phone = $patient->phone;
+        $this->gender = $patient->gender;
         $this->age = $patient->age;
         $this->bloodgroup = $patient->bloodgroup;
         $this->edit_photo = $patient->photo_path;
@@ -76,10 +77,10 @@ class Patients extends Component
             abort_unless(auth()->user()->hasPermission('patients', 'create'), 403);
 
             $this->validate([
-                'name' => 'required||min:6|max:50',
+                'name' => 'required',
                 'email' => 'nullable|email',
                 'address' => 'required',
-                'phone' => 'required|numeric|max:10000000000000',
+                'phone' => 'required|numeric',
                 'gender' => 'required',
                 'age' => 'required',
                 'bloodgroup' => 'nullable',
@@ -131,10 +132,10 @@ class Patients extends Component
         abort_unless(auth()->user()->hasPermission('patients', 'update'), 403);
 
         $this->validate([
-            'name' => 'required||min:6|max:50',
-            'email' => 'required|email',
+            'name' => 'required',
+            'email' => 'nullable|email',
             'address' => 'required',
-            'phone' => 'required|numeric|max:10000000000000',
+            'phone' => 'required|numeric',
             'gender' => 'required',
             'age' => 'required',
             'bloodgroup' => 'nullable',
