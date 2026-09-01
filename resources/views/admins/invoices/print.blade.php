@@ -38,7 +38,7 @@
         }
         .page > *:not(.watermark) { position: relative; z-index: 1; }
         .footer-note {
-            margin-top: 30px;
+            margin-top: 10px;
             padding-top: 10px;
             border-top: 1px solid #ddd;
             font-size: 10.5px;
@@ -46,7 +46,7 @@
             text-align: center;
             font-style: italic;
         }
-        .invoice-header { position: relative; min-height: 60px; margin-bottom: 20px; }
+        .invoice-header { position: relative; min-height: 60px; margin-bottom: 0px; }
         .invoice-logo { position: absolute; left: 0; top: 50%; transform: translateY(-50%); height: 55px; width: auto; }
         .brand-center { text-align: center; }
         .brand-center h1 { margin: 0 0 4px; font-size: 24px; color: #333; }
@@ -61,7 +61,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
         th { background: #f4f4f4; }
-        .section-title { margin-top: 25px; font-size: 15px; font-weight: 600; color: #333; }
+        .section-title { margin-top: 10px; font-size: 15px; font-weight: 600; color: #333; }
         .totals-payment { display: flex; justify-content: space-between; margin-top: -10px; gap: 20px; }
         .payment-history { flex: 1; }
         .summary { width: 260px; }
@@ -69,7 +69,7 @@
         .summary table td.label { color: #444; }
         .summary table td.value { text-align: right; font-weight: 600; }
         .summary table tr.grand td { border-top: 1px solid #999; pa-5ing-top: 8px; font-size: 14px; }
-        .notes { padding-top: 16px; font-size: 12px; color: #444; }
+        .notes { padding-top: 0px; font-size: 12px; color: #444; }
         .notes ul { margin: 6px 0 0; padding-left: 18px; }
         .notes li { margin-bottom: 4px; }
         .print-bar { text-align: center; margin: 10px 0; }
