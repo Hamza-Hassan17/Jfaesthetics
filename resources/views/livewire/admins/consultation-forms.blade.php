@@ -124,6 +124,20 @@
                                 </div>
                             </div>
 
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>Consultant</label>
+                                    <select wire:model="consultant_id" class="form-control">
+                                        <option value="">Choose Consultant</option>
+                                        @forelse ($doctors as $doc)
+                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
+                                        @empty
+                                            <option value="">No Doctor Found!</option>
+                                        @endforelse
+                                    </select>
+                                </div>
+                            </div>
+
                             <div class="form-group cf-check-group">
                                 <label class="d-block mb-1"><strong>For Female Patients</strong></label>
                                 @foreach (\App\Http\Livewire\Admins\ConsultationForms::FEMALE_STATUS_OPTIONS as $option)
@@ -139,29 +153,6 @@
                                     <input type="checkbox" wire:model="declaration_confirmed">
                                     I confirm that the information provided above is true and complete to the best of my knowledge.
                                 </label>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label>Patient Signature (typed full name)</label>
-                                    <input type="text" class="form-control" wire:model.lazy="patient_signature_name">
-                                </div>
-                                <div class="form-group col-md-6">
-                                    <label>Consultant</label>
-                                    <select wire:model="consultant_id" class="form-control">
-                                        <option value="">Choose Consultant</option>
-                                        @forelse ($doctors as $doc)
-                                            <option value="{{ $doc->id }}">{{ $doc->employ->name ?? 'Unknown' }}</option>
-                                        @empty
-                                            <option value="">No Doctor Found!</option>
-                                        @endforelse
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Recommended Treatment</label>
-                                <textarea class="form-control" wire:model.lazy="recommended_treatment" rows="2"></textarea>
                             </div>
 
                             <div class="form-group">
