@@ -38,6 +38,8 @@ class Appiontment extends Component
     public $intime;
     public $description;
     public $prescription;
+    public $consultation_fee;
+    public $is_foc = false;
 
     public $quick_patient_name;
     public $quick_patient_phone;
@@ -76,6 +78,18 @@ class Appiontment extends Component
         $this->intime = now()->format('Y-m-d\TH:i');
         $this->description = 'Skin Treatment';
         $this->prescription = '';
+        $this->consultation_fee = self::CONSULTATION_FEE;
+        $this->is_foc = false;
+    }
+
+    /**
+     * Toggling F.O.C. (Free of Cost) on zeroes the fee out and locks the
+     * input; toggling it back off restores the standard fee rather than
+     * leaving 0 sitting there to forget about.
+     */
+    public function updatedIsFoc($value)
+    {
+        $this->consultation_fee = $value ? 0 : self::CONSULTATION_FEE;
     }
 
     public function show_create_form()
@@ -124,6 +138,8 @@ class Appiontment extends Component
         $this->intime = optional($appointment->intime)->format('Y-m-d\TH:i');
         $this->description = $appointment->description;
         $this->prescription = $appointment->prescription;
+        $this->consultation_fee = $appointment->consultation_fee;
+        $this->is_foc = (float) $appointment->consultation_fee === 0.0;
 
         $this->_page = 'create';
     }
@@ -184,6 +200,7 @@ class Appiontment extends Component
             'intime' => 'required|date',
             'description' => 'required|string',
             'prescription' => 'nullable|string',
+            'consultation_fee' => 'required|numeric|min:0',
         ]);
 
         $data = [
@@ -197,7 +214,7 @@ class Appiontment extends Component
             'intime' => $this->intime,
             'description' => $this->description,
             'prescription' => $this->prescription,
-            'consultation_fee' => self::CONSULTATION_FEE,
+            'consultation_fee' => $this->is_foc ? 0 : $this->consultation_fee,
         ];
 
         if ($this->editing_id) {

@@ -124,7 +124,7 @@
                         <td>{{ $appointment->intime ? $appointment->intime->format('d M Y h:i A') : '-' }}</td>
                         <td>{{ \App\Http\Livewire\Admins\AppointmentReport::STATUS_LABELS[$appointment->status] ?? ucfirst($appointment->status) }}</td>
                         <td>{{ $appointment->description }}</td>
-                        <td>Rs. {{ number_format($appointment->consultation_fee, 0) }}</td>
+                        <td>{{ (float) $appointment->consultation_fee === 0.0 ? 'Free of Cost' : 'Rs. ' . number_format($appointment->consultation_fee, 0) }}</td>
                     </tr>
                 @empty
                     <tr><td colspan="6">No appointments found for this filter.</td></tr>

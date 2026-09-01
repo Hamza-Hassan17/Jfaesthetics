@@ -17,7 +17,7 @@
             min-height: 297mm;
             margin: 10mm auto;
             background: #fff;
-            padding: 15mm;
+            padding: 5mm 15mm 15mm 15mm;
             box-shadow: 0 0 8px rgba(0,0,0,.2);
             position: relative;
             overflow: hidden;

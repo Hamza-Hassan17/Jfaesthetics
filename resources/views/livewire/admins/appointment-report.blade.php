@@ -213,7 +213,7 @@
                                             <td>{{ $appointment->intime ? $appointment->intime->format('d M Y h:i A') : '-' }}</td>
                                             <td><span class="jfr-badge jfr-badge-{{ $appointment->status }}">{{ \App\Http\Livewire\Admins\AppointmentReport::STATUS_LABELS[$appointment->status] ?? ucfirst($appointment->status) }}</span></td>
                                             <td>{{ \Illuminate\Support\Str::limit($appointment->description, 40) }}</td>
-                                            <td>Rs. {{ number_format($appointment->consultation_fee, 0) }}</td>
+                                            <td>{{ (float) $appointment->consultation_fee === 0.0 ? 'Free of Cost' : 'Rs. ' . number_format($appointment->consultation_fee, 0) }}</td>
                                             <td>
                                                 <a href="{{ route('admin_appointment_print', $appointment->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
                                             </td>

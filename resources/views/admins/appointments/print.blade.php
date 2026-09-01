@@ -165,7 +165,7 @@
                 </div>
                 <div class="field-row">
                     <div class="field-cell"><span class="lbl">Purpose of Visit</span><span class="val">{{ $appointment->description ?: '' }}</span></div>
-                    <div class="field-cell"><span class="lbl">Consultation Fee</span><span class="val">Rs. {{ number_format($appointment->consultation_fee ?? 1500) }}</span></div>
+                    <div class="field-cell"><span class="lbl">Consultation Fee</span><span class="val">{{ (float) ($appointment->consultation_fee ?? 1500) === 0.0 ? 'Free of Cost' : 'Rs. ' . number_format($appointment->consultation_fee ?? 1500) }}</span></div>
                 </div>
             </div>
 

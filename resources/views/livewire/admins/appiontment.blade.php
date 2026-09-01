@@ -125,7 +125,17 @@
                                 </div>
                                 <div class="form-group col-md-4">
                                     <label>Consultation Fee</label>
-                                    <input type="text" class="form-control" value="Rs. {{ number_format(\App\Http\Livewire\Admins\Appiontment::CONSULTATION_FEE) }}" readonly style="background: #f4f6f6;">
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">Rs.</span>
+                                        </div>
+                                        <input type="number" min="0" step="1" class="form-control" wire:model.lazy="consultation_fee" @if ($is_foc) disabled @endif>
+                                    </div>
+                                    <div class="form-check mt-2">
+                                        <input type="checkbox" class="form-check-input" id="is_foc" wire:model="is_foc">
+                                        <label class="form-check-label" for="is_foc">F.O.C. (Free of Cost)</label>
+                                    </div>
+                                    @error('consultation_fee') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                                 </div>
                             </div>
 
@@ -251,7 +261,7 @@
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Consultation Fee</dt>
-                                        <dd>Rs. {{ number_format($appointment->consultation_fee) }}</dd>
+                                        <dd>{{ (float) $appointment->consultation_fee === 0.0 ? 'Free of Cost' : 'Rs. ' . number_format($appointment->consultation_fee) }}</dd>
                                     </div>
                                     <div class="col-md-3">
                                         <dt>Location</dt>
