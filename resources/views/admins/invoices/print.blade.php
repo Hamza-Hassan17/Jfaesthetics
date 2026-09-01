@@ -58,7 +58,7 @@
         .invoice-meta { text-align: right; }
         .invoice-meta h2 { margin: 0 0 6px; font-weight: 400; color: #333; }
         .invoice-meta p { margin: 2px 0; font-size: 13px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 12px; }
         th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
         th { background: #f4f4f4; }
         .section-title { margin-top: 10px; font-size: 15px; font-weight: 600; color: #333; }
