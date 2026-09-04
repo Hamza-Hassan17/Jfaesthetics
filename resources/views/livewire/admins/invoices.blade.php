@@ -467,7 +467,7 @@
                                         <tr>
                                             <th>Invoice #</th>
                                             <th>Patient</th>
-                                            <th>Patient #</th>
+                                            <th>Patient Phone Number</th>
                                             <th>Doctor</th>
                                             <th>Grand Total</th>
                                             <th>Paid</th>
