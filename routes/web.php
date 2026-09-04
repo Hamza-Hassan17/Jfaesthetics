@@ -30,6 +30,53 @@ Route::view('/services', 'services');
 Route::middleware(['auth', 'checksuperadmin'])->group(function () {
     Route::prefix('/admin')->group(function () {
         Route::get('/dashboard', App\Http\Livewire\Admins\Dashboard::class)->name('admin_dashboard')->middleware('permission:dashboard');
+
+        /**
+         * Backs the navbar's "Search anything..." live-search dropdown.
+         * Filters per-module results by the user's own permissions rather
+         * than gating the whole endpoint on one module, since it searches
+         * across several.
+         */
+        Route::get('/search-suggestions', function (Illuminate\Http\Request $request) {
+            $q = trim((string) $request->query('q', ''));
+            if (mb_strlen($q) < 2) {
+                return response()->json([]);
+            }
+
+            $user = $request->user();
+            $results = [];
+
+            if ($user->hasPermission('patients', 'view')) {
+                App\Models\patient::where('name', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%")
+                    ->limit(5)
+                    ->get()
+                    ->each(function ($patient) use (&$results) {
+                        $results[] = [
+                            'type' => 'Patient',
+                            'label' => $patient->name . ($patient->phone ? ' (' . $patient->phone . ')' : ''),
+                            'url' => route('admin_patients', ['patient' => $patient->id]),
+                        ];
+                    });
+            }
+
+            if ($user->hasPermission('invoices', 'view')) {
+                App\Models\Invoice::with('patient')
+                    ->where('invoice_number', 'like', "%{$q}%")
+                    ->orWhereHas('patient', fn ($q2) => $q2->where('name', 'like', "%{$q}%"))
+                    ->limit(5)
+                    ->get()
+                    ->each(function ($invoice) use (&$results) {
+                        $results[] = [
+                            'type' => 'Invoice',
+                            'label' => '#' . $invoice->invoice_number . ' — ' . ($invoice->patient->name ?? 'N/A'),
+                            'url' => route('admin_invoices', ['invoice' => $invoice->id]),
+                        ];
+                    });
+            }
+
+            return response()->json($results);
+        })->name('admin_search_suggestions');
         Route::get('settings', App\Http\Livewire\Admins\Settings::class)->name('admin_settings')->middleware('permission:settings');
 
         Route::get('roles-permissions', App\Http\Livewire\Admins\RolesPermissions::class)->name('admin_roles_permissions')->middleware('permission:roles');

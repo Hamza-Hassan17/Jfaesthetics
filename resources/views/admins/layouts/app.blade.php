@@ -243,6 +243,47 @@
             font-size: 13px;
         }
 
+        .jf-navbar-search-results {
+            position: absolute;
+            top: 44px;
+            left: 0;
+            width: 320px;
+            background: #fff;
+            border: 1px solid #e6ecec;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(10, 53, 53, 0.12);
+            max-height: 320px;
+            overflow-y: auto;
+            z-index: 1050;
+        }
+
+        .jf-navbar-search-results a {
+            display: block;
+            padding: 8px 14px;
+            color: #222;
+            border-bottom: 1px solid #f2f5f5;
+        }
+
+        .jf-navbar-search-results a:last-child { border-bottom: none; }
+        .jf-navbar-search-results a:hover { background: #f6f9f9; text-decoration: none; }
+
+        .jf-navbar-search-results .type {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: #148080;
+            font-weight: 700;
+            display: block;
+        }
+
+        .jf-navbar-search-results .label { font-size: 13px; color: #333; }
+
+        .jf-navbar-search-results .empty {
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #7a8a8a;
+        }
+
         .jf-navbar-icon-btn {
             width: 38px;
             height: 38px;
@@ -461,6 +502,7 @@
                             <div class="jf-navbar-search">
                                 <i class="fas fa-search"></i>
                                 <input type="text" id="jfNavbarQuickSearch" placeholder="Search anything..." autocomplete="off">
+                                <div class="jf-navbar-search-results" id="jfNavbarSearchResults" hidden></div>
                             </div>
                         </li>
                         <li class="nav-item">
@@ -561,6 +603,68 @@
                         });
                         if (matchKey) {
                             window.location.href = quickNavRoutes[matchKey];
+                        }
+                    });
+                })();
+
+                (function () {
+                    var input = document.getElementById('jfNavbarQuickSearch');
+                    var results = document.getElementById('jfNavbarSearchResults');
+                    if (!input || !results) return;
+
+                    var suggestUrl = '{{ route('admin_search_suggestions') }}';
+                    var debounceTimer = null;
+                    var currentController = null;
+
+                    function hideResults() {
+                        results.hidden = true;
+                        results.innerHTML = '';
+                    }
+
+                    function renderResults(items) {
+                        if (!items.length) {
+                            results.innerHTML = '<div class="empty">No matches found.</div>';
+                            results.hidden = false;
+                            return;
+                        }
+                        results.innerHTML = items.map(function (item) {
+                            var typeEl = document.createElement('span');
+                            typeEl.className = 'type';
+                            typeEl.textContent = item.type;
+                            var labelEl = document.createElement('span');
+                            labelEl.className = 'label';
+                            labelEl.textContent = item.label;
+                            var a = document.createElement('a');
+                            a.href = item.url;
+                            a.appendChild(typeEl);
+                            a.appendChild(labelEl);
+                            return a.outerHTML;
+                        }).join('');
+                        results.hidden = false;
+                    }
+
+                    input.addEventListener('input', function () {
+                        var term = this.value.trim();
+                        clearTimeout(debounceTimer);
+                        if (term.length < 2) {
+                            hideResults();
+                            return;
+                        }
+                        debounceTimer = setTimeout(function () {
+                            if (currentController) currentController.abort();
+                            currentController = new AbortController();
+                            fetch(suggestUrl + '?q=' + encodeURIComponent(term), { signal: currentController.signal })
+                                .then(function (res) { return res.json(); })
+                                .then(renderResults)
+                                .catch(function (err) {
+                                    if (err.name !== 'AbortError') hideResults();
+                                });
+                        }, 250);
+                    });
+
+                    document.addEventListener('click', function (e) {
+                        if (!results.contains(e.target) && e.target !== input) {
+                            hideResults();
                         }
                     });
                 })();

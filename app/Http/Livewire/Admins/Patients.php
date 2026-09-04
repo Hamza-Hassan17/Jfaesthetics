@@ -39,6 +39,15 @@ class Patients extends Component
     public function mount()
     {
         $this->_page = 'index';
+
+        /**
+         * Deep-link support for the navbar search dropdown: /admin/patients?patient=5
+         * opens straight into that patient's edit form.
+         */
+        $patientId = request()->query('patient');
+        if ($patientId && patient::find($patientId)) {
+            $this->show_edit_form($patientId);
+        }
     }
 
     public function show_create_form()

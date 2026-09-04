@@ -17,7 +17,7 @@
             min-height: 297mm;
             margin: 10mm auto;
             background: #fff;
-            padding: 0mm 15mm 15mm 15mm;
+            padding: -1mm 15mm 15mm 15mm;
             box-shadow: 0 0 8px rgba(0,0,0,.2);
             position: relative;
             overflow: hidden;
@@ -102,7 +102,6 @@
                 <p><strong>Name:</strong> {{ $invoice->patient->name ?? 'N/A' }}</p>
                 <p><strong>MR#:</strong> H-{{ str_pad($invoice->patient_id, 2, '0', STR_PAD_LEFT) }}-{{ str_pad($invoice->patient_id, 6, '0', STR_PAD_LEFT) }}</p>
                 <p><strong>Phone:</strong> {{ $invoice->patient->phone ?? 'N/A' }}</p>
-                <p><strong>Doctor:</strong> {{ $invoice->doctor->employ->name ?? 'N/A' }}</p>
             </div>
             <div class="invoice-meta">
                 <h2>Invoice</h2>

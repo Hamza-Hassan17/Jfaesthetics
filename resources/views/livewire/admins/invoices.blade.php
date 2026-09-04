@@ -467,6 +467,7 @@
                                         <tr>
                                             <th>Invoice #</th>
                                             <th>Patient</th>
+                                            <th>Patient #</th>
                                             <th>Doctor</th>
                                             <th>Grand Total</th>
                                             <th>Paid</th>
@@ -481,6 +482,7 @@
                                             <tr>
                                                 <td>{{ $invoice->invoice_number }}</td>
                                                 <td>{{ $invoice->patient->name ?? 'N/A' }}</td>
+                                                <td>{{ $invoice->patient->phone ?? 'N/A' }}</td>
                                                 <td>{{ $invoice->doctor->employ->name ?? 'N/A' }}</td>
                                                 <td>{{ number_format($invoice->grand_total, 2) }}</td>
                                                 <td>{{ number_format($invoice->paid_total, 2) }}</td>
@@ -503,7 +505,7 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="9" class="text-warning">No invoices generated yet.</td></tr>
+                                            <tr><td colspan="10" class="text-warning">No invoices generated yet.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>

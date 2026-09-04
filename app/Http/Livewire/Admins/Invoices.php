@@ -48,6 +48,15 @@ class Invoices extends Component
     public function mount()
     {
         $this->resetForm();
+
+        /**
+         * Deep-link support for the navbar search dropdown: /admin/invoices?invoice=5
+         * opens straight into that invoice's view page.
+         */
+        $invoiceId = request()->query('invoice');
+        if ($invoiceId && Invoice::find($invoiceId)) {
+            $this->view($invoiceId);
+        }
     }
 
     protected function blankItem()
