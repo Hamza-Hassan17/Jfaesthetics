@@ -2,7 +2,6 @@
 
 namespace App\Http\Livewire\Admins;
 
-use App\Models\employee;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
@@ -40,10 +39,6 @@ class Invoices extends Component
     public $quick_patient_gender;
     public $quick_patient_age;
     public $quick_patient_bloodgroup;
-
-    public $quick_doctor_name;
-    public $quick_doctor_email;
-    public $quick_doctor_phone;
 
     public function mount()
     {
@@ -229,44 +224,6 @@ class Invoices extends Component
         session()->flash('message', 'Patient added and selected for this invoice.');
     }
 
-    /**
-     * Quick-add mirrors Employees::add_employee()'s doctor path (a
-     * "doctor" is just an employee with position=doctor plus a linked
-     * doctor row) but skips the fields that page requires (salary,
-     * qualification, image) since none of them are actually required
-     * at the database level — keeps this modal as lightweight as the
-     * quick-add-patient one.
-     */
-    public function add_quick_doctor()
-    {
-        $this->validate([
-            'quick_doctor_name' => 'required|string|min:2|max:50',
-            'quick_doctor_email' => 'nullable|email|unique:employees,email',
-            'quick_doctor_phone' => 'required|string|unique:employees,phone',
-        ]);
-
-        $newEmployee = employee::create([
-            'name' => $this->quick_doctor_name,
-            'email' => $this->quick_doctor_email,
-            'phone' => $this->quick_doctor_phone,
-            'position' => 'doctor',
-            'status' => 'active',
-        ]);
-
-        $newDoctor = doctor::create([
-            'employee_id' => $newEmployee->id,
-        ]);
-
-        $this->doctor_id = $newDoctor->id;
-
-        $this->quick_doctor_name = '';
-        $this->quick_doctor_email = '';
-        $this->quick_doctor_phone = '';
-
-        $this->dispatchBrowserEvent('doctor-quick-added');
-        session()->flash('message', 'Doctor added and selected for this invoice.');
-    }
-
     public function add_payment()
     {
         $this->payments[] = ['paid_on' => now()->format('Y-m-d'), 'amount' => 0, 'payment_mode' => 'Cash'];
@@ -311,7 +268,7 @@ class Invoices extends Component
 
         $this->validate([
             'patient_id' => 'required',
-            'doctor_id' => 'required',
+            'doctor_id' => 'nullable',
             'items.*.service' => 'required|string',
             'items.*.quantity' => 'required|numeric|min:1',
             'items.*.session' => 'nullable|integer|between:1,10',
@@ -356,7 +313,7 @@ class Invoices extends Component
                     $invoice = Invoice::findOrFail($this->editing_invoice_id);
                     $invoice->update([
                         'patient_id' => $this->patient_id,
-                        'doctor_id' => $this->doctor_id,
+                        'doctor_id' => $this->doctor_id ?: null,
                         'notes' => $this->notes,
                     ]);
 
@@ -387,7 +344,7 @@ class Invoices extends Component
                     $invoice = Invoice::create([
                         'invoice_number' => $invoiceNumber,
                         'patient_id' => $this->patient_id,
-                        'doctor_id' => $this->doctor_id,
+                        'doctor_id' => $this->doctor_id ?: null,
                         'printed_by' => auth()->user()->name ?? null,
                         'notes' => $this->notes,
                     ]);
