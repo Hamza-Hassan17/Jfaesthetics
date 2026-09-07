@@ -6,6 +6,7 @@ use App\Models\patient;
 use App\Traits\LogsActivity;
 use Livewire\Component;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Intervention\Image\ImageManagerStatic;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
@@ -89,11 +90,17 @@ class Patients extends Component
                 'name' => 'required',
                 'email' => 'nullable|email',
                 'address' => 'required',
-                'phone' => 'required|numeric',
+                'phone' => [
+                    'required',
+                    'numeric',
+                    Rule::unique('patients', 'phone')->where(fn ($query) => $query->where('name', $this->name)),
+                ],
                 'gender' => 'required',
                 'age' => 'required',
                 'bloodgroup' => 'nullable',
                 'photo' => 'nullable|max:3072',
+            ], [
+                'phone.unique' => 'A patient with this name and phone number already exists.',
             ]);
 
             $newPatient = patient::create([
@@ -144,11 +151,17 @@ class Patients extends Component
             'name' => 'required',
             'email' => 'nullable|email',
             'address' => 'required',
-            'phone' => 'required|numeric',
+            'phone' => [
+                'required',
+                'numeric',
+                Rule::unique('patients', 'phone')->where(fn ($query) => $query->where('name', $this->name))->ignore($id),
+            ],
             'gender' => 'required',
             'age' => 'required',
             'bloodgroup' => 'nullable',
             'photo' => 'nullable|max:3072',
+        ], [
+            'phone.unique' => 'A patient with this name and phone number already exists.',
         ]);
 
         $patient = patient::findOrFail($id);
