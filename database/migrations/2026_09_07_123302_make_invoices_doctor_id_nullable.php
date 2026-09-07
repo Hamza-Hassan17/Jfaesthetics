@@ -27,9 +27,21 @@ class MakeInvoicesDoctorIdNullable extends Migration
         $isMysql = DB::connection()->getDriverName() === 'mysql';
 
         if ($isMysql) {
-            Schema::table('invoices', function (Blueprint $table) {
-                $table->dropForeign(['doctor_id']);
-            });
+            // Discovered by name rather than assuming Laravel's default
+            // ("invoices_doctor_id_foreign") - production doesn't actually
+            // have a constraint under that name, so dropForeign(['doctor_id'])
+            // fails there with "Can't DROP FOREIGN KEY ... check that it exists".
+            $constraints = DB::select("
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                  AND TABLE_NAME = 'invoices'
+                  AND COLUMN_NAME = 'doctor_id'
+                  AND REFERENCED_TABLE_NAME IS NOT NULL
+            ");
+            foreach ($constraints as $constraint) {
+                DB::statement("ALTER TABLE invoices DROP FOREIGN KEY `{$constraint->CONSTRAINT_NAME}`");
+            }
         }
 
         Schema::table('invoices', function (Blueprint $table) {
