@@ -31,6 +31,7 @@
                             <tr>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Patient Phone Number</th>
                                 <th>Age</th>
                                 <th>Gender</th>
                                 <th>Dated</th>
@@ -42,6 +43,7 @@
                                 <tr>
                                     <td>{{ $patient->name }}</td>
                                     <td>{{ $patient->email }}</td>
+                                    <td>{{ $patient->phone ?: 'Null' }}</td>
                                     <td>{{ $patient->age ?: 'Null' }}</td>
                                     <td>{{ $patient->gender ?: 'Null' }}</td>
                                     <td>{{ $patient->created_at }}</td>
