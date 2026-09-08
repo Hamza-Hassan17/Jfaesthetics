@@ -245,9 +245,9 @@ class Patients extends Component
                 'patients' => patient::latest()->paginate(10),
             ])->layout('admins.layouts.app');
         } else if ($this->_page == "create") {
-            return view('livewire.admins.patients.create');
+            return view('livewire.admins.patients.create')->layout('admins.layouts.app');
         } else if ($this->_page == "edit") {
-            return view('livewire.admins.patients.edit');
+            return view('livewire.admins.patients.edit')->layout('admins.layouts.app');
         }
     }
 }
