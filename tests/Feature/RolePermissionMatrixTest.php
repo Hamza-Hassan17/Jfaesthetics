@@ -134,16 +134,20 @@ class RolePermissionMatrixTest extends TestCase
 
         return [
             'Services::add_service (create)' => [\App\Http\Livewire\Admins\Services::class, 'add_service', [], 'services', 'create'],
+            'Services::edit (update)' => [\App\Http\Livewire\Admins\Services::class, 'edit', [999999], 'services', 'update'],
             'Services::update (update)' => [\App\Http\Livewire\Admins\Services::class, 'update', [999999], 'services', 'update'],
             'Services::delete (delete)' => [\App\Http\Livewire\Admins\Services::class, 'delete', [999999], 'services', 'delete'],
 
             'Employees::add_employee (create)' => [\App\Http\Livewire\Admins\Employees::class, 'add_employee', [], 'employees', 'create'],
+            'Employees::show_edit_form (update)' => [\App\Http\Livewire\Admins\Employees::class, 'show_edit_form', [999999], 'employees', 'update'],
             'Employees::update_employee (update)' => [\App\Http\Livewire\Admins\Employees::class, 'update_employee', [], 'employees', 'update'],
             'Employees::delete (delete)' => [\App\Http\Livewire\Admins\Employees::class, 'delete', [999999], 'employees', 'delete'],
 
             'Medicinestore::add_medicine (create)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'add_medicine', [], 'medicines_store', 'create'],
+            'Medicinestore::edit (update)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'edit', [999999], 'medicines_store', 'update'],
             'Medicinestore::update (update)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'update', [999999], 'medicines_store', 'update'],
             'Medicinestore::delete (delete)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'delete', [999999], 'medicines_store', 'delete'],
+            'Medicinestore::show_stock_in_form (update)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'show_stock_in_form', [999999], 'medicines_store', 'update'],
             'Medicinestore::add_stock (update)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'add_stock', [], 'medicines_store', 'update'],
 
             'RolesPermissions::show_create_role (create)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'show_create_role', [], 'roles', 'create'],
@@ -152,12 +156,18 @@ class RolePermissionMatrixTest extends TestCase
 
             'Appiontment::save (create)' => [\App\Http\Livewire\Admins\Appiontment::class, 'save', [], 'appointments', 'create'],
             'Appiontment::delete (delete)' => [\App\Http\Livewire\Admins\Appiontment::class, 'delete', [999999], 'appointments', 'delete'],
+            // Nurse has appointments.update (clinical support role), so it
+            // can't stand in for "lacks this permission" here - Accountant
+            // has no appointments.* permissions at all per RoleSeeder.
+            'Appiontment::edit (update)' => [\App\Http\Livewire\Admins\Appiontment::class, 'edit', [999999], 'appointments', 'update', 'Accountant'],
 
             'Patients::add_patient (create)' => [\App\Http\Livewire\Admins\Patients::class, 'add_patient', [], 'patients', 'create'],
+            'Patients::show_edit_form (update)' => [\App\Http\Livewire\Admins\Patients::class, 'show_edit_form', [999999], 'patients', 'update'],
             'Patients::update (update)' => [\App\Http\Livewire\Admins\Patients::class, 'update', [999999], 'patients', 'update'],
             'Patients::prompt_delete (delete)' => [\App\Http\Livewire\Admins\Patients::class, 'prompt_delete', [999999], 'patients', 'delete'],
 
             'ConsultationForms::save (create)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'save', [], 'consultation_form', 'create'],
+            'ConsultationForms::edit (update)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'edit', [999999], 'consultation_form', 'update'],
             'ConsultationForms::delete (delete)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'delete', [999999], 'consultation_form', 'delete'],
 
             'Invoices::generate_invoice (create)' => [\App\Http\Livewire\Admins\Invoices::class, 'generate_invoice', [], 'invoices', 'create'],
@@ -167,23 +177,25 @@ class RolePermissionMatrixTest extends TestCase
     }
 
     /** @dataProvider writeActionGuards */
-    public function test_write_action_is_blocked_for_a_role_without_that_permission($componentClass, $method, $args, $module, $action)
+    public function test_write_action_is_blocked_for_a_role_without_that_permission($componentClass, $method, $args, $module, $action, $roleName = 'Nurse')
     {
         $args = array_map(function ($arg) {
             return $arg === 'DOCTOR_ROLE_ID_PLACEHOLDER' ? Role::where('name', 'Doctor')->value('id') : $arg;
         }, $args);
 
-        // Nurse has no create/update/delete on any of these modules per
-        // RoleSeeder (view-only or nothing at all) - a safe "definitely
-        // lacks this permission" role for every guard in the list.
-        $nurse = Role::with('permissions')->where('name', 'Nurse')->first();
-        $this->assertNotNull($nurse, 'Nurse role not found.');
+        // Nurse has no create/update/delete on most of these modules per
+        // RoleSeeder (view-only or nothing at all), so it's the default
+        // "definitely lacks this permission" role. A handful of guards
+        // (e.g. Appiontment::edit) pass an explicit $roleName instead,
+        // because Nurse actually holds that specific permission.
+        $role = Role::with('permissions')->where('name', $roleName)->first();
+        $this->assertNotNull($role, "{$roleName} role not found.");
         $this->assertFalse(
-            $nurse->hasPermission($module, $action),
-            "Test setup invalid: Nurse actually has {$action} on {$module}, so this isn't a valid 'lacks permission' case."
+            $role->hasPermission($module, $action),
+            "Test setup invalid: {$roleName} actually has {$action} on {$module}, so this isn't a valid 'lacks permission' case."
         );
 
-        $user = User::factory()->create(['role_id' => $nurse->id, 'is_active' => true]);
+        $user = User::factory()->create(['role_id' => $role->id, 'is_active' => true]);
         \Illuminate\Support\Facades\Auth::login($user);
 
         $component = new $componentClass();

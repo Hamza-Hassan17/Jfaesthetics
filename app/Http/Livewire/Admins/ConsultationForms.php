@@ -139,6 +139,8 @@ class ConsultationForms extends Component
 
     public function edit($id)
     {
+        abort_unless(auth()->user()->hasPermission('consultation_form', 'update'), 403);
+
         $form = ConsultationForm::findOrFail($id);
         $this->assertOwnsForm($form);
 

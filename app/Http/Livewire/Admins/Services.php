@@ -44,6 +44,8 @@ class Services extends Component
 
     public function edit($id)
     {
+        abort_unless(auth()->user()->hasPermission('services', 'update'), 403);
+
         $service = Service::findOrFail($id);
         $this->edit_service_id = $id;
         $this->name = $service->name;

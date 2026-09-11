@@ -75,6 +75,8 @@ class Medicinestore extends Component
 
      public function edit($id)
     {
+        abort_unless(auth()->user()->hasPermission('medicines_store', 'update'), 403);
+
         $Medicine = medicine::findOrFail($id);
         $this->edit_medicine_id = $id;
 
@@ -136,6 +138,8 @@ class Medicinestore extends Component
 
     public function show_stock_in_form($id)
     {
+        abort_unless(auth()->user()->hasPermission('medicines_store', 'update'), 403);
+
         $this->stock_in_medicine_id = $id;
         $this->stock_in_quantity = "";
         $this->stock_in_cost = "";

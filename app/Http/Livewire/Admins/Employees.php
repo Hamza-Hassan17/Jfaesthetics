@@ -45,6 +45,8 @@ class Employees extends Component
 
     public function show_edit_form($id)
     {
+        abort_unless(auth()->user()->hasPermission('employees', 'update'), 403);
+
         $this->_page = "edit";
         $this->_edit_employ_id = $id;
         $employ = employee::find($id);

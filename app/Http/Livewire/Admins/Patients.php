@@ -58,6 +58,8 @@ class Patients extends Component
 
     public function show_edit_form($id)
     {
+        abort_unless(auth()->user()->hasPermission('patients', 'update'), 403);
+
         $this->_page = "edit";
         $patient = patient::findOrFail($id);
         $this->edit_patient_id = $id;

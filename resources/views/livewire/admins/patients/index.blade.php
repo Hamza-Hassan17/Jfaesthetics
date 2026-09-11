@@ -48,12 +48,16 @@
                                     <td>{{ $patient->gender ?: 'Null' }}</td>
                                     <td>{{ $patient->created_at }}</td>
                                     <td class="text-right">
-                                        <button wire:click="show_edit_form({{ $patient->id }})"
-                                            class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
-                                        <button wire:click="prompt_delete({{ $patient->id }})"
-                                            data-toggle="modal" data-target="#confirmDeletePatientModal"
-                                            class="btn btn-outline-danger btn-rounded"><i
-                                                class="fas fa-trash"></i></button>
+                                        @if (auth()->user()->hasPermission('patients', 'update'))
+                                            <button wire:click="show_edit_form({{ $patient->id }})"
+                                                class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
+                                        @endif
+                                        @if (auth()->user()->hasPermission('patients', 'delete'))
+                                            <button wire:click="prompt_delete({{ $patient->id }})"
+                                                data-toggle="modal" data-target="#confirmDeletePatientModal"
+                                                class="btn btn-outline-danger btn-rounded"><i
+                                                    class="fas fa-trash"></i></button>
+                                        @endif
                                     </td>
                                 </tr>
                             @empty

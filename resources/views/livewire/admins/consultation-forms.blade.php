@@ -292,7 +292,9 @@
                                 </dl>
                             </div>
                             <div class="form-group mt-4">
-                                <button class="btn btn-jfr-teal" wire:click="edit({{ $form->id }})"><i class="fas fa-pen"></i> Edit</button>
+                                @if (auth()->user()->hasPermission('consultation_form', 'update'))
+                                    <button class="btn btn-jfr-teal" wire:click="edit({{ $form->id }})"><i class="fas fa-pen"></i> Edit</button>
+                                @endif
                                 <a href="{{ route('admin_consultation_form_print', $form->id) }}" target="_blank" class="btn btn-success"><i class="fas fa-print"></i> Print / Download A4</a>
                             </div>
                         </div>
@@ -320,9 +322,13 @@
                                             <td>{{ optional($item->consultation_date)->format('d M Y') }}</td>
                                             <td>
                                                 <button wire:click="view({{ $item->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>
-                                                <button wire:click="edit({{ $item->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
+                                                @if (auth()->user()->hasPermission('consultation_form', 'update'))
+                                                    <button wire:click="edit({{ $item->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
+                                                @endif
                                                 <a href="{{ route('admin_consultation_form_print', $item->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
-                                                <button wire:click="delete({{ $item->id }})" onclick="return confirm('Are You Sure?')" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                @if (auth()->user()->hasPermission('consultation_form', 'delete'))
+                                                    <button wire:click="delete({{ $item->id }})" onclick="return confirm('Are You Sure?')" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

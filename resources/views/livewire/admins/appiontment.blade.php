@@ -275,7 +275,9 @@
                                 <dd>{{ $appointment->prescription ?: '-' }}</dd>
                             </dl>
                             <div class="form-group mt-4">
-                                <button class="btn btn-jfr-teal" wire:click="edit({{ $appointment->id }})"><i class="fas fa-pen"></i> Edit</button>
+                                @if (auth()->user()->hasPermission('appointments', 'update'))
+                                    <button class="btn btn-jfr-teal" wire:click="edit({{ $appointment->id }})"><i class="fas fa-pen"></i> Edit</button>
+                                @endif
                                 <a href="{{ route('admin_appointment_print', $appointment->id) }}" target="_blank" class="btn btn-success"><i class="fas fa-print"></i> Print / Download A4</a>
                             </div>
                         </div>
@@ -307,9 +309,13 @@
                                             <td>{{ \Illuminate\Support\Str::limit($item->description, 40) }}</td>
                                             <td>
                                                 <button wire:click="view({{ $item->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>
-                                                <button wire:click="edit({{ $item->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
+                                                @if (auth()->user()->hasPermission('appointments', 'update'))
+                                                    <button wire:click="edit({{ $item->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
+                                                @endif
                                                 <a href="{{ route('admin_appointment_print', $item->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
-                                                <button wire:click="delete({{ $item->id }})" onclick="return confirm('Are You Sure?')" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                @if (auth()->user()->hasPermission('appointments', 'delete'))
+                                                    <button wire:click="delete({{ $item->id }})" onclick="return confirm('Are You Sure?')" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                @endif
                                             </td>
                                         </tr>
                                     @empty

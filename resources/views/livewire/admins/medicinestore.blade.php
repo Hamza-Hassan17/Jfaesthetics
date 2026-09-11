@@ -108,14 +108,18 @@
                                     </td>
                                     <td>{{ $medicine->created_at }}</td>
                                     <td class="text-right">
-                                        <button wire:click="show_stock_in_form({{ $medicine->id }})"
-                                            title="Receive stock" class="btn btn-outline-success btn-rounded"><i class="fas fa-plus"></i></button>
-                                        <button wire:click="edit({{ $medicine->id }})"
-                                            class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
-                                        <button wire:click="delete({{ $medicine->id }})"
-                                            onclick="return confirm('{{ __('Are You Sure ?') }}')"
-                                            class="btn btn-outline-danger btn-rounded"><i
-                                                class="fas fa-trash"></i></button>
+                                        @if (auth()->user()->hasPermission('medicines_store', 'update'))
+                                            <button wire:click="show_stock_in_form({{ $medicine->id }})"
+                                                title="Receive stock" class="btn btn-outline-success btn-rounded"><i class="fas fa-plus"></i></button>
+                                            <button wire:click="edit({{ $medicine->id }})"
+                                                class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
+                                        @endif
+                                        @if (auth()->user()->hasPermission('medicines_store', 'delete'))
+                                            <button wire:click="delete({{ $medicine->id }})"
+                                                onclick="return confirm('{{ __('Are You Sure ?') }}')"
+                                                class="btn btn-outline-danger btn-rounded"><i
+                                                    class="fas fa-trash"></i></button>
+                                        @endif
                                     </td>
                                 </tr>
                                 @if ($stock_in_medicine_id == $medicine->id)

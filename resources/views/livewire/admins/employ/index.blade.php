@@ -83,9 +83,11 @@
                                     <td>PKR {{ number_format($employee->salary, 2, '.', ',') }}</td>
                                     <td>{{ $employee->created_at->format('d/m/Y') }}</td>
                                     <td class="text-right">
-                                        <button wire:click="show_edit_form({{ $employee->id }})"
-                                            class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
-                                        @if ($employee->email !== \App\Http\Livewire\Admins\Appiontment::MEDILIFE_DOCTOR_EMAIL)
+                                        @if (auth()->user()->hasPermission('employees', 'update'))
+                                            <button wire:click="show_edit_form({{ $employee->id }})"
+                                                class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>
+                                        @endif
+                                        @if ($employee->email !== \App\Http\Livewire\Admins\Appiontment::MEDILIFE_DOCTOR_EMAIL && auth()->user()->hasPermission('employees', 'delete'))
                                             <button wire:click="delete({{ $employee->id }})"
                                                 onclick="return confirm('Are You Sure?')"
                                                 class="btn btn-outline-danger btn-rounded"><i

@@ -126,6 +126,8 @@ class Appiontment extends Component
 
     public function edit($id)
     {
+        abort_unless(auth()->user()->hasPermission('appointments', 'update'), 403);
+
         $appointment = appointment::findOrFail($id);
         $this->editing_id = $id;
 
