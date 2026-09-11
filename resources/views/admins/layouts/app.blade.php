@@ -525,7 +525,7 @@
                                     <span class="jf-navbar-avatar"><i class="fas fa-user"></i></span>
                                     <span class="jf-navbar-user-text d-none d-md-block">
                                         <span class="name">{{ auth()->user()->name ?? 'Admin' }}</span>
-                                        <span class="role">Administrator</span>
+                                        <span class="role">{{ auth()->user()->role->name ?? 'Administrator' }}</span>
                                     </span>
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-right nav-link-menu">

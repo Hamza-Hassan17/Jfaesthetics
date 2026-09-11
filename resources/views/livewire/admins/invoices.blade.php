@@ -1,6 +1,23 @@
 <div>
     <style>
         .jfr-title { color: #0a3535; font-weight: 800; }
+        .jfr-filter-card {
+            background: #fff;
+            border: 1px solid #e9eef0;
+            border-radius: 14px;
+            padding: 22px 22px 22px;
+            margin-bottom: 24px;
+            box-shadow: 0 6px 18px rgba(10, 53, 53, 0.05);
+        }
+        .jfr-filter-card .form-control,
+        .jfr-filter-card .input-group-text {
+            border-radius: 8px;
+            border-color: #e1e7e7;
+        }
+        .jfr-filter-card .form-control:focus {
+            border-color: #148080;
+            box-shadow: 0 0 0 3px rgba(20, 128, 128, 0.12);
+        }
         .btn-jfr-teal {
             background: #148080;
             border-color: #148080;
@@ -404,6 +421,23 @@
 
                     {{-- ============ INDEX ============ --}}
                     @if ($_page === 'index')
+                        <div class="jfr-filter-card">
+                            <div class="form-row align-items-end">
+                                <div class="form-group col-md-4 mb-0">
+                                    <label>Search</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                                        </div>
+                                        <input type="text" wire:model.lazy="search" class="form-control border-left-0" placeholder="Search Invoice #...">
+                                    </div>
+                                </div>
+                                <div class="form-group col-md-auto mb-0">
+                                    <button type="button" wire:click="$set('search', '')" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="jfr-table-card">
                             <div class="table-responsive">
                                 <table class="table table-hover jfr-table mb-0">

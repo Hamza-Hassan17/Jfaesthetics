@@ -14,9 +14,15 @@ class Invoice extends Model
         'invoice_number',
         'patient_id',
         'doctor_id',
+        'created_by',
         'printed_by',
         'notes',
     ];
+
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
 
     public function patient()
     {

@@ -33,6 +33,8 @@ class Invoices extends Component
     public $view_invoice_id;
     public $editing_invoice_id;
 
+    public $search = '';
+
     public $quick_patient_name;
     public $quick_patient_phone;
     public $quick_patient_address;
@@ -52,6 +54,18 @@ class Invoices extends Component
         if ($invoiceId && Invoice::find($invoiceId)) {
             $this->view($invoiceId);
         }
+    }
+
+    /**
+     * Only Super Admin (rank 0) and Admin (rank 1) can see/manage every
+     * invoice; every other role is scoped to invoices they created
+     * themselves. Rank-based rather than a role-name check so it stays
+     * correct if roles get renamed.
+     */
+    protected function canViewAllInvoices(): bool
+    {
+        $role = auth()->user()->role;
+        return $role && $role->rank <= 1;
     }
 
     protected function blankItem()
@@ -93,6 +107,9 @@ class Invoices extends Component
 
     public function view($id)
     {
+        $invoice = Invoice::findOrFail($id);
+        abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
+
         $this->view_invoice_id = $id;
         $this->_page = 'view';
     }
@@ -100,6 +117,7 @@ class Invoices extends Component
     public function edit_invoice($id)
     {
         $invoice = Invoice::with(['items', 'payments'])->findOrFail($id);
+        abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
 
         $this->editing_invoice_id = $invoice->id;
         $this->patient_id = $invoice->patient_id;
@@ -345,6 +363,7 @@ class Invoices extends Component
                         'invoice_number' => $invoiceNumber,
                         'patient_id' => $this->patient_id,
                         'doctor_id' => $this->doctor_id ?: null,
+                        'created_by' => auth()->id(),
                         'printed_by' => auth()->user()->name ?? null,
                         'notes' => $this->notes,
                     ]);
@@ -453,6 +472,8 @@ class Invoices extends Component
     public function prompt_delete($id)
     {
         abort_unless(auth()->user()->hasPermission('invoices', 'delete'), 403);
+        $invoice = Invoice::findOrFail($id);
+        abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
         $this->confirm_delete_id = $id;
         $this->confirm_delete_password = '';
         $this->resetErrorBag('confirm_delete_password');
@@ -477,6 +498,8 @@ class Invoices extends Component
             $this->confirm_delete_id = null;
             return;
         }
+
+        abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
 
         $invoiceNumber = $invoice->invoice_number;
         $id = $invoice->id;
@@ -508,7 +531,11 @@ class Invoices extends Component
         }
 
         return view('livewire.admins.invoices', [
-            'invoices' => Invoice::with(['patient', 'doctor.employ'])->latest()->paginate(10),
+            'invoices' => Invoice::with(['patient', 'doctor.employ'])
+                ->when(!$this->canViewAllInvoices(), fn ($q) => $q->where('created_by', auth()->id()))
+                ->when($this->search, fn ($q) => $q->where('invoice_number', 'like', "%{$this->search}%"))
+                ->latest()
+                ->paginate(10),
         ])->layout('admins.layouts.app');
     }
 }
