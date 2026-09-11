@@ -116,6 +116,8 @@ class Invoices extends Component
 
     public function edit_invoice($id)
     {
+        abort_unless(auth()->user()->hasPermission('invoices', 'update'), 403);
+
         $invoice = Invoice::with(['items', 'payments'])->findOrFail($id);
         abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
 

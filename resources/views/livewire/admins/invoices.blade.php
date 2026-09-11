@@ -477,9 +477,13 @@
                                                 </td>
                                                 <td>
                                                     <button wire:click="view({{ $invoice->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>
-                                                    <button wire:click="edit_invoice({{ $invoice->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
+                                                    @if (auth()->user()->hasPermission('invoices', 'update'))
+                                                        <button wire:click="edit_invoice({{ $invoice->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
+                                                    @endif
                                                     <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
-                                                    <button wire:click="prompt_delete({{ $invoice->id }})" data-toggle="modal" data-target="#confirmDeleteInvoiceModal" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                    @if (auth()->user()->hasPermission('invoices', 'delete'))
+                                                        <button wire:click="prompt_delete({{ $invoice->id }})" data-toggle="modal" data-target="#confirmDeleteInvoiceModal" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                    @endif
                                                 </td>
                                             </tr>
                                         @empty

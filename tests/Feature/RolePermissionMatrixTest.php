@@ -162,6 +162,7 @@ class RolePermissionMatrixTest extends TestCase
 
             'Invoices::generate_invoice (create)' => [\App\Http\Livewire\Admins\Invoices::class, 'generate_invoice', [], 'invoices', 'create'],
             'Invoices::prompt_delete (delete)' => [\App\Http\Livewire\Admins\Invoices::class, 'prompt_delete', [999999], 'invoices', 'delete'],
+            'Invoices::edit_invoice (update)' => [\App\Http\Livewire\Admins\Invoices::class, 'edit_invoice', [999999], 'invoices', 'update'],
         ];
     }
 
