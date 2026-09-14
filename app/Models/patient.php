@@ -20,4 +20,24 @@ class patient extends Model
         'bloodgroup',
         'photo_path',
     ];
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'patient_id');
+    }
+
+    public function latestInvoice()
+    {
+        return $this->hasOne(Invoice::class, 'patient_id')->latestOfMany();
+    }
+
+    public function appointments()
+    {
+        return $this->hasMany(appointment::class, 'patient_id');
+    }
+
+    public function latestAppointment()
+    {
+        return $this->hasOne(appointment::class, 'patient_id')->latestOfMany();
+    }
 }

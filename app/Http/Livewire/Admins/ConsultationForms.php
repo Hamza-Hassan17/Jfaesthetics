@@ -239,17 +239,19 @@ class ConsultationForms extends Component
             'notes' => $this->notes,
         ];
 
+        $patientName = patient::find($this->patient_id)->name ?? 'Unknown';
+
         if ($this->editing_id) {
             $existing = ConsultationForm::findOrFail($this->editing_id);
             $this->assertOwnsForm($existing);
             $existing->update($data);
             $savedId = $this->editing_id;
-            $this->logActivity('updated', 'consultation_form', $savedId, "Updated consultation form for patient #{$this->patient_id}.");
+            $this->logActivity('updated', 'consultation_form', $savedId, "Updated consultation form #{$savedId} for patient '{$patientName}'.");
             session()->flash('message', 'Consultation form updated successfully.');
         } else {
             $data['created_by'] = auth()->user()->name ?? null;
             $savedId = ConsultationForm::create($data)->id;
-            $this->logActivity('created', 'consultation_form', $savedId, "Created consultation form for patient #{$this->patient_id}.");
+            $this->logActivity('created', 'consultation_form', $savedId, "Created consultation form #{$savedId} for patient '{$patientName}'.");
             session()->flash('message', 'Consultation form saved successfully.');
         }
 
@@ -283,7 +285,7 @@ class ConsultationForms extends Component
             ])->layout('admins.layouts.app');
         }
 
-        $query = ConsultationForm::with(['patient', 'consultant.employ']);
+        $query = ConsultationForm::with(['patient.latestInvoice', 'patient.latestAppointment', 'consultant.employ']);
         $this->scopeToOwnDoctor($query);
 
         return view('livewire.admins.consultation-forms', [

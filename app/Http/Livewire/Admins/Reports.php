@@ -61,8 +61,24 @@ class Reports extends Component
 
         $invoices = Invoice::with(['patient', 'doctor.employ', 'items', 'payments'])
             ->when($search, fn ($q) => $q->where('invoice_number', 'like', "%{$search}%"))
-            ->when($from, fn ($q) => $q->whereDate('created_at', '>=', $from))
-            ->when($to, fn ($q) => $q->whereDate('created_at', '<=', $to))
+            // "Activity within the range" rather than just "created within
+            // the range" - an invoice whose payments changed today (even
+            // though the invoice row itself was created earlier) should
+            // still surface when the report is filtered to include today.
+            ->when($from || $to, function ($q) use ($from, $to) {
+                $dateWindow = function ($q2, $column) use ($from, $to) {
+                    $q2->when($from, fn ($q3) => $q3->whereDate($column, '>=', $from))
+                        ->when($to, fn ($q3) => $q3->whereDate($column, '<=', $to));
+                };
+
+                $q->where(function ($q2) use ($dateWindow) {
+                    $dateWindow($q2, 'created_at');
+                })->orWhere(function ($q2) use ($dateWindow) {
+                    $dateWindow($q2, 'updated_at');
+                })->orWhereHas('payments', function ($q2) use ($dateWindow) {
+                    $dateWindow($q2, 'created_at');
+                });
+            })
             ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
             ->when($patientId, fn ($q) => $q->where('patient_id', $patientId))
             ->when($service, fn ($q) => $q->whereHas('items', fn ($q2) => $q2->where('service', $service)))

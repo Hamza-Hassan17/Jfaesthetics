@@ -310,6 +310,8 @@
                                         <th>Consultant</th>
                                         <th>Consultation For</th>
                                         <th>Date</th>
+                                        <th>Invoice ID</th>
+                                        <th>Appointment Case No</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -320,6 +322,8 @@
                                             <td>{{ $item->consultant->employ->name ?? '-' }}</td>
                                             <td>{{ $item->consultation_for ?: '-' }}</td>
                                             <td>{{ optional($item->consultation_date)->format('d M Y') }}</td>
+                                            <td>{{ $item->patient->latestInvoice->id ?? '-' }}</td>
+                                            <td>{{ $item->patient->latestAppointment->case_no ?? '-' }}</td>
                                             <td>
                                                 <button wire:click="view({{ $item->id }})" class="jfr-icon-btn view"><i class="fas fa-eye"></i></button>
                                                 @if (auth()->user()->hasPermission('consultation_form', 'update'))
@@ -332,7 +336,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="5">No consultation forms found.</td></tr>
+                                        <tr><td colspan="7">No consultation forms found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>

@@ -29,6 +29,7 @@
                     <table width="100%" class="table table-hover" id="">
                         <thead>
                             <tr>
+                                <th>Patient ID</th>
                                 <th>Name</th>
                                 <th>Email</th>
                                 <th>Patient Phone Number</th>
@@ -41,6 +42,7 @@
                         <tbody>
                             @forelse ($patients as $patient)
                                 <tr>
+                                    <td>{{ $patient->id }}</td>
                                     <td>{{ $patient->name }}</td>
                                     <td>{{ $patient->email }}</td>
                                     <td>{{ $patient->phone ?: 'Null' }}</td>
@@ -61,15 +63,8 @@
                                     </td>
                                 </tr>
                             @empty
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
-                                <td class="text-warning">{{ __('Null') }}</td>
+                                <tr>
+                                    <td colspan="8" class="text-warning">{{ __('No patients found.') }}</td>
                                 </tr>
                             @endforelse
                         </tbody>

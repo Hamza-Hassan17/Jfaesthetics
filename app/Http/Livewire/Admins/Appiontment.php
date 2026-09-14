@@ -223,11 +223,13 @@ class Appiontment extends Component
             $existing = appointment::findOrFail($this->editing_id);
             $existing->update($data);
             $savedId = $this->editing_id;
-            $this->logActivity('updated', 'appointments', $savedId, "Updated appointment for patient #{$this->patient_id}.");
+            $caseNo = $data['case_no'] ?: 'N/A';
+            $this->logActivity('updated', 'appointments', $savedId, "Updated appointment for patient #{$this->patient_id}, case #{$caseNo}.");
             session()->flash('message', 'Appointment updated successfully.');
         } else {
             $savedId = appointment::create($data)->id;
-            $this->logActivity('created', 'appointments', $savedId, "Created appointment for patient #{$this->patient_id}.");
+            $caseNo = $data['case_no'] ?: 'N/A';
+            $this->logActivity('created', 'appointments', $savedId, "Created appointment for patient #{$this->patient_id}, case #{$caseNo}.");
             session()->flash('message', 'Appointment created successfully.');
         }
 
