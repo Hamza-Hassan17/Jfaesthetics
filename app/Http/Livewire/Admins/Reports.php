@@ -101,13 +101,45 @@ class Reports extends Component
         return $invoices;
     }
 
+    /**
+     * With no date filter, "revenue" is simply the value of the matching
+     * invoices. But once a date range is applied, an invoice can appear in
+     * the list purely because a payment was recorded in that window (see
+     * queryFilteredInvoices) even though the invoice itself is older - so
+     * revenue for the period has to be the payments actually recorded in
+     * that window, not the invoice's full lifetime value/paid amount.
+     */
+    public static function sumRevenueInRange($invoices, $from, $to)
+    {
+        if (!$from && !$to) {
+            return $invoices->sum('grand_total');
+        }
+
+        return $invoices->sum(function ($invoice) use ($from, $to) {
+            return $invoice->payments->filter(function ($payment) use ($from, $to) {
+                $paidAt = $payment->created_at;
+                if (!$paidAt) {
+                    return false;
+                }
+                if ($from && $paidAt->lt(\Illuminate\Support\Carbon::parse($from)->startOfDay())) {
+                    return false;
+                }
+                if ($to && $paidAt->gt(\Illuminate\Support\Carbon::parse($to)->endOfDay())) {
+                    return false;
+                }
+                return true;
+            })->sum('amount');
+        });
+    }
+
     public function render()
     {
-        $filtered = self::queryFilteredInvoices($this->currentFilters());
+        $filters = $this->currentFilters();
+        $filtered = self::queryFilteredInvoices($filters);
 
         $summary = [
             'total_invoices' => $filtered->count(),
-            'total_revenue' => $filtered->sum('grand_total'),
+            'total_revenue' => self::sumRevenueInRange($filtered, $filters['from'], $filters['to']),
             'total_paid' => $filtered->sum('paid_total'),
             'outstanding' => $filtered->sum('unpaid_total'),
         ];

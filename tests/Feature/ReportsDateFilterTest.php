@@ -83,4 +83,60 @@ class ReportsDateFilterTest extends TestCase
 
         $this->assertFalse($results->pluck('id')->contains($invoice->id));
     }
+
+    /**
+     * Reproduces the exact reported scenario: two older invoices, each
+     * getting a payment recorded today. The date-filtered "Total Revenue"
+     * must equal the sum of just those two payments (500 + 50000 =
+     * 50500), not each invoice's full lifetime paid/grand total.
+     */
+    public function test_total_revenue_sums_only_payments_recorded_within_the_filtered_range()
+    {
+        $patient = $this->patient();
+
+        $invoiceA = Invoice::create(['invoice_number' => 'RPT-A', 'patient_id' => $patient->id]);
+        $invoiceA->created_at = now()->subDays(7);
+        $invoiceA->updated_at = now()->subDays(7);
+        $invoiceA->saveQuietly();
+
+        // An older payment on invoice A, outside the filtered window -
+        // must NOT be counted.
+        $oldPayment = InvoicePayment::create([
+            'invoice_id' => $invoiceA->id,
+            'paid_on' => now()->subDays(7)->format('Y-m-d'),
+            'amount' => 9999,
+            'payment_mode' => 'Cash',
+        ]);
+        $oldPayment->created_at = now()->subDays(7);
+        $oldPayment->updated_at = now()->subDays(7);
+        $oldPayment->saveQuietly();
+
+        // Today's payment on invoice A - must be counted.
+        InvoicePayment::create([
+            'invoice_id' => $invoiceA->id,
+            'paid_on' => now()->format('Y-m-d'),
+            'amount' => 500,
+            'payment_mode' => 'Cash',
+        ]);
+
+        $invoiceB = Invoice::create(['invoice_number' => 'RPT-B', 'patient_id' => $patient->id]);
+        $invoiceB->created_at = now()->subDays(7);
+        $invoiceB->updated_at = now()->subDays(7);
+        $invoiceB->saveQuietly();
+
+        InvoicePayment::create([
+            'invoice_id' => $invoiceB->id,
+            'paid_on' => now()->format('Y-m-d'),
+            'amount' => 50000,
+            'payment_mode' => 'Cash',
+        ]);
+
+        $from = now()->subDay()->format('Y-m-d');
+        $to = now()->format('Y-m-d');
+
+        $filtered = Reports::queryFilteredInvoices(['from' => $from, 'to' => $to]);
+        $revenue = Reports::sumRevenueInRange($filtered, $from, $to);
+
+        $this->assertEquals(50500, $revenue);
+    }
 }
