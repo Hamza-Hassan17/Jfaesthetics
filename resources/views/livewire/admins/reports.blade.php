@@ -258,7 +258,7 @@
                                             <td>{{ $invoice->doctor->employ->name ?? 'N/A' }}</td>
                                             <td>{{ $invoice->items->pluck('service')->implode(', ') }}</td>
                                             <td>{{ number_format($invoice->grand_total, 2) }}</td>
-                                            <td>{{ number_format($invoice->paid_total, 2) }}</td>
+                                            <td>{{ number_format($invoice->paid_in_range, 2) }}</td>
                                             <td>{{ number_format($invoice->unpaid_total, 2) }}</td>
                                             <td>{{ $invoice->created_at->format('d M Y') }}</td>
                                             <td>

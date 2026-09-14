@@ -174,4 +174,41 @@ class ReportsDateFilterTest extends TestCase
         $this->assertFalse($filtered->pluck('id')->contains($invoice->id));
         $this->assertEquals(0, Reports::sumRevenueInRange($filtered, $from, $to));
     }
+
+    /**
+     * Reproduces the reported "Mr. Naveed" scenario: one invoice with two
+     * payments on different dates (10,000 on day 1, 80,000 on day 2).
+     * Filtering to day 1 alone must show 10,000 as this invoice's paid
+     * amount, not its full lifetime paid_total (90,000).
+     */
+    public function test_per_invoice_paid_amount_is_scoped_to_the_filtered_date_not_lifetime_total()
+    {
+        $patient = $this->patient();
+
+        $invoice = Invoice::create(['invoice_number' => 'RPT-NAVEED', 'patient_id' => $patient->id]);
+        $invoice->created_at = now()->subDays(4);
+        $invoice->updated_at = now()->subDays(4);
+        $invoice->saveQuietly();
+
+        InvoicePayment::create([
+            'invoice_id' => $invoice->id,
+            'paid_on' => now()->subDays(4)->format('Y-m-d'),
+            'amount' => 10000,
+            'payment_mode' => 'Cash',
+        ]);
+
+        InvoicePayment::create([
+            'invoice_id' => $invoice->id,
+            'paid_on' => now()->subDays(2)->format('Y-m-d'),
+            'amount' => 80000,
+            'payment_mode' => 'Cash',
+        ]);
+
+        $this->assertEquals(90000, $invoice->paid_total, 'Sanity check: lifetime paid_total should still be 90,000.');
+
+        $day1 = now()->subDays(4)->format('Y-m-d');
+        $paidOnDay1 = Reports::paidAmountInRange($invoice, $day1, $day1);
+
+        $this->assertEquals(10000, $paidOnDay1);
+    }
 }

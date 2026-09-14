@@ -106,12 +106,40 @@ class Reports extends Component
     }
 
     /**
+     * With no date filter, an invoice's "paid" figure is simply its full
+     * lifetime paid_total. But once a date range is applied, an invoice can
+     * appear in the list purely because ONE payment was recorded in that
+     * window (see queryFilteredInvoices) even though it has other, older
+     * payments too - so the amount attributable to this period is just the
+     * payments actually dated (paid_on) within the range, not everything
+     * ever paid on the invoice.
+     */
+    public static function paidAmountInRange($invoice, $from, $to)
+    {
+        if (!$from && !$to) {
+            return $invoice->paid_total;
+        }
+
+        return $invoice->payments->filter(function ($payment) use ($from, $to) {
+            $paidOn = $payment->paid_on;
+            if (!$paidOn) {
+                return false;
+            }
+            $paidOn = \Illuminate\Support\Carbon::parse($paidOn)->startOfDay();
+            if ($from && $paidOn->lt(\Illuminate\Support\Carbon::parse($from)->startOfDay())) {
+                return false;
+            }
+            if ($to && $paidOn->gt(\Illuminate\Support\Carbon::parse($to)->startOfDay())) {
+                return false;
+            }
+            return true;
+        })->sum('amount');
+    }
+
+    /**
      * With no date filter, "revenue" is simply the value of the matching
-     * invoices. But once a date range is applied, an invoice can appear in
-     * the list purely because a payment was recorded in that window (see
-     * queryFilteredInvoices) even though the invoice itself is older - so
-     * revenue for the period has to be the payments actually recorded in
-     * that window, not the invoice's full lifetime value/paid amount.
+     * invoices. With one applied, it's the sum of each invoice's
+     * paidAmountInRange() - the money actually recorded in that window.
      */
     public static function sumRevenueInRange($invoices, $from, $to)
     {
@@ -119,22 +147,7 @@ class Reports extends Component
             return $invoices->sum('grand_total');
         }
 
-        return $invoices->sum(function ($invoice) use ($from, $to) {
-            return $invoice->payments->filter(function ($payment) use ($from, $to) {
-                $paidOn = $payment->paid_on;
-                if (!$paidOn) {
-                    return false;
-                }
-                $paidOn = \Illuminate\Support\Carbon::parse($paidOn)->startOfDay();
-                if ($from && $paidOn->lt(\Illuminate\Support\Carbon::parse($from)->startOfDay())) {
-                    return false;
-                }
-                if ($to && $paidOn->gt(\Illuminate\Support\Carbon::parse($to)->startOfDay())) {
-                    return false;
-                }
-                return true;
-            })->sum('amount');
-        });
+        return $invoices->sum(fn ($invoice) => self::paidAmountInRange($invoice, $from, $to));
     }
 
     public function render()
@@ -152,6 +165,9 @@ class Reports extends Component
         $perPage = 10;
         $page = LengthAwarePaginator::resolveCurrentPage();
         $pagedItems = $filtered->slice(($page - 1) * $perPage, $perPage)->values();
+        $pagedItems->each(function ($invoice) use ($filters) {
+            $invoice->paid_in_range = self::paidAmountInRange($invoice, $filters['from'], $filters['to']);
+        });
         $invoicesPaginated = new LengthAwarePaginator($pagedItems, $filtered->count(), $perPage, $page, [
             'path' => LengthAwarePaginator::resolveCurrentPath(),
         ]);
