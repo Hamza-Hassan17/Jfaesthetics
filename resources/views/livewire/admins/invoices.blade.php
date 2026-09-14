@@ -429,10 +429,11 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                                         </div>
-                                        <input type="text" wire:model.lazy="search" class="form-control border-left-0" placeholder="Search Invoice #...">
+                                        <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" class="form-control border-left-0" placeholder="Search Invoice #...">
                                     </div>
                                 </div>
                                 <div class="form-group col-md-auto mb-0">
+                                    <button type="button" wire:click="$refresh" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
                                     <button type="button" wire:click="$set('search', '')" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
                                 </div>
                             </div>
