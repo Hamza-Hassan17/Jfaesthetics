@@ -139,4 +139,39 @@ class ReportsDateFilterTest extends TestCase
 
         $this->assertEquals(50500, $revenue);
     }
+
+    /**
+     * Regression for the exact bug reported after the first fix: a payment
+     * whose DB row was inserted today (created_at = today) but whose real
+     * paid_on date is old must NOT count as today's revenue, and must not
+     * make the invoice appear in a report filtered to today either -
+     * filtering has to go by paid_on (the real payment date), not
+     * created_at (when the row happened to be typed in).
+     */
+    public function test_a_payment_entered_today_but_paid_on_an_old_date_is_not_counted_as_todays_revenue()
+    {
+        $patient = $this->patient();
+
+        $invoice = Invoice::create(['invoice_number' => 'RPT-BACKDATED', 'patient_id' => $patient->id]);
+        $invoice->created_at = now()->subDays(7);
+        $invoice->updated_at = now()->subDays(7);
+        $invoice->saveQuietly();
+
+        // Row inserted right now (created_at defaults to now), but records
+        // a payment that was actually made a week ago.
+        InvoicePayment::create([
+            'invoice_id' => $invoice->id,
+            'paid_on' => now()->subDays(7)->format('Y-m-d'),
+            'amount' => 62320.97,
+            'payment_mode' => 'Cash',
+        ]);
+
+        $from = now()->format('Y-m-d');
+        $to = now()->format('Y-m-d');
+
+        $filtered = Reports::queryFilteredInvoices(['from' => $from, 'to' => $to]);
+
+        $this->assertFalse($filtered->pluck('id')->contains($invoice->id));
+        $this->assertEquals(0, Reports::sumRevenueInRange($filtered, $from, $to));
+    }
 }

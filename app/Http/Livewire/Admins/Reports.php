@@ -65,6 +65,10 @@ class Reports extends Component
             // the range" - an invoice whose payments changed today (even
             // though the invoice row itself was created earlier) should
             // still surface when the report is filtered to include today.
+            // Payments match on paid_on (the actual payment date the user
+            // picks when recording it), not created_at (when the row was
+            // typed into the system) - staff often enter several payments
+            // in one sitting with different real payment dates.
             ->when($from || $to, function ($q) use ($from, $to) {
                 $dateWindow = function ($q2, $column) use ($from, $to) {
                     $q2->when($from, fn ($q3) => $q3->whereDate($column, '>=', $from))
@@ -76,7 +80,7 @@ class Reports extends Component
                 })->orWhere(function ($q2) use ($dateWindow) {
                     $dateWindow($q2, 'updated_at');
                 })->orWhereHas('payments', function ($q2) use ($dateWindow) {
-                    $dateWindow($q2, 'created_at');
+                    $dateWindow($q2, 'paid_on');
                 });
             })
             ->when($doctorId, fn ($q) => $q->where('doctor_id', $doctorId))
@@ -117,14 +121,15 @@ class Reports extends Component
 
         return $invoices->sum(function ($invoice) use ($from, $to) {
             return $invoice->payments->filter(function ($payment) use ($from, $to) {
-                $paidAt = $payment->created_at;
-                if (!$paidAt) {
+                $paidOn = $payment->paid_on;
+                if (!$paidOn) {
                     return false;
                 }
-                if ($from && $paidAt->lt(\Illuminate\Support\Carbon::parse($from)->startOfDay())) {
+                $paidOn = \Illuminate\Support\Carbon::parse($paidOn)->startOfDay();
+                if ($from && $paidOn->lt(\Illuminate\Support\Carbon::parse($from)->startOfDay())) {
                     return false;
                 }
-                if ($to && $paidAt->gt(\Illuminate\Support\Carbon::parse($to)->endOfDay())) {
+                if ($to && $paidOn->gt(\Illuminate\Support\Carbon::parse($to)->startOfDay())) {
                     return false;
                 }
                 return true;
