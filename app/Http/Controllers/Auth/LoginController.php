@@ -57,4 +57,9 @@ class LoginController extends Controller
 
         return route($user->landingRouteName());
     }
+
+    protected function loggedOut(Request $request)
+    {
+        return redirect('/login');
+    }
 }

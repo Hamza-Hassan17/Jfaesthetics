@@ -220,7 +220,7 @@ class RolesPermissions extends Component
 
         $this->validate([
             'user_name' => 'required|string|max:100',
-            'user_email' => 'required|email' . ($this->editing_user_id ? ',unique:users,email,' . $this->editing_user_id : '|unique:users,email'),
+            'user_email' => 'required|email' . ($this->editing_user_id ? '|unique:users,email,' . $this->editing_user_id : '|unique:users,email'),
             'user_password' => $this->editing_user_id ? 'nullable|min:6' : 'required|min:6',
             'user_role_id' => 'required|exists:roles,id',
             'user_doctor_id' => 'nullable|exists:doctors,id',
