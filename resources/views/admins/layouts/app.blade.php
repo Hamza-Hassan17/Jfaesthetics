@@ -398,7 +398,13 @@
                 box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
             }
 
+            /* Same specificity as sidebar-default.css's own
+               #sidebar.active { margin-left: -250px; } (the vendor
+               theme's desktop-collapse rule) - without this explicit
+               reset that rule wins the tie and drags the drawer back
+               off-screen, cancelling out the transform below. */
             #sidebar.active {
+                margin-left: 0;
                 transform: translateX(0);
             }
 
