@@ -561,7 +561,7 @@
         </nav>
         <div id="jfSidebarOverlay" class="jf-sidebar-overlay"></div>
         <div id="body" class="active d-flex flex-column" style="min-height: 100vh;">
-            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid">
+            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid" style="display: flex; justify-content: center; align-items: center;">
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
                         class="fas fa-bars"></i><span></span></button>
                 <div class="jf-navbar-logo-wrap">
