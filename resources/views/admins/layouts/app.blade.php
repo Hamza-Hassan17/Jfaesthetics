@@ -95,14 +95,19 @@
         }
 
         @media (max-width: 991px) {
-            /* Switches from the desktop grid (hamburger | logo | nav)
-               to a centered flex row - avoids the grid/absolute-logo
-               mismatch entirely, since there's no second grid row for
+            /* Switches from the desktop grid (hamburger | logo | nav) to
+               a flex row - avoids the grid/absolute-logo mismatch
+               entirely, since there's no second grid row for
                .navbar-collapse to wrap onto and grow the box taller
-               than the hamburger's own row. */
+               than the hamburger's own row. justify-content: center
+               (rather than space-between) would cluster the hamburger
+               and navbar-collapse in the exact same horizontal center
+               as the absolutely-positioned logo below, so they'd
+               visually collide - space-between pins them to the edges,
+               leaving the center clear. */
             .jf-navbar-grid {
                 display: flex;
-                justify-content: center;
+                justify-content: space-between;
                 align-items: center;
             }
 
