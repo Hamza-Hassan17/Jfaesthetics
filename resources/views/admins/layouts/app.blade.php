@@ -112,6 +112,20 @@
             .jf-navbar-grid .jf-navbar-logo {
                 right: 0;
             }
+
+            /* The vendor theme only shows .navbar-collapse (bell/avatar)
+               below 680px when #body has an "active" class
+               (master.css: #body.active .navbar-collapse). #body's
+               active class is really tracking the sidebar drawer's
+               open/closed state now, not header visibility - closing the
+               drawer via the backdrop or X button can leave #body
+               without "active", which silently hides the bell/avatar
+               (and centers the now-lone hamburger behind the logo).
+               Header content visibility shouldn't depend on the sidebar
+               at all, so force it visible unconditionally here. */
+            .jf-navbar-grid .navbar-collapse {
+                display: flex !important;
+            }
         }
 
         #body > .jf-admin-content {
