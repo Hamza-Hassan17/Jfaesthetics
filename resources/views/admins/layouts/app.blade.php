@@ -109,27 +109,6 @@
             .jf-navbar-grid .jf-navbar-logo {
                 right: 0;
             }
-
-            /* .jf-navbar-logo-wrap normally centers itself with
-               top: 50% against the WHOLE grid box. But at this width
-               .navbar-collapse wraps onto its own second row below the
-               hamburger, making the grid's total height much taller than
-               just the hamburger's row - so top: 50% of that combined
-               height drags the logo down below the hamburger's own
-               vertical center. Anchoring to a fixed-height first row
-               instead keeps it level with the hamburger regardless of
-               how tall the second row grows. */
-            .jf-navbar-grid .jf-navbar-logo-wrap {
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 64px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                transform: none;
-            }
         }
 
         #body > .jf-admin-content {
