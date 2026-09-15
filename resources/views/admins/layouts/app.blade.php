@@ -95,12 +95,15 @@
         }
 
         @media (max-width: 991px) {
+            /* Switches from the desktop grid (hamburger | logo | nav)
+               to a centered flex row - avoids the grid/absolute-logo
+               mismatch entirely, since there's no second grid row for
+               .navbar-collapse to wrap onto and grow the box taller
+               than the hamburger's own row. */
             .jf-navbar-grid {
-                grid-template-columns: auto auto;
-            }
-
-            .jf-navbar-grid .navbar-collapse {
-                grid-column: 1 / -1;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
 
             /* The -45px nudge below exists to visually re-center the logo
@@ -561,7 +564,7 @@
         </nav>
         <div id="jfSidebarOverlay" class="jf-sidebar-overlay"></div>
         <div id="body" class="active d-flex flex-column" style="min-height: 100vh;">
-            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid" style="display: flex; justify-content: center; align-items: center;">
+            <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid">
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
                         class="fas fa-bars"></i><span></span></button>
                 <div class="jf-navbar-logo-wrap">
