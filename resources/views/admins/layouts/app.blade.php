@@ -102,6 +102,13 @@
             .jf-navbar-grid .navbar-collapse {
                 grid-column: 1 / -1;
             }
+
+            /* The -45px nudge below exists to visually re-center the logo
+               against the desktop layout's wider right-hand nav; at this
+               narrower grid it overshoots and drags the logo off-center. */
+            .jf-navbar-grid .jf-navbar-logo {
+                right: 0;
+            }
         }
 
         #body > .jf-admin-content {
@@ -161,44 +168,41 @@
         .jf-support-card {
             margin-top: auto;
             flex-shrink: 0;
-            padding: 16px;
+            padding: 10px;
         }
 
         .jf-support-card .inner {
             background: linear-gradient(135deg, rgba(20, 128, 128, 0.1), rgba(201, 162, 39, 0.08));
             border: 1px solid rgba(20, 128, 128, 0.15);
-            border-radius: 12px;
-            padding: 16px;
-            text-align: center;
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .jf-support-card i.fa-life-ring {
-            font-size: 22px;
+            font-size: 15px;
             color: #148080;
-            margin-bottom: 8px;
         }
 
         .jf-support-card h6 {
             font-weight: 700;
-            font-size: 13.5px;
+            font-size: 12.5px;
             color: #0a3535;
-            margin-bottom: 2px;
-        }
-
-        .jf-support-card p {
-            font-size: 12px;
-            color: #64777a;
-            margin-bottom: 10px;
+            margin-bottom: 0;
         }
 
         .jf-support-card .btn-jf-support {
             background: #148080;
             color: #fff;
-            font-size: 12.5px;
+            font-size: 11.5px;
             font-weight: 700;
-            padding: 6px 16px;
+            padding: 4px 12px;
             border-radius: 20px;
             display: inline-block;
+            flex-shrink: 0;
         }
 
         .jf-support-card .btn-jf-support:hover {
@@ -541,8 +545,7 @@
                 <div class="inner">
                     <i class="fas fa-life-ring"></i>
                     <h6>Need Help?</h6>
-                    <p>Contact Support</p>
-                    <a href="mailto:{{ $adminSettings['business_email'] ?? 'info@jfaesthetics.com' }}" class="btn-jf-support">Get Support <i class="fas fa-arrow-right"></i></a>
+                    <a href="mailto:{{ $adminSettings['business_email'] ?? 'info@jfaesthetics.com' }}" class="btn-jf-support">Get Support</a>
                 </div>
             </div>
             <div class="jf-sidebar-version">

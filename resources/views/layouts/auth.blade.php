@@ -418,6 +418,37 @@
                 padding: 34px 26px;
             }
         }
+
+        /* Mobile-only: collapse the marketing panel + footer down to just
+           the sign-in card, matching a simple single-screen mobile login
+           (desktop/tablet keep the full two-column layout + footer). */
+        @media (max-width: 767px) {
+            .auth-card-left {
+                display: none;
+            }
+
+            .auth-footer,
+            .auth-copyright {
+                display: none;
+            }
+
+            .auth-hero {
+                min-height: calc(100vh - 73px);
+                display: flex;
+                align-items: center;
+                padding: 24px 16px;
+            }
+
+            .auth-card {
+                width: 100%;
+            }
+
+            .auth-card-right {
+                flex: 1 1 100%;
+                min-width: 0;
+                padding: 30px 22px;
+            }
+        }
     </style>
 
     @yield('head')
