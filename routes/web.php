@@ -155,6 +155,32 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             ]);
         })->name('admin_reports_print_list')->middleware('permission:reports');
 
+        Route::get('/reports/export', function (Illuminate\Http\Request $request) {
+            $filters = $request->only(['search', 'from', 'to', 'doctor_id', 'patient_id', 'status', 'service']);
+            $invoices = App\Http\Livewire\Admins\Reports::queryFilteredInvoices($filters);
+
+            return response()->streamDownload(function () use ($invoices) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, ['Invoice #', 'Patient', 'Doctor', 'Grand Total', 'Paid', 'Unpaid', 'Created On', 'Status']);
+                foreach ($invoices as $invoice) {
+                    $unpaid = $invoice->unpaid_total;
+                    $paid = $invoice->paid_total;
+                    $status = $unpaid <= 0 ? 'Paid' : ($paid > 0 ? 'Partial' : 'Unpaid');
+                    fputcsv($out, [
+                        $invoice->invoice_number,
+                        optional($invoice->patient)->name,
+                        optional(optional($invoice->doctor)->employ)->name,
+                        number_format($invoice->grand_total, 2, '.', ''),
+                        number_format($paid, 2, '.', ''),
+                        number_format($unpaid, 2, '.', ''),
+                        $invoice->created_at->format('Y-m-d'),
+                        $status,
+                    ]);
+                }
+                fclose($out);
+            }, 'reports-' . now()->format('Y-m-d') . '.csv', ['Content-Type' => 'text/csv']);
+        })->name('admin_reports_export')->middleware('permission:reports,export');
+
         Route::get('/reports/appointments', App\Http\Livewire\Admins\AppointmentReport::class)->name('admin_reports_appointments')->middleware('permission:reports');
 
         Route::get('/reports/appointments/print', function (Illuminate\Http\Request $request) {

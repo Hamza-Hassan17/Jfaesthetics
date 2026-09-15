@@ -47,7 +47,9 @@
                 <div class="col-auto">
                     @include('admins.partials.back-to-dashboard')
                     @if ($_page !== 'create')
-                        <button class="btn btn-jfr-teal" wire:click="show_create_form">New Consultation Form</button>
+                        @if (auth()->user()->hasPermission('consultation_form', 'create'))
+                            <button class="btn btn-jfr-teal" wire:click="show_create_form">New Consultation Form</button>
+                        @endif
                     @else
                         <button class="btn btn-secondary" wire:click="show_index">Back to List</button>
                     @endif

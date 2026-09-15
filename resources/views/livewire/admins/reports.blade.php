@@ -188,6 +188,9 @@
                                     <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
                                 </div>
                                 <div class="mb-2">
+                                    @if (auth()->user()->hasPermission('reports', 'export'))
+                                        <a href="{{ route('admin_reports_export', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> Export</a>
+                                    @endif
                                     <a href="{{ route('admin_reports_print_list', array_filter(['search' => $search, 'from' => $filter_from, 'to' => $filter_to, 'doctor_id' => $filter_doctor_id, 'patient_id' => $filter_patient_id, 'status' => $filter_status, 'service' => $filter_service])) }}" target="_blank" class="btn btn-outline-dark"><i class="fas fa-print"></i> Print</a>
                                 </div>
                             </div>

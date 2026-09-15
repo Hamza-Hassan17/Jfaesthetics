@@ -7,7 +7,9 @@
                 </div>
                 <div class="col-auto">
                     @include('admins.partials.back-to-dashboard')
-                    <button class="btn btn-primary" wire:click="show_create_form">Add Employee</button>
+                    @if (auth()->user()->hasPermission('employees', 'create'))
+                        <button class="btn btn-primary" wire:click="show_create_form">Add Employee</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -83,6 +85,10 @@
                                     <td>PKR {{ number_format($employee->salary, 2, '.', ',') }}</td>
                                     <td>{{ $employee->created_at->format('d/m/Y') }}</td>
                                     <td class="text-right">
+                                        @if (auth()->user()->hasPermission('employees', 'view'))
+                                            <button wire:click="view({{ $employee->id }})"
+                                                class="btn btn-outline-primary btn-rounded"><i class="fas fa-eye"></i></button>
+                                        @endif
                                         @if (auth()->user()->hasPermission('employees', 'update'))
                                             <button wire:click="show_edit_form({{ $employee->id }})"
                                                 class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>

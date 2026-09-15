@@ -22,6 +22,7 @@
             <div class="box box-primary">
                 <div class="box-body">
                     <div class="text-info" wire:loading>Loading..</div>
+                    @if (($edit_service_id && auth()->user()->hasPermission('services', 'update')) || (!$edit_service_id && auth()->user()->hasPermission('services', 'create')))
                     <form accept-charset="utf-8" class="shadow rounded p-3" wire:submit.prevent="add_service()">
                         <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">
                             {{ __('Add New Service') }}</div>
@@ -48,6 +49,7 @@
                             <input type="submit" class="btn btn-primary" value="{{ $button_text }}">
                         </div>
                     </form><br>
+                    @endif
                     <hr>
 
                     <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">

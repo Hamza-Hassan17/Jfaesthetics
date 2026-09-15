@@ -94,6 +94,8 @@ class Appiontment extends Component
 
     public function show_create_form()
     {
+        abort_unless(auth()->user()->hasPermission('appointments', 'create'), 403);
+
         $this->resetForm();
         $this->_page = 'create';
     }

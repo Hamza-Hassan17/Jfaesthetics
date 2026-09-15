@@ -22,6 +22,7 @@
             <div class="box box-primary">
                 <div class="box-body">
                     <div class="text-info" wire:loading>Loading..</div>
+                    @if (($edit_medicine_id && auth()->user()->hasPermission('medicines_store', 'update')) || (!$edit_medicine_id && auth()->user()->hasPermission('medicines_store', 'create')))
                     <form accept-charset="utf-8" class="shadow rounded p-3" wire:submit.prevent="add_medicine()">
                         <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">
                             {{ __('Add New medicine') }}</div>
@@ -74,6 +75,7 @@
                             <input type="submit" class="btn btn-primary" value="{{ $button_text }}">
                         </div>
                     </form><br>
+                    @endif
                     <hr>
 
                     <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">

@@ -29,6 +29,7 @@ class Employees extends Component
     public $existing_image;
     public $_page;
     public $_edit_employ_id;
+    public $_view_employ_id;
     public $_filter;
     public $selectedFilter;
 
@@ -40,7 +41,18 @@ class Employees extends Component
 
     public function show_create_form()
     {
+        abort_unless(auth()->user()->hasPermission('employees', 'create'), 403);
+
         $this->_page = "create";
+    }
+
+    public function view($id)
+    {
+        abort_unless(auth()->user()->hasPermission('employees', 'view'), 403);
+
+        employee::findOrFail($id);
+        $this->_view_employ_id = $id;
+        $this->_page = "view";
     }
 
     public function show_edit_form($id)
@@ -211,6 +223,10 @@ class Employees extends Component
         } else if ($this->_page == "edit") {
             return view('livewire.admins.employ.edit', [
                 'positions' => $positions
+            ])->layout('admins.layouts.app');
+        } else if ($this->_page == "view") {
+            return view('livewire.admins.employ.view', [
+                'employee' => employee::findOrFail($this->_view_employ_id),
             ])->layout('admins.layouts.app');
         }
     }

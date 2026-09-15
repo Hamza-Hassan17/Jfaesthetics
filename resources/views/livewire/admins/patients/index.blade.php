@@ -7,7 +7,9 @@
                 </div>
                 <div class="col-auto">
                     @include('admins.partials.back-to-dashboard')
-                    <button class="btn btn-primary" wire:click="show_create_form">Add New</button>
+                    @if (auth()->user()->hasPermission('patients', 'create'))
+                        <button class="btn btn-primary" wire:click="show_create_form">Add New</button>
+                    @endif
                 </div>
             </div>
             <div>
@@ -23,6 +25,21 @@
             <div class="box box-primary">
                 <div class="box-body">
                     <div class="text-info" wire:loading>Loading..</div>
+                    <div class="form-row align-items-end mb-3">
+                        <div class="form-group col-md-4 mb-0">
+                            <label>Search by Name</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
+                                </div>
+                                <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" name="patient_name_filter" autocomplete="nope" class="form-control" placeholder="Search patient name...">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-auto mb-0">
+                            <button type="button" wire:click="$refresh" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+                            <button type="button" wire:click="$set('search', '')" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
+                        </div>
+                    </div>
                     <hr>
                     <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">
                         {{ __('All  patients') }}</div>
@@ -50,6 +67,10 @@
                                     <td>{{ $patient->gender ?: 'Null' }}</td>
                                     <td>{{ $patient->created_at }}</td>
                                     <td class="text-right">
+                                        @if (auth()->user()->hasPermission('patients', 'view'))
+                                            <button wire:click="view({{ $patient->id }})"
+                                                class="btn btn-outline-primary btn-rounded"><i class="fas fa-eye"></i></button>
+                                        @endif
                                         @if (auth()->user()->hasPermission('patients', 'update'))
                                             <button wire:click="show_edit_form({{ $patient->id }})"
                                                 class="btn btn-outline-info btn-rounded"><i class="fas fa-pen"></i></button>

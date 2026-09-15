@@ -89,6 +89,8 @@ class ConsultationForms extends Component
 
     public function show_create_form()
     {
+        abort_unless(auth()->user()->hasPermission('consultation_form', 'create'), 403);
+
         $this->resetForm();
         $this->_page = 'create';
     }

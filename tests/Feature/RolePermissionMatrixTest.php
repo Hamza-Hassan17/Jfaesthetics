@@ -139,9 +139,11 @@ class RolePermissionMatrixTest extends TestCase
             'Services::delete (delete)' => [\App\Http\Livewire\Admins\Services::class, 'delete', [999999], 'services', 'delete'],
 
             'Employees::add_employee (create)' => [\App\Http\Livewire\Admins\Employees::class, 'add_employee', [], 'employees', 'create'],
+            'Employees::show_create_form (create)' => [\App\Http\Livewire\Admins\Employees::class, 'show_create_form', [], 'employees', 'create'],
             'Employees::show_edit_form (update)' => [\App\Http\Livewire\Admins\Employees::class, 'show_edit_form', [999999], 'employees', 'update'],
             'Employees::update_employee (update)' => [\App\Http\Livewire\Admins\Employees::class, 'update_employee', [], 'employees', 'update'],
             'Employees::delete (delete)' => [\App\Http\Livewire\Admins\Employees::class, 'delete', [999999], 'employees', 'delete'],
+            'Employees::view (view)' => [\App\Http\Livewire\Admins\Employees::class, 'view', [999999], 'employees', 'view'],
 
             'Medicinestore::add_medicine (create)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'add_medicine', [], 'medicines_store', 'create'],
             'Medicinestore::edit (update)' => [\App\Http\Livewire\Admins\Medicinestore::class, 'edit', [999999], 'medicines_store', 'update'],
@@ -156,6 +158,7 @@ class RolePermissionMatrixTest extends TestCase
             'RolesPermissions::delete_user (delete)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'delete_user', [999999], 'users', 'delete'],
 
             'Appiontment::save (create)' => [\App\Http\Livewire\Admins\Appiontment::class, 'save', [], 'appointments', 'create'],
+            'Appiontment::show_create_form (create)' => [\App\Http\Livewire\Admins\Appiontment::class, 'show_create_form', [], 'appointments', 'create'],
             'Appiontment::delete (delete)' => [\App\Http\Livewire\Admins\Appiontment::class, 'delete', [999999], 'appointments', 'delete'],
             // Nurse has appointments.update (clinical support role), so it
             // can't stand in for "lacks this permission" here - Accountant
@@ -163,11 +166,13 @@ class RolePermissionMatrixTest extends TestCase
             'Appiontment::edit (update)' => [\App\Http\Livewire\Admins\Appiontment::class, 'edit', [999999], 'appointments', 'update', 'Accountant'],
 
             'Patients::add_patient (create)' => [\App\Http\Livewire\Admins\Patients::class, 'add_patient', [], 'patients', 'create'],
+            'Patients::show_create_form (create)' => [\App\Http\Livewire\Admins\Patients::class, 'show_create_form', [], 'patients', 'create'],
             'Patients::show_edit_form (update)' => [\App\Http\Livewire\Admins\Patients::class, 'show_edit_form', [999999], 'patients', 'update'],
             'Patients::update (update)' => [\App\Http\Livewire\Admins\Patients::class, 'update', [999999], 'patients', 'update'],
             'Patients::prompt_delete (delete)' => [\App\Http\Livewire\Admins\Patients::class, 'prompt_delete', [999999], 'patients', 'delete'],
 
             'ConsultationForms::save (create)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'save', [], 'consultation_form', 'create'],
+            'ConsultationForms::show_create_form (create)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'show_create_form', [], 'consultation_form', 'create'],
             'ConsultationForms::edit (update)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'edit', [999999], 'consultation_form', 'update'],
             'ConsultationForms::delete (delete)' => [\App\Http\Livewire\Admins\ConsultationForms::class, 'delete', [999999], 'consultation_form', 'delete'],
 

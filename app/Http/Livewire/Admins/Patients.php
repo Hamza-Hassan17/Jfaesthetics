@@ -36,6 +36,9 @@ class Patients extends Component
     public $confirm_delete_id;
     public $confirm_delete_password;
 
+    public $view_patient_id;
+    public $search = '';
+
     public $_page;
     public function mount()
     {
@@ -53,7 +56,18 @@ class Patients extends Component
 
     public function show_create_form()
     {
+        abort_unless(auth()->user()->hasPermission('patients', 'create'), 403);
+
         $this->_page = "create";
+    }
+
+    public function view($id)
+    {
+        abort_unless(auth()->user()->hasPermission('patients', 'view'), 403);
+
+        patient::findOrFail($id);
+        $this->view_patient_id = $id;
+        $this->_page = "view";
     }
 
     public function show_edit_form($id)
@@ -244,12 +258,18 @@ class Patients extends Component
     {
         if ($this->_page == "index") {
             return view('livewire.admins.patients.index', [
-                'patients' => patient::latest()->paginate(10),
+                'patients' => patient::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
+                    ->orderBy('name')
+                    ->paginate(10),
             ])->layout('admins.layouts.app');
         } else if ($this->_page == "create") {
             return view('livewire.admins.patients.create')->layout('admins.layouts.app');
         } else if ($this->_page == "edit") {
             return view('livewire.admins.patients.edit')->layout('admins.layouts.app');
+        } else if ($this->_page == "view") {
+            return view('livewire.admins.patients.view', [
+                'patient' => patient::with(['appointments', 'invoices', 'consultationForms'])->findOrFail($this->view_patient_id),
+            ])->layout('admins.layouts.app');
         }
     }
 }

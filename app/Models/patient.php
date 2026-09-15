@@ -40,4 +40,9 @@ class patient extends Model
     {
         return $this->hasOne(appointment::class, 'patient_id')->latestOfMany();
     }
+
+    public function consultationForms()
+    {
+        return $this->hasMany(ConsultationForm::class, 'patient_id');
+    }
 }
