@@ -49,6 +49,7 @@
         }
 
         .jf-sidebar-logo {
+            position: relative;
             padding: 18px 20px;
             border-bottom: 1px solid #eef2f2;
             flex-shrink: 0;
@@ -348,6 +349,67 @@
             color: #97a5a5;
             display: block;
         }
+
+        .jf-sidebar-close {
+            display: none;
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #97a5a5;
+            font-size: 18px;
+            line-height: 1;
+            padding: 4px;
+        }
+
+        .jf-sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 53, 53, 0.45);
+            z-index: 1035;
+        }
+
+        /* Below 992px the fixed 250px sidebar leaves almost no room for
+           content, so it becomes an off-canvas drawer instead: hidden by
+           default, slid in over the content (not pushing it) when the
+           hamburger is tapped, with a tap-outside backdrop to close it -
+           the same #sidebar.active class the desktop collapse already
+           uses, just reinterpreted at this breakpoint. */
+        @media (max-width: 991px) {
+            #sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                margin-left: 0;
+                width: 260px;
+                min-width: 260px;
+                max-width: 80vw;
+                height: 100vh;
+                z-index: 1040;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+            }
+
+            #sidebar.active {
+                transform: translateX(0);
+            }
+
+            #body {
+                width: 100%;
+            }
+
+            .jf-sidebar-close {
+                display: inline-block;
+            }
+
+            .jf-sidebar-overlay.active {
+                display: block;
+            }
+        }
     </style>
     @livewireStyles
 </head>
@@ -360,6 +422,7 @@
                 <a href="{{ route(auth()->user()->landingRouteName()) }}">
                     <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
                 </a>
+                <button type="button" id="jfSidebarClose" class="jf-sidebar-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
             </div>
             <ul class="list-unstyled components text-secondary">
                 {{-- @auth --}}
@@ -487,6 +550,7 @@
                 &copy; {{ date('Y') }} {{ $adminSettings['title'] ?? env('APP_NAME') }}
             </div>
         </nav>
+        <div id="jfSidebarOverlay" class="jf-sidebar-overlay"></div>
         <div id="body" class="active d-flex flex-column" style="min-height: 100vh;">
             <nav class="navbar navbar-expand-lg fixed-top navbar-white bg-white jf-navbar-grid">
                 <button type="button" id="sidebarCollapse" class="btn btn-light"><i
@@ -572,6 +636,32 @@
             <script src="{{ config('app.url') }}assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
             <script src="{{ config('app.url') }}assets/js/script.js"></script>
             <script>
+                (function () {
+                    // #sidebarCollapse already toggles #sidebar/#body's
+                    // "active" class (script.js) - on mobile that class is
+                    // reinterpreted by CSS as "drawer open" instead of the
+                    // desktop "collapsed" meaning, so this just keeps the
+                    // backdrop in sync and gives it a couple of ways to
+                    // close: tapping outside, or the X button in the drawer.
+                    var sidebar = document.getElementById('sidebar');
+                    var overlay = document.getElementById('jfSidebarOverlay');
+                    var closeBtn = document.getElementById('jfSidebarClose');
+                    if (!sidebar || !overlay) return;
+
+                    function closeDrawer() {
+                        sidebar.classList.remove('active');
+                        document.getElementById('body')?.classList.remove('active');
+                        overlay.classList.remove('active');
+                    }
+
+                    var toggleBtn = document.getElementById('sidebarCollapse');
+                    toggleBtn?.addEventListener('click', function () {
+                        overlay.classList.toggle('active', sidebar.classList.contains('active'));
+                    });
+                    overlay.addEventListener('click', closeDrawer);
+                    closeBtn?.addEventListener('click', closeDrawer);
+                })();
+
                 document.getElementById('jfFullscreenToggle')?.addEventListener('click', function () {
                     if (!document.fullscreenElement) {
                         document.documentElement.requestFullscreen?.();
