@@ -625,7 +625,7 @@
                                 </a>
                                 <div class="dropdown-menu dropdown-menu-right nav-link-menu">
                                     <ul class="nav-list">
-                                        <li><a href="{{ route('admin_settings') }}" class="dropdown-item"><i
+                                        <li><a href="{{ route('admin_profile') }}" class="dropdown-item"><i
                                                     class="fas fa-address-card"></i>
                                                 Profile</a></li>
                                         <li><a href="{{ route('admin_settings') }}" class="dropdown-item"><i class="fas fa-cog"></i>

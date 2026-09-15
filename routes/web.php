@@ -78,6 +78,7 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             return response()->json($results);
         })->name('admin_search_suggestions');
         Route::get('settings', App\Http\Livewire\Admins\Settings::class)->name('admin_settings')->middleware('permission:settings');
+        Route::get('profile', App\Http\Livewire\Admins\Profile::class)->name('admin_profile');
 
         Route::get('roles-permissions', App\Http\Livewire\Admins\RolesPermissions::class)->name('admin_roles_permissions')->middleware('permission:roles');
         Route::get('nurses', App\Http\Livewire\Admins\Nurses::class)->name('nurses')->middleware('permission:legacy_modules');
