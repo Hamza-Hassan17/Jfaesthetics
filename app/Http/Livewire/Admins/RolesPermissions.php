@@ -286,6 +286,38 @@ class RolesPermissions extends Component
         session()->flash('message', 'User ' . ($user->is_active ? 'activated' : 'deactivated') . ' successfully.');
     }
 
+    /**
+     * Permanent deletion, not deactivation - reserved for Super Admin
+     * (canManageRole() already grants Super Admin unrestricted access to
+     * every role, including other Super Admins) since every other role is
+     * still limited by the normal rank-outranking rule via canManageRole.
+     * Every FK referencing users.id (activity_logs, stock_movements,
+     * invoices.created_by) is nullOnDelete, so this is safe - related
+     * records just lose their "who did this" attribution rather than
+     * being deleted themselves.
+     */
+    public function delete_user($id)
+    {
+        $actingUser = auth()->user();
+        abort_unless($actingUser->hasPermission('users', 'delete'), 403);
+
+        $user = User::findOrFail($id);
+
+        if ((int) $id === (int) $actingUser->id) {
+            session()->flash('error', 'You cannot delete your own account.');
+            return;
+        }
+
+        abort_unless($actingUser->canManageRole($user->role), 403, 'You cannot manage this user.');
+
+        $name = $user->name;
+        \Illuminate\Support\Facades\DB::table('sessions')->where('user_id', $user->id)->delete();
+        $user->delete();
+
+        $this->log('deleted', 'users', $id, "Permanently deleted user '{$name}'.");
+        session()->flash('message', 'User deleted permanently.');
+    }
+
     protected function log($action, $module, $recordId, $description)
     {
         ActivityLog::create([

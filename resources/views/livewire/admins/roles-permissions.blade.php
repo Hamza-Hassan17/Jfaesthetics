@@ -152,6 +152,9 @@
                                                     @elseif ($u->role && auth()->user()->canManageRole($u->role))
                                                         <button wire:click="edit_user({{ $u->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
                                                         <button wire:click="toggle_active({{ $u->id }})" onclick="return confirm('{{ $u->is_active ? 'Deactivate' : 'Activate' }} this user?')" class="jfr-icon-btn toggle"><i class="fas fa-power-off"></i></button>
+                                                        @if (auth()->user()->hasPermission('users', 'delete'))
+                                                            <button wire:click="delete_user({{ $u->id }})" onclick="return confirm('Permanently delete {{ $u->name }}? This cannot be undone.')" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
+                                                        @endif
                                                     @else
                                                         <span class="text-muted small">View only</span>
                                                     @endif

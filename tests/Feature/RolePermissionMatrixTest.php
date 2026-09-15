@@ -153,6 +153,7 @@ class RolePermissionMatrixTest extends TestCase
             'RolesPermissions::show_create_role (create)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'show_create_role', [], 'roles', 'create'],
             'RolesPermissions::delete_role (delete)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'delete_role', [$doctorRoleId], 'roles', 'delete'],
             'RolesPermissions::show_create_user (create)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'show_create_user', [], 'users', 'create'],
+            'RolesPermissions::delete_user (delete)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'delete_user', [999999], 'users', 'delete'],
 
             'Appiontment::save (create)' => [\App\Http\Livewire\Admins\Appiontment::class, 'save', [], 'appointments', 'create'],
             'Appiontment::delete (delete)' => [\App\Http\Livewire\Admins\Appiontment::class, 'delete', [999999], 'appointments', 'delete'],
