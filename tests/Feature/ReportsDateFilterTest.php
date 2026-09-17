@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Livewire\Admins\Reports;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
 use App\Models\patient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -86,11 +87,13 @@ class ReportsDateFilterTest extends TestCase
 
     /**
      * Reproduces the exact reported scenario: two older invoices, each
-     * getting a payment recorded today. The date-filtered "Total Revenue"
-     * must equal the sum of just those two payments (500 + 50000 =
-     * 50500), not each invoice's full lifetime paid/grand total.
+     * getting a payment recorded today. "Total Revenue" is the value of the
+     * matching invoices (grand_total), which is independent of how much of
+     * each has been paid or when; "Total Paid" is scoped to just the
+     * payments recorded within the filtered range (500 + 50000 = 50500),
+     * not each invoice's full lifetime paid_total.
      */
-    public function test_total_revenue_sums_only_payments_recorded_within_the_filtered_range()
+    public function test_total_paid_sums_only_payments_recorded_within_the_filtered_range()
     {
         $patient = $this->patient();
 
@@ -135,9 +138,10 @@ class ReportsDateFilterTest extends TestCase
         $to = now()->format('Y-m-d');
 
         $filtered = Reports::queryFilteredInvoices(['from' => $from, 'to' => $to]);
-        $revenue = Reports::sumRevenueInRange($filtered, $from, $to);
+        $totalPaid = $filtered->sum(fn ($invoice) => Reports::paidAmountInRange($invoice, $from, $to));
 
-        $this->assertEquals(50500, $revenue);
+        $this->assertEquals(50500, $totalPaid);
+        $this->assertEquals($invoiceA->grand_total + $invoiceB->grand_total, $filtered->sum('grand_total'));
     }
 
     /**
@@ -172,7 +176,7 @@ class ReportsDateFilterTest extends TestCase
         $filtered = Reports::queryFilteredInvoices(['from' => $from, 'to' => $to]);
 
         $this->assertFalse($filtered->pluck('id')->contains($invoice->id));
-        $this->assertEquals(0, Reports::sumRevenueInRange($filtered, $from, $to));
+        $this->assertEquals(0, $filtered->sum(fn ($inv) => Reports::paidAmountInRange($inv, $from, $to)));
     }
 
     /**
@@ -210,5 +214,63 @@ class ReportsDateFilterTest extends TestCase
         $paidOnDay1 = Reports::paidAmountInRange($invoice, $day1, $day1);
 
         $this->assertEquals(10000, $paidOnDay1);
+    }
+
+    /**
+     * Regression for the reported dashboard bug: the "Total Revenue" and
+     * "Total Paid" summary tiles didn't match the invoice table at all once
+     * a date filter was active. Total Revenue must equal the sum of the
+     * table's GRAND TOTAL column, and Total Paid must equal the sum of the
+     * table's PAID column (which is itself date-scoped).
+     */
+    public function test_summary_tiles_match_the_invoice_table_when_date_filtered()
+    {
+        $patient = $this->patient();
+
+        $invoice = Invoice::create(['invoice_number' => 'RPT-TILES', 'patient_id' => $patient->id]);
+        $invoice->created_at = now()->subDays(4);
+        $invoice->updated_at = now()->subDays(4);
+        $invoice->saveQuietly();
+
+        InvoiceItem::create([
+            'invoice_id' => $invoice->id,
+            'service' => 'Gynocomastia',
+            'quantity' => 1,
+            'service_charges' => 90000,
+            'discount_type' => 'flat',
+            'discount_value' => 0,
+            'sub_total' => 90000,
+            'discount' => 0,
+            'after_discount' => 90000,
+        ]);
+
+        // Old payment, outside the filtered window.
+        $oldPayment = InvoicePayment::create([
+            'invoice_id' => $invoice->id,
+            'paid_on' => now()->subDays(4)->format('Y-m-d'),
+            'amount' => 5000,
+            'payment_mode' => 'Cash',
+        ]);
+        $oldPayment->created_at = now()->subDays(4);
+        $oldPayment->updated_at = now()->subDays(4);
+        $oldPayment->saveQuietly();
+
+        // Today's payment, inside the filtered window.
+        InvoicePayment::create([
+            'invoice_id' => $invoice->id,
+            'paid_on' => now()->format('Y-m-d'),
+            'amount' => 3000,
+            'payment_mode' => 'Cash',
+        ]);
+
+        $from = now()->format('Y-m-d');
+        $to = now()->format('Y-m-d');
+
+        $filtered = Reports::queryFilteredInvoices(['from' => $from, 'to' => $to]);
+        $totalRevenue = $filtered->sum('grand_total');
+        $totalPaid = $filtered->sum(fn ($inv) => Reports::paidAmountInRange($inv, $from, $to));
+
+        $this->assertEquals($invoice->grand_total, $totalRevenue);
+        $this->assertEquals(3000, $totalPaid);
     }
 }

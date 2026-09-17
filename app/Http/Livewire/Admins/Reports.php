@@ -136,20 +136,6 @@ class Reports extends Component
         })->sum('amount');
     }
 
-    /**
-     * With no date filter, "revenue" is simply the value of the matching
-     * invoices. With one applied, it's the sum of each invoice's
-     * paidAmountInRange() - the money actually recorded in that window.
-     */
-    public static function sumRevenueInRange($invoices, $from, $to)
-    {
-        if (!$from && !$to) {
-            return $invoices->sum('grand_total');
-        }
-
-        return $invoices->sum(fn ($invoice) => self::paidAmountInRange($invoice, $from, $to));
-    }
-
     public function render()
     {
         $filters = $this->currentFilters();
@@ -157,8 +143,8 @@ class Reports extends Component
 
         $summary = [
             'total_invoices' => $filtered->count(),
-            'total_revenue' => self::sumRevenueInRange($filtered, $filters['from'], $filters['to']),
-            'total_paid' => $filtered->sum('paid_total'),
+            'total_revenue' => $filtered->sum('grand_total'),
+            'total_paid' => $filtered->sum(fn ($invoice) => self::paidAmountInRange($invoice, $filters['from'], $filters['to'])),
             'outstanding' => $filtered->sum('unpaid_total'),
         ];
 
