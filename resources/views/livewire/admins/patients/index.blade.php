@@ -32,7 +32,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                                 </div>
-                                <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" name="patient_name_filter" autocomplete="nope" class="form-control" placeholder="Search patient name...">
+                                <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" name="patient_name_filter" autocomplete="off" class="form-control" placeholder="Search patient name...">
                             </div>
                         </div>
                         <div class="form-group col-md-auto mb-0">
