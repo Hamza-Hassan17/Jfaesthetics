@@ -132,7 +132,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                                         </div>
-                                        <input type="text" wire:model.defer="search" class="form-control border-left-0" placeholder="Invoice #...">
+                                        <input type="text" wire:model.defer="search" autocomplete="one-time-code" class="form-control border-left-0" placeholder="Invoice #...">
                                     </div>
                                 </div>
                                 <div class="form-group col-md-3">

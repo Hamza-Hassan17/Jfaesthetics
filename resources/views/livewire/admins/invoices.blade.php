@@ -429,7 +429,7 @@
                                         <div class="input-group-prepend">
                                             <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
                                         </div>
-                                        <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" name="invoice_number_filter" autocomplete="off" class="form-control border-left-0" placeholder="Search Invoice #...">
+                                        <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" name="invoice_number_filter" autocomplete="one-time-code" class="form-control border-left-0" placeholder="Search Invoice #...">
                                     </div>
                                 </div>
                                 <div class="form-group col-md-auto mb-0">
