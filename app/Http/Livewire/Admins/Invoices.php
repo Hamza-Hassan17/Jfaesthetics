@@ -36,6 +36,7 @@ class Invoices extends Component
     public $search = '';
     public $filter_from = '';
     public $filter_to = '';
+    public $filter_status = '';
 
     public $quick_patient_name;
     public $quick_patient_phone;
@@ -49,6 +50,7 @@ class Invoices extends Component
         $this->search = '';
         $this->filter_from = '';
         $this->filter_to = '';
+        $this->filter_status = '';
         $this->resetPage();
     }
 
@@ -545,30 +547,53 @@ class Invoices extends Component
         $from = $this->filter_from ?: null;
         $to = $this->filter_to ?: null;
 
-        return view('livewire.admins.invoices', [
-            'invoices' => Invoice::with(['patient', 'doctor.employ'])
-                ->when(!$this->canViewAllInvoices(), fn ($q) => $q->where('created_by', auth()->id()))
-                ->when($this->search, fn ($q) => $q->where('invoice_number', 'like', "%{$this->search}%"))
-                // Same "activity within the range" semantics as the Reports
-                // page: an invoice whose payment was recorded today should
-                // surface when filtering to today, even if it was created
-                // earlier.
-                ->when($from || $to, function ($q) use ($from, $to) {
-                    $dateWindow = function ($q2, $column) use ($from, $to) {
-                        $q2->when($from, fn ($q3) => $q3->whereDate($column, '>=', $from))
-                            ->when($to, fn ($q3) => $q3->whereDate($column, '<=', $to));
-                    };
+        $invoices = Invoice::with(['patient', 'doctor.employ'])
+            ->when(!$this->canViewAllInvoices(), fn ($q) => $q->where('created_by', auth()->id()))
+            ->when($this->search, fn ($q) => $q->where('invoice_number', 'like', "%{$this->search}%"))
+            // Same "activity within the range" semantics as the Reports
+            // page: an invoice whose payment was recorded today should
+            // surface when filtering to today, even if it was created
+            // earlier.
+            ->when($from || $to, function ($q) use ($from, $to) {
+                $dateWindow = function ($q2, $column) use ($from, $to) {
+                    $q2->when($from, fn ($q3) => $q3->whereDate($column, '>=', $from))
+                        ->when($to, fn ($q3) => $q3->whereDate($column, '<=', $to));
+                };
 
-                    $q->where(function ($q2) use ($dateWindow) {
-                        $dateWindow($q2, 'created_at');
-                    })->orWhere(function ($q2) use ($dateWindow) {
-                        $dateWindow($q2, 'updated_at');
-                    })->orWhereHas('payments', function ($q2) use ($dateWindow) {
-                        $dateWindow($q2, 'paid_on');
-                    });
-                })
-                ->latest()
-                ->paginate(10),
+                $q->where(function ($q2) use ($dateWindow) {
+                    $dateWindow($q2, 'created_at');
+                })->orWhere(function ($q2) use ($dateWindow) {
+                    $dateWindow($q2, 'updated_at');
+                })->orWhereHas('payments', function ($q2) use ($dateWindow) {
+                    $dateWindow($q2, 'paid_on');
+                });
+            })
+            ->latest()
+            ->get();
+
+        if ($this->filter_status) {
+            $status = $this->filter_status;
+            $invoices = $invoices->filter(function ($invoice) use ($status) {
+                $unpaid = $invoice->unpaid_total;
+                $paid = $invoice->paid_total;
+                return match ($status) {
+                    'paid' => $unpaid <= 0,
+                    'unpaid' => $paid <= 0,
+                    'partial' => $paid > 0 && $unpaid > 0,
+                    default => true,
+                };
+            })->values();
+        }
+
+        $perPage = 10;
+        $page = \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage();
+        $pagedItems = $invoices->slice(($page - 1) * $perPage, $perPage)->values();
+        $invoicesPaginated = new \Illuminate\Pagination\LengthAwarePaginator($pagedItems, $invoices->count(), $perPage, $page, [
+            'path' => \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPath(),
+        ]);
+
+        return view('livewire.admins.invoices', [
+            'invoices' => $invoicesPaginated,
         ])->layout('admins.layouts.app');
     }
 }

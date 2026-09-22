@@ -100,7 +100,7 @@ class InvoiceUpdatedAtFilterTest extends TestCase
             ->assertDontSee('UPD-OLD');
     }
 
-    public function test_reset_filters_clears_search_and_date_range()
+    public function test_reset_filters_clears_search_date_range_and_status()
     {
         $this->actingAs(User::factory()->create());
 
@@ -108,9 +108,67 @@ class InvoiceUpdatedAtFilterTest extends TestCase
             ->set('search', 'ABC')
             ->set('filter_from', '2026-01-01')
             ->set('filter_to', '2026-01-31')
+            ->set('filter_status', 'paid')
             ->call('resetFilters')
             ->assertSet('search', '')
             ->assertSet('filter_from', '')
-            ->assertSet('filter_to', '');
+            ->assertSet('filter_to', '')
+            ->assertSet('filter_status', '');
+    }
+
+    public function test_invoices_page_filters_by_payment_status()
+    {
+        $this->actingAs(User::factory()->create());
+        $patient = $this->patient();
+
+        $paidInvoice = Invoice::create(['invoice_number' => 'STATUS-PAID', 'patient_id' => $patient->id]);
+        \App\Models\InvoiceItem::create([
+            'invoice_id' => $paidInvoice->id,
+            'service' => 'Facial',
+            'quantity' => 1,
+            'service_charges' => 5000,
+            'discount_type' => 'flat',
+            'discount_value' => 0,
+            'sub_total' => 5000,
+            'discount' => 0,
+            'after_discount' => 5000,
+        ]);
+        InvoicePayment::create([
+            'invoice_id' => $paidInvoice->id,
+            'paid_on' => now()->format('Y-m-d'),
+            'amount' => 5000,
+            'payment_mode' => 'Cash',
+        ]);
+
+        $partialInvoice = Invoice::create(['invoice_number' => 'STATUS-PARTIAL', 'patient_id' => $patient->id]);
+        \App\Models\InvoiceItem::create([
+            'invoice_id' => $partialInvoice->id,
+            'service' => 'Facial',
+            'quantity' => 1,
+            'service_charges' => 5000,
+            'discount_type' => 'flat',
+            'discount_value' => 0,
+            'sub_total' => 5000,
+            'discount' => 0,
+            'after_discount' => 5000,
+        ]);
+        InvoicePayment::create([
+            'invoice_id' => $partialInvoice->id,
+            'paid_on' => now()->format('Y-m-d'),
+            'amount' => 2000,
+            'payment_mode' => 'Cash',
+        ]);
+
+        Livewire::test(Invoices::class)
+            ->set('filter_status', 'paid')
+            ->call('$refresh')
+            ->assertSee('STATUS-PAID')
+            ->assertDontSee('STATUS-PARTIAL');
+
+        Livewire::test(Invoices::class)
+            ->set('filter_status', 'partial')
+            ->call('$refresh')
+            ->assertSee('STATUS-PARTIAL')
+            ->assertDontSee('STATUS-PAID');
     }
 }

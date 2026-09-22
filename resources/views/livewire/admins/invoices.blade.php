@@ -440,6 +440,15 @@
                                     <label>Updated To</label>
                                     <input type="date" wire:model.defer="filter_to" class="form-control">
                                 </div>
+                                <div class="form-group col-md-2 mb-0">
+                                    <label>Payment Status</label>
+                                    <select wire:model.defer="filter_status" class="form-control">
+                                        <option value="">All Status</option>
+                                        <option value="paid">Paid</option>
+                                        <option value="partial">Partial</option>
+                                        <option value="unpaid">Unpaid</option>
+                                    </select>
+                                </div>
                                 <div class="form-group col-md-auto mb-0">
                                     <button type="button" wire:click="$refresh" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
                                     <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
