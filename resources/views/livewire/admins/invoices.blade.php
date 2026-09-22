@@ -432,9 +432,17 @@
                                         <input type="text" wire:model.defer="search" wire:keydown.enter="$refresh" name="invoice_number_filter" autocomplete="one-time-code" class="form-control border-left-0" placeholder="Search Invoice #...">
                                     </div>
                                 </div>
+                                <div class="form-group col-md-3 mb-0">
+                                    <label>Updated From</label>
+                                    <input type="date" wire:model.defer="filter_from" class="form-control">
+                                </div>
+                                <div class="form-group col-md-3 mb-0">
+                                    <label>Updated To</label>
+                                    <input type="date" wire:model.defer="filter_to" class="form-control">
+                                </div>
                                 <div class="form-group col-md-auto mb-0">
                                     <button type="button" wire:click="$refresh" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-                                    <button type="button" wire:click="$set('search', '')" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
+                                    <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
                                 </div>
                             </div>
                         </div>
@@ -452,6 +460,7 @@
                                             <th>Paid</th>
                                             <th>Unpaid</th>
                                             <th>Created On</th>
+                                            <th>Updated On</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
@@ -467,6 +476,7 @@
                                                 <td>{{ number_format($invoice->paid_total, 2) }}</td>
                                                 <td>{{ number_format($invoice->unpaid_total, 2) }}</td>
                                                 <td>{{ $invoice->created_at->format('d M Y') }}</td>
+                                                <td>{{ $invoice->updated_at->format('d M Y') }}</td>
                                                 <td>
                                                     @if ($invoice->unpaid_total <= 0)
                                                         <span class="jfr-badge jfr-badge-paid">Paid</span>
@@ -488,7 +498,7 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr><td colspan="10" class="text-warning">No invoices generated yet.</td></tr>
+                                            <tr><td colspan="11" class="text-warning">No invoices generated yet.</td></tr>
                                         @endforelse
                                     </tbody>
                                 </table>

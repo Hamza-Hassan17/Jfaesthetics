@@ -34,6 +34,8 @@ class Invoices extends Component
     public $editing_invoice_id;
 
     public $search = '';
+    public $filter_from = '';
+    public $filter_to = '';
 
     public $quick_patient_name;
     public $quick_patient_phone;
@@ -41,6 +43,14 @@ class Invoices extends Component
     public $quick_patient_gender;
     public $quick_patient_age;
     public $quick_patient_bloodgroup;
+
+    public function resetFilters()
+    {
+        $this->search = '';
+        $this->filter_from = '';
+        $this->filter_to = '';
+        $this->resetPage();
+    }
 
     public function mount()
     {
@@ -532,10 +542,31 @@ class Invoices extends Component
             ])->layout('admins.layouts.app');
         }
 
+        $from = $this->filter_from ?: null;
+        $to = $this->filter_to ?: null;
+
         return view('livewire.admins.invoices', [
             'invoices' => Invoice::with(['patient', 'doctor.employ'])
                 ->when(!$this->canViewAllInvoices(), fn ($q) => $q->where('created_by', auth()->id()))
                 ->when($this->search, fn ($q) => $q->where('invoice_number', 'like', "%{$this->search}%"))
+                // Same "activity within the range" semantics as the Reports
+                // page: an invoice whose payment was recorded today should
+                // surface when filtering to today, even if it was created
+                // earlier.
+                ->when($from || $to, function ($q) use ($from, $to) {
+                    $dateWindow = function ($q2, $column) use ($from, $to) {
+                        $q2->when($from, fn ($q3) => $q3->whereDate($column, '>=', $from))
+                            ->when($to, fn ($q3) => $q3->whereDate($column, '<=', $to));
+                    };
+
+                    $q->where(function ($q2) use ($dateWindow) {
+                        $dateWindow($q2, 'created_at');
+                    })->orWhere(function ($q2) use ($dateWindow) {
+                        $dateWindow($q2, 'updated_at');
+                    })->orWhereHas('payments', function ($q2) use ($dateWindow) {
+                        $dateWindow($q2, 'paid_on');
+                    });
+                })
                 ->latest()
                 ->paginate(10),
         ])->layout('admins.layouts.app');
