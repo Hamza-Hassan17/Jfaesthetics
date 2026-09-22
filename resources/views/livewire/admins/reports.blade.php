@@ -249,6 +249,7 @@
                                         <th>Paid</th>
                                         <th>Unpaid</th>
                                         <th>Created On</th>
+                                        <th>Updated On</th>
                                         <th>Status</th>
                                         <th>Print</th>
                                     </tr>
@@ -264,6 +265,7 @@
                                             <td>{{ number_format($invoice->paid_in_range, 2) }}</td>
                                             <td>{{ number_format($invoice->unpaid_total, 2) }}</td>
                                             <td>{{ $invoice->created_at->format('d M Y') }}</td>
+                                            <td>{{ $invoice->updated_at->format('d M Y') }}</td>
                                             <td>
                                                 @if ($invoice->unpaid_total <= 0)
                                                     <span class="jfr-badge jfr-badge-paid">Paid</span>
@@ -278,7 +280,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="10" class="text-warning">No invoices found.</td></tr>
+                                        <tr><td colspan="11" class="text-warning">No invoices found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>

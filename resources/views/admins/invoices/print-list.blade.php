@@ -116,6 +116,7 @@
                     <th>Paid</th>
                     <th>Unpaid</th>
                     <th>Created On</th>
+                    <th>Updated On</th>
                     <th>Status</th>
                 </tr>
             </thead>
@@ -130,10 +131,11 @@
                         <td>{{ number_format($invoice->paid_total, 0) }}</td>
                         <td>{{ number_format($invoice->unpaid_total, 0) }}</td>
                         <td>{{ $invoice->created_at->format('d M Y') }}</td>
+                        <td>{{ $invoice->updated_at->format('d M Y') }}</td>
                         <td>{{ $invoice->unpaid_total <= 0 ? 'Paid' : ($invoice->paid_total > 0 ? 'Partial' : 'Unpaid') }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="9">No invoices found for this filter.</td></tr>
+                    <tr><td colspan="10">No invoices found for this filter.</td></tr>
                 @endforelse
             </tbody>
         </table>

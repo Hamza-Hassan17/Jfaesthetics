@@ -162,7 +162,7 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
 
             return response()->streamDownload(function () use ($invoices) {
                 $out = fopen('php://output', 'w');
-                fputcsv($out, ['Invoice #', 'Patient', 'Doctor', 'Grand Total', 'Paid', 'Unpaid', 'Created On', 'Status']);
+                fputcsv($out, ['Invoice #', 'Patient', 'Doctor', 'Grand Total', 'Paid', 'Unpaid', 'Created On', 'Updated On', 'Status']);
                 foreach ($invoices as $invoice) {
                     $unpaid = $invoice->unpaid_total;
                     $paid = $invoice->paid_total;
@@ -175,6 +175,7 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
                         number_format($paid, 2, '.', ''),
                         number_format($unpaid, 2, '.', ''),
                         $invoice->created_at->format('Y-m-d'),
+                        $invoice->updated_at->format('Y-m-d'),
                         $status,
                     ]);
                 }
