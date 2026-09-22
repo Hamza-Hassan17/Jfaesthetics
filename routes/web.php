@@ -144,6 +144,15 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             ]);
         })->name('admin_invoice_print')->middleware('permission:invoices');
 
+        Route::get('/expenses', App\Http\Livewire\Admins\Expenses::class)->name('admin_expenses')->middleware('permission:expenses');
+
+        Route::get('/expenses/{expense}/print', function (App\Models\Expense $expense) {
+            return view('admins.expenses.print', [
+                'expense' => $expense,
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_expense_print')->middleware('permission:expenses');
+
         Route::get('/reports', App\Http\Livewire\Admins\Reports::class)->name('admin_reports')->middleware('permission:reports');
 
         Route::get('/reports/print', function (Illuminate\Http\Request $request) {

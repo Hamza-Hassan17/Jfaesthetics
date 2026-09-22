@@ -26,6 +26,7 @@ class RolesPermissions extends Component
         'appointments' => 'Appointments',
         'employees' => 'Employees',
         'invoices' => 'Invoices',
+        'expenses' => 'Expenses',
         'consultation_form' => 'Consultation Form',
         'medicines_store' => 'Medicines Store',
         'services' => 'Services',

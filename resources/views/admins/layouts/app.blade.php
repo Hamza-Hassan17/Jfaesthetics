@@ -499,6 +499,11 @@
                     <a href="{{ route('admin_invoices') }}"><i class="fas fa-file-invoice"></i>Invoices</a>
                 </li>
                 @endif
+                @if (auth()->user()->hasAnyPermissionFor('expenses'))
+                <li class="{{ request()->routeIs('admin_expenses*') ? 'active' : '' }}">
+                    <a href="{{ route('admin_expenses') }}"><i class="fas fa-money-bill-wave"></i>Expenses</a>
+                </li>
+                @endif
                 @if (auth()->user()->hasAnyPermissionFor('consultation_form'))
                 <li class="{{ request()->routeIs('admin_consultation_forms*') ? 'active' : '' }}">
                     <a href="{{ route('admin_consultation_forms') }}"><i class="fas fa-notes-medical"></i>Consultation Form</a>
