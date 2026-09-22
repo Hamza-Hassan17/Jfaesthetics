@@ -69,15 +69,17 @@ class Invoices extends Component
     }
 
     /**
-     * Only Super Admin (rank 0) and Admin (rank 1) can see/manage every
-     * invoice; every other role is scoped to invoices they created
-     * themselves. Rank-based rather than a role-name check so it stays
-     * correct if roles get renamed.
+     * Super Admin (rank 0) and Admin (rank 1) see/manage every invoice by
+     * rank. Receptionist is also allowed to see every invoice by name (not
+     * rank, since Doctor/Nurse/Accountant share rank 2 with it but should
+     * stay scoped to their own) - front-desk staff routinely need to look
+     * up any patient's invoice, not just ones they personally created.
+     * Every other role stays scoped to invoices they created themselves.
      */
     protected function canViewAllInvoices(): bool
     {
         $role = auth()->user()->role;
-        return $role && $role->rank <= 1;
+        return $role && ($role->rank <= 1 || $role->name === 'Receptionist');
     }
 
     protected function blankItem()
