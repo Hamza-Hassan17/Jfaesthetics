@@ -15,4 +15,5 @@
 <div class="jfr-report-tabs">
     <a href="{{ route('admin_reports') }}" class="{{ request()->routeIs('admin_reports') ? 'active' : '' }}">Consultancy Report</a>
     <a href="{{ route('admin_reports_appointments') }}" class="{{ request()->routeIs('admin_reports_appointments') ? 'active' : '' }}">Appointment Report</a>
+    <a href="{{ route('admin_reports_expenses') }}" class="{{ request()->routeIs('admin_reports_expenses') ? 'active' : '' }}">Expense Report</a>
 </div>

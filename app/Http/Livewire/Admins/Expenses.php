@@ -120,10 +120,10 @@ class Expenses extends Component
         session()->flash('message', 'Expense deleted successfully.');
     }
 
-    public static function queryFilteredExpenses(array $filters)
+    protected function filteredExpenses()
     {
-        $from = $filters['from'] ?? null;
-        $to = $filters['to'] ?? null;
+        $from = $this->filter_from ?: null;
+        $to = $this->filter_to ?: null;
 
         return Expense::query()
             ->when($from, fn ($q) => $q->whereDate('expense_date', '>=', $from))
@@ -132,11 +132,9 @@ class Expenses extends Component
 
     public function render()
     {
-        $filters = ['from' => $this->filter_from ?: null, 'to' => $this->filter_to ?: null];
-
         return view('livewire.admins.expenses', [
-            'expenses' => self::queryFilteredExpenses($filters)->latest('expense_date')->latest('id')->paginate(10),
-            'totalAmount' => self::queryFilteredExpenses($filters)->sum('amount'),
+            'expenses' => $this->filteredExpenses()->latest('expense_date')->latest('id')->paginate(10),
+            'totalAmount' => $this->filteredExpenses()->sum('amount'),
         ])->layout('admins.layouts.app');
     }
 }

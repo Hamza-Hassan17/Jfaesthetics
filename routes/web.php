@@ -153,36 +153,6 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             ]);
         })->name('admin_expense_print')->middleware('permission:expenses');
 
-        Route::get('/expenses/print-list', function (Illuminate\Http\Request $request) {
-            $filters = $request->only(['from', 'to']);
-
-            return view('admins.expenses.print-list', [
-                'expenses' => App\Http\Livewire\Admins\Expenses::queryFilteredExpenses($filters)->latest('expense_date')->latest('id')->get(),
-                'filters' => $filters,
-                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
-            ]);
-        })->name('admin_expenses_print_list')->middleware('permission:expenses');
-
-        Route::get('/expenses/export', function (Illuminate\Http\Request $request) {
-            $filters = $request->only(['from', 'to']);
-            $expenses = App\Http\Livewire\Admins\Expenses::queryFilteredExpenses($filters)->latest('expense_date')->latest('id')->get();
-
-            return response()->streamDownload(function () use ($expenses) {
-                $out = fopen('php://output', 'w');
-                fputcsv($out, ['Date', 'Category', 'Description', 'Payment Mode', 'Amount', 'Recorded By']);
-                foreach ($expenses as $expense) {
-                    fputcsv($out, [
-                        $expense->expense_date->format('Y-m-d'),
-                        $expense->category,
-                        $expense->description,
-                        $expense->payment_mode,
-                        number_format($expense->amount, 2, '.', ''),
-                        $expense->created_by,
-                    ]);
-                }
-                fclose($out);
-            }, 'expenses-' . now()->format('Y-m-d') . '.csv', ['Content-Type' => 'text/csv']);
-        })->name('admin_expenses_export')->middleware('permission:expenses,export');
 
         Route::get('/reports', App\Http\Livewire\Admins\Reports::class)->name('admin_reports')->middleware('permission:reports');
 
@@ -248,6 +218,18 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
                 'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
             ]);
         })->name('admin_doctor_performance_report_print')->middleware('permission:reports');
+
+        Route::get('/reports/expenses', App\Http\Livewire\Admins\ExpenseReport::class)->name('admin_reports_expenses')->middleware('permission:reports');
+
+        Route::get('/reports/expenses/print', function (Illuminate\Http\Request $request) {
+            $filters = $request->only(['from', 'to']);
+
+            return view('admins.expenses.print-list', [
+                'expenses' => App\Http\Livewire\Admins\ExpenseReport::queryFilteredExpenses($filters)->get(),
+                'filters' => $filters,
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_reports_expenses_print_list')->middleware('permission:reports');
     });
 });
 

@@ -186,39 +186,6 @@ class ExpenseTest extends TestCase
         return User::factory()->create(['role_id' => $receptionist->id, 'is_active' => true]);
     }
 
-    public function test_an_admin_can_print_the_expenses_report()
-    {
-        Expense::create([
-            'expense_date' => now()->format('Y-m-d'),
-            'category' => 'Petrol',
-            'payment_mode' => 'Cash',
-            'amount' => 500,
-        ]);
-
-        $response = $this->actingAs($this->adminUser())->get(route('admin_expenses_print_list'));
-
-        $response->assertStatus(200);
-        $response->assertSee('Expenses Report');
-        $response->assertSee('Petrol');
-    }
-
-    public function test_an_admin_can_export_expenses_as_csv()
-    {
-        Expense::create([
-            'expense_date' => now()->format('Y-m-d'),
-            'category' => 'Coffee',
-            'payment_mode' => 'Card',
-            'amount' => 250,
-            'created_by' => 'Test Admin',
-        ]);
-
-        $response = $this->actingAs($this->adminUser())->get(route('admin_expenses_export'));
-
-        $response->assertStatus(200);
-        $response->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
-        $this->assertStringContainsString('Coffee', $response->streamedContent());
-    }
-
     public function test_a_receptionist_can_view_the_expenses_page_but_cannot_add_an_expense()
     {
         $response = $this->actingAs($this->receptionistUser())->get(route('admin_expenses'));
@@ -228,20 +195,6 @@ class ExpenseTest extends TestCase
             ->test(Expenses::class)
             ->call('show_create_modal')
             ->assertStatus(403);
-    }
-
-    public function test_a_receptionist_cannot_export_expenses()
-    {
-        $response = $this->actingAs($this->receptionistUser())->get(route('admin_expenses_export'));
-
-        $response->assertStatus(403);
-    }
-
-    public function test_a_receptionist_can_still_print_the_expenses_report()
-    {
-        $response = $this->actingAs($this->receptionistUser())->get(route('admin_expenses_print_list'));
-
-        $response->assertStatus(200);
     }
 
     public function test_a_receptionist_cannot_delete_an_expense()

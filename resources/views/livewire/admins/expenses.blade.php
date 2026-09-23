@@ -122,12 +122,6 @@
                                 <button type="button" wire:click="$refresh" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
                                 <button type="button" wire:click="resetFilters" class="btn btn-outline-secondary"><i class="fas fa-redo"></i> Reset</button>
                             </div>
-                            <div class="form-group col-md-auto mb-0 ml-auto">
-                                @if (auth()->user()->hasPermission('expenses', 'export'))
-                                    <a href="{{ route('admin_expenses_export', array_filter(['from' => $filter_from, 'to' => $filter_to])) }}" class="btn btn-outline-success"><i class="fas fa-file-csv"></i> Export</a>
-                                @endif
-                                <a href="{{ route('admin_expenses_print_list', array_filter(['from' => $filter_from, 'to' => $filter_to])) }}" target="_blank" class="btn btn-outline-dark"><i class="fas fa-print"></i> Print</a>
-                            </div>
                         </div>
                     </div>
 
