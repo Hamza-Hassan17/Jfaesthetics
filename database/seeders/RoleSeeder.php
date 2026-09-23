@@ -57,7 +57,7 @@ class RoleSeeder extends Seeder
             'appointments' => $allActions,
             'employees' => $allActions,
             'invoices' => $allActions,
-            'expenses' => $allActions,
+            'expenses' => array_merge($allActions, ['export']),
             'consultation_form' => $allActions,
             'medicines_store' => $allActions,
             'services' => $allActions,
@@ -100,7 +100,7 @@ class RoleSeeder extends Seeder
             'appointments.view', 'appointments.create', 'appointments.update', 'appointments.delete',
             'employees.view', 'employees.create', 'employees.update', 'employees.delete',
             'invoices.view', 'invoices.create', 'invoices.update', 'invoices.delete',
-            'expenses.view', 'expenses.create', 'expenses.update', 'expenses.delete',
+            'expenses.view', 'expenses.create', 'expenses.update', 'expenses.delete', 'expenses.export',
             'consultation_form.view', 'consultation_form.create', 'consultation_form.update', 'consultation_form.delete',
             'medicines_store.view', 'medicines_store.create', 'medicines_store.update', 'medicines_store.delete',
             'services.view', 'services.create', 'services.update', 'services.delete',
@@ -127,6 +127,7 @@ class RoleSeeder extends Seeder
             'patients.view', 'patients.create', 'patients.update', // no delete
             'appointments.view', 'appointments.create', 'appointments.update', 'appointments.delete',
             'invoices.view', 'invoices.create', // limited: create/view only
+            'expenses.view', // view only, no create/update/delete/export
             'services.view',
         ]);
 
@@ -135,7 +136,7 @@ class RoleSeeder extends Seeder
             'dashboard.view',
             'patients.view', // read-only for billing context
             'invoices.view', 'invoices.create', 'invoices.update', 'invoices.delete',
-            'expenses.view', 'expenses.create', 'expenses.update', 'expenses.delete',
+            'expenses.view', 'expenses.create', 'expenses.update', 'expenses.delete', 'expenses.export',
             'medicines_store.view',
             'services.view',
             'reports.view', 'reports.export',
