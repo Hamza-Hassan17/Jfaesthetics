@@ -137,7 +137,7 @@
                                         <tr>
                                             <th style="min-width: 260px;">Service/Product</th>
                                             <th style="min-width: 90px;">Quantity</th>
-                                            <th style="min-width: 80px;">Session</th>
+                                            <th style="min-width: 80px;">No. of Sessions</th>
                                             <th style="min-width: 120px;">Service Charges</th>
                                             <th style="min-width: 170px;">Discount</th>
                                             <th style="min-width: 100px;">Sub Total</th>
@@ -154,25 +154,29 @@
                                                         <select class="form-control form-control-sm mr-1" wire:model="items.{{ $index }}.type">
                                                             <option value="custom">Custom / Typed</option>
                                                             <option value="service">Service</option>
-                                                            <option value="medicine">Medicine</option>
+                                                            <option value="product">Product</option>
                                                         </select>
                                                     </div>
 
                                                     @if ($item['type'] === 'custom')
-                                                        <input type="text" class="form-control" wire:model.lazy="items.{{ $index }}.service" placeholder="e.g. Carbon+PRP+Meso 3sessions">
+                                                        <input type="text" class="form-control" wire:model.lazy="items.{{ $index }}.service" placeholder="e.g. Carbon+PRP+Meso">
                                                     @else
                                                         <select class="form-control" wire:model="items.{{ $index }}.catalog_id">
-                                                            <option value="">Choose {{ $item['type'] === 'service' ? 'Service' : 'Medicine' }}</option>
+                                                            <option value="">Choose {{ $item['type'] === 'service' ? 'Service' : 'Product' }}</option>
                                                             @if ($item['type'] === 'service')
                                                                 @foreach ($services as $svc)
                                                                     <option value="{{ $svc->id }}">{{ $svc->name }} (PKR {{ number_format($svc->price, 2) }})</option>
                                                                 @endforeach
                                                             @else
-                                                                @foreach ($medicines as $med)
-                                                                    <option value="{{ $med->id }}">{{ $med->name }} — stock: {{ $med->quantity }} (PKR {{ number_format($med->price, 2) }})</option>
+                                                                @foreach ($products as $product)
+                                                                    <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->code }}) — PKR {{ number_format($product->sale_price, 2) }}</option>
                                                                 @endforeach
                                                             @endif
                                                         </select>
+                                                        @if ($item['type'] === 'product' && $item['catalog_id'] !== '' && isset($available[$item['catalog_id']]))
+                                                            @php $avail = $available[$item['catalog_id']]; @endphp
+                                                            <small class="{{ $avail < (int) $item['quantity'] ? 'text-danger font-weight-bold' : 'text-muted' }}">Available: {{ $avail }}</small>
+                                                        @endif
                                                     @endif
                                                 </td>
                                                 <td>
@@ -183,8 +187,8 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if ($item['type'] === 'medicine')
-                                                        <input type="text" class="form-control" value="" readonly style="background: #f4f6f6;" title="Not applicable for medicines.">
+                                                    @if ($item['type'] === 'product')
+                                                        <input type="text" class="form-control" value="" readonly style="background: #f4f6f6;" title="Not applicable for products.">
                                                     @else
                                                         <select class="form-control" wire:model.lazy="items.{{ $index }}.session">
                                                             <option value="">-</option>
@@ -197,7 +201,7 @@
                                                 <td>
                                                     <input type="number" step="0.01" min="0" class="form-control"
                                                         wire:model.lazy="items.{{ $index }}.service_charges"
-                                                        @if ($item['type'] !== 'custom') readonly style="background: #f4f6f6;" title="Price comes from the catalog. Use Discount to adjust." @endif>
+                                                        @if ($item['type'] === 'service' || ($item['type'] === 'product' && !$canOverridePrice)) readonly style="background: #f4f6f6;" title="Price comes from the catalog. Use Discount to adjust." @endif>
                                                 </td>
                                                 <td>
                                                     <div class="input-group">
@@ -336,6 +340,43 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="modal fade" id="invoiceShortfallModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Not enough stock</h5>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p>These products will go into negative stock. The shortfall is settled automatically when stock is next received.</p>
+                                        <table class="table table-sm">
+                                            <thead><tr><th>Product</th><th>Needed</th><th>Available</th><th>Short by</th></tr></thead>
+                                            <tbody>
+                                                @foreach ($shortfalls as $shortfall)
+                                                    <tr>
+                                                        <td>{{ $shortfall['name'] }}</td>
+                                                        <td>{{ $shortfall['needed'] }}</td>
+                                                        <td>{{ $shortfall['available'] }}</td>
+                                                        <td class="text-danger font-weight-bold">{{ $shortfall['short'] }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal" wire:click="cancel_shortfall">Cancel</button>
+                                        <button type="button" class="btn btn-danger" data-dismiss="modal" wire:click="generate_invoice(true)">Save anyway</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            if (!window.__jfInvoiceShortfallBound) {
+                                window.__jfInvoiceShortfallBound = true;
+                                window.addEventListener('invoice-shortfall-open', function () {
+                                    $('#invoiceShortfallModal').modal('show');
+                                });
+                            }
+                        </script>
                         <script>
                             if (!window.__jfPatientQuickAddedBound) {
                                 window.__jfPatientQuickAddedBound = true;
@@ -359,7 +400,7 @@
 
                         <table class="table table-bordered">
                             <thead>
-                                <tr><th>Service/Product</th><th>Qty</th><th>Session</th><th>Charges</th><th>Sub Total</th><th>Discount</th><th>After Discount</th></tr>
+                                <tr><th>Service/Product</th><th>Qty</th><th>No. of Sessions</th><th>Charges</th><th>Sub Total</th><th>Discount</th><th>After Discount</th></tr>
                             </thead>
                             <tbody>
                                 @foreach ($invoice->items as $item)

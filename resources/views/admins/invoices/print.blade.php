@@ -116,7 +116,7 @@
                 <tr>
                     <th>Service/Product</th>
                     <th>Quantity</th>
-                    <th>Session</th>
+                    <th>No. of Sessions</th>
                     <th>Service Charges</th>
                     <th>Sub Total</th>
                     <th>Discount</th>
@@ -128,7 +128,7 @@
                     <tr>
                         <td>{{ $item->service }}</td>
                         <td>{{ $item->service_id ? '-' : $item->quantity }}</td>
-                        <td>{{ $item->medicine_id ? '-' : ($item->session_number ?? '-') }}</td>
+                        <td>{{ $item->line_type === 'product' ? '-' : ($item->session_number ?? '-') }}</td>
                         <td>{{ number_format($item->service_charges, 0) }}</td>
                         <td>{{ number_format($item->sub_total, 0) }}</td>
                         <td>

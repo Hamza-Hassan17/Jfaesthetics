@@ -1,5 +1,5 @@
 @php
-    $lowStockCount = \App\Models\medicine::whereColumn('quantity', '<=', 'low_stock_threshold')->count();
+    $lowStockCount = \App\Models\InventoryItem::lowStock()->count();
     $adminSettings = \App\Models\Settings::pluck('value', 'key')->toArray();
 @endphp
 <!doctype html>
@@ -526,9 +526,9 @@
                     <a href="{{ route('admin_doctor_performance_report') }}"><i class="fas fa-chart-line"></i>Doctor Performance</a>
                 </li> --}}
 
-                @if (auth()->user()->hasAnyPermissionFor('medicines_store'))
-                <li class="{{ request()->routeIs('medicinesStore') ? 'active' : '' }}">
-                    <a href="{{ route('medicinesStore') }}"><i class="fas fa-file-alt"></i>Medicines Store</a>
+                @if (auth()->user()->hasAnyPermissionFor('inventory'))
+                <li class="{{ request()->routeIs('admin_inventory*') ? 'active' : '' }}">
+                    <a href="{{ route('admin_inventory_items') }}"><i class="fas fa-boxes"></i>Inventory</a>
                 </li>
                 @endif
                 @if (auth()->user()->hasAnyPermissionFor('services'))
@@ -606,7 +606,7 @@
                             </div>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('medicinesStore') }}" class="jf-navbar-icon-btn" title="Low stock alerts">
+                            <a href="{{ route('admin_inventory_items') }}" class="jf-navbar-icon-btn" title="Low stock alerts">
                                 <i class="fas fa-bell"></i>
                                 @if ($lowStockCount > 0)
                                     <span class="jf-navbar-badge">{{ $lowStockCount }}</span>
@@ -711,8 +711,9 @@
                         'dashboard': '{{ route('admin_dashboard') }}',
                         'patients': '{{ route('admin_patients') }}',
                         'employees': '{{ route('employees') }}',
-                        'medicines': '{{ route('medicinesStore') }}',
-                        'medicine store': '{{ route('medicinesStore') }}',
+                        'inventory': '{{ route('admin_inventory_items') }}',
+                        'stock': '{{ route('admin_inventory_items') }}',
+                        'medicines': '{{ route('admin_inventory_items') }}',
                         'services': '{{ route('admin_services') }}',
                         'invoices': '{{ route('admin_invoices') }}',
                         'consultation form': '{{ route('admin_consultation_forms') }}',

@@ -89,7 +89,10 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         Route::get('/rooms', App\Http\Livewire\Admins\Rooms::class)->name('Rooms')->middleware('permission:legacy_modules');
         Route::get('/beds', App\Http\Livewire\Admins\Beds::class)->name('patients_beds')->middleware('permission:legacy_modules');
 
-        Route::get('/medicinesStore', App\Http\Livewire\Admins\Medicinestore::class)->name('medicinesStore')->middleware('permission:medicines_store');
+        Route::redirect('/inventory', '/admin/inventory/items')->name('admin_inventory');
+        Route::get('/inventory/items', App\Http\Livewire\Admins\Inventory\Items::class)->name('admin_inventory_items')->middleware('permission:inventory');
+        Route::get('/inventory/categories', App\Http\Livewire\Admins\Inventory\Categories::class)->name('admin_inventory_categories')->middleware('permission:inventory');
+        Route::get('/inventory/adjustments', App\Http\Livewire\Admins\Inventory\Adjustments::class)->name('admin_inventory_adjustments')->middleware('permission:inventory');
 
         Route::get('/departments', App\Http\Livewire\Admins\Departments::class)->name('departments')->middleware('permission:legacy_modules');
 

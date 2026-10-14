@@ -236,7 +236,7 @@
                                     @foreach ($perms as $perm)
                                         @if (in_array($perm->id, $selectablePermissionIds))
                                             <label>
-                                                <input type="checkbox" wire:model="selected_permission_ids" value="{{ $perm->id }}"> {{ ucfirst($perm->action) }}
+                                                <input type="checkbox" wire:model="selected_permission_ids" value="{{ $perm->id }}"> {{ ucfirst(str_replace('_', ' ', $perm->action)) }}
                                             </label>
                                         @endif
                                     @endforeach

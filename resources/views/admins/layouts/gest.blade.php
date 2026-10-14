@@ -63,7 +63,7 @@
                     </li>
 
                     <li>
-                        <a href="{{ route('medicinesStore') }}"><i class="fas fa-file-alt"></i>Medicines Store</a>
+                        <a href="{{ route('admin_inventory_items') }}"><i class="fas fa-boxes"></i>Inventory</a>
                     </li>
                     <li>
                         <a href="#authmenu" data-toggle="collapse" aria-expanded="false"

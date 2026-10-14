@@ -11,8 +11,12 @@ class InvoiceItem extends Model
 
     protected $fillable = [
         'invoice_id',
+        'line_type',
         'service_id',
-        'medicine_id',
+        'inventory_item_id',
+        'parent_line_id',
+        'is_billable',
+        'unit_cost',
         'service',
         'quantity',
         'session_number',
@@ -34,8 +38,8 @@ class InvoiceItem extends Model
         return $this->belongsTo(Service::class, 'service_id');
     }
 
-    public function medicine()
+    public function inventoryItem()
     {
-        return $this->belongsTo(medicine::class);
+        return $this->belongsTo(InventoryItem::class);
     }
 }

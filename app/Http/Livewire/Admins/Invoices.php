@@ -5,11 +5,11 @@ namespace App\Http\Livewire\Admins;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
+use App\Models\InventoryItem;
 use App\Models\doctor;
-use App\Models\medicine;
 use App\Models\patient;
 use App\Models\Service;
-use App\Models\StockMovement;
+use App\Services\Inventory\StockService;
 use App\Traits\LogsActivity;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -32,6 +32,9 @@ class Invoices extends Component
 
     public $view_invoice_id;
     public $editing_invoice_id;
+
+    // Product lines whose qty exceeds sellable stock: [['name' => ..., 'needed' => ..., 'available' => ...]]
+    public $shortfalls = [];
 
     public $search = '';
     public $filter_from = '';
@@ -142,8 +145,8 @@ class Invoices extends Component
 
         $this->items = $invoice->items->map(function ($item) {
             return [
-                'type' => $item->service_id ? 'service' : ($item->medicine_id ? 'medicine' : 'custom'),
-                'catalog_id' => $item->service_id ?: ($item->medicine_id ?: ''),
+                'type' => $item->line_type,
+                'catalog_id' => $item->service_id ?: ($item->inventory_item_id ?: ''),
                 'service' => $item->service,
                 'quantity' => $item->quantity,
                 'session' => $item->session_number,
@@ -194,11 +197,10 @@ class Invoices extends Component
             if ($this->items[$index]['type'] === 'custom') {
                 $this->items[$index]['service_charges'] = 0;
             }
-            // Medicines are dispensed by quantity, not session number;
-            // services are tracked by session, not a variable quantity —
-            // fixed at 1 (not user-facing) so the sub_total math still
-            // works with the Quantity column hidden for service rows.
-            if ($this->items[$index]['type'] === 'medicine') {
+            // Products are sold by quantity and have no sessions; a service
+            // is one package (quantity fixed at 1, hidden) whose session
+            // count is informational and never multiplies the price.
+            if ($this->items[$index]['type'] === 'product') {
                 $this->items[$index]['session'] = '';
             } elseif ($this->items[$index]['type'] === 'service') {
                 $this->items[$index]['quantity'] = 1;
@@ -215,11 +217,11 @@ class Invoices extends Component
                     $this->items[$index]['service'] = $catalogItem->name;
                     $this->items[$index]['service_charges'] = $catalogItem->price;
                 }
-            } elseif ($type === 'medicine') {
-                $catalogItem = medicine::find($value);
+            } elseif ($type === 'product') {
+                $catalogItem = InventoryItem::find($value);
                 if ($catalogItem) {
                     $this->items[$index]['service'] = $catalogItem->name;
-                    $this->items[$index]['service_charges'] = $catalogItem->price;
+                    $this->items[$index]['service_charges'] = $catalogItem->sale_price;
                 }
             }
         }
@@ -296,15 +298,20 @@ class Invoices extends Component
         return collect($this->payments)->sum(fn ($p) => (float) $p['amount']);
     }
 
-    public function generate_invoice()
+    /**
+     * @param bool $confirmShortfall true when the user chose "Save anyway"
+     *        in the shortfall modal (stock may go negative, spec decision 11)
+     */
+    public function generate_invoice($confirmShortfall = false)
     {
         abort_unless(auth()->user()->hasPermission('invoices', $this->editing_invoice_id ? 'update' : 'create'), 403);
 
         $this->validate([
             'patient_id' => 'required',
             'doctor_id' => 'nullable',
+            'items.*.type' => 'required|in:service,product,custom',
             'items.*.service' => 'required|string',
-            'items.*.quantity' => 'required|numeric|min:1',
+            'items.*.quantity' => 'required|integer|min:1',
             'items.*.session' => 'nullable|integer|between:1,10',
             'items.*.service_charges' => 'required|numeric|min:0',
             'items.*.discount_type' => 'required|in:flat,percent',
@@ -314,138 +321,108 @@ class Invoices extends Component
             'payments.*.payment_mode' => 'required|string',
         ]);
 
-        // When editing, stock already held by this invoice's old items will be
-        // returned before the new items are applied, so it counts as available.
-        $reservedByThisInvoice = [];
-        if ($this->editing_invoice_id) {
-            $oldInvoice = Invoice::with('items')->find($this->editing_invoice_id);
-            if ($oldInvoice) {
-                foreach ($oldInvoice->items as $oldItem) {
-                    if ($oldItem->medicine_id) {
-                        $reservedByThisInvoice[$oldItem->medicine_id] = ($reservedByThisInvoice[$oldItem->medicine_id] ?? 0) + $oldItem->quantity;
-                    }
-                }
-            }
-        }
-
-        // Stock check up front so we can show a clean validation error
-        // rather than a mid-transaction failure.
+        $products = [];
         foreach ($this->items as $index => $item) {
-            if ($item['type'] === 'medicine' && $item['catalog_id']) {
-                $med = medicine::find($item['catalog_id']);
-                $available = $med ? $med->quantity + ($reservedByThisInvoice[$med->id] ?? 0) : 0;
-                if (!$med || $available < $item['quantity']) {
-                    $this->addError("items.$index.quantity", 'Not enough stock available for ' . ($med->name ?? 'this medicine') . ' (available: ' . $available . ').');
-                    return;
-                }
+            if ($item['type'] !== 'product') {
+                continue;
+            }
+            $product = $item['catalog_id'] ? InventoryItem::find($item['catalog_id']) : null;
+            if (!$product) {
+                $this->addError("items.$index.service", 'Choose a product from inventory.');
+                return;
+            }
+            $products[$index] = $product;
+
+            // Unit price is the item's sale price unless the user may override it.
+            if (!auth()->user()->hasPermission('inventory', 'price_override')) {
+                $this->items[$index]['service_charges'] = $product->sale_price;
             }
         }
 
-        try {
-            $invoice = DB::transaction(function () {
-                if ($this->editing_invoice_id) {
-                    $invoice = Invoice::findOrFail($this->editing_invoice_id);
-                    $invoice->update([
-                        'patient_id' => $this->patient_id,
-                        'doctor_id' => $this->doctor_id ?: null,
-                        'notes' => $this->notes,
-                    ]);
+        $stock = app(StockService::class);
 
-                    // Reverse stock deducted by the medicine items this invoice
-                    // previously had, before recreating items from the form.
-                    foreach ($invoice->items as $oldItem) {
-                        if ($oldItem->medicine_id) {
-                            $med = medicine::lockForUpdate()->find($oldItem->medicine_id);
-                            if ($med) {
-                                $med->increment('quantity', $oldItem->quantity);
-                                StockMovement::create([
-                                    'medicine_id' => $med->id,
-                                    'change' => $oldItem->quantity,
-                                    'reason' => 'invoice_edit_reversal',
-                                    'reference_type' => Invoice::class,
-                                    'reference_id' => $invoice->id,
-                                    'user_id' => auth()->id(),
-                                ]);
-                            }
-                        }
-                    }
-
-                    $invoice->items()->delete();
-                    $invoice->payments()->delete();
-                } else {
-                    $invoiceNumber = date('y') . str_pad(Invoice::withTrashed()->max('id') + 1, 5, '0', STR_PAD_LEFT);
-
-                    $invoice = Invoice::create([
-                        'invoice_number' => $invoiceNumber,
-                        'patient_id' => $this->patient_id,
-                        'doctor_id' => $this->doctor_id ?: null,
-                        'created_by' => auth()->id(),
-                        'printed_by' => auth()->user()->name ?? null,
-                        'notes' => $this->notes,
-                    ]);
-                }
-
-                foreach ($this->items as $item) {
-                    $subTotal = (float) $item['quantity'] * (float) $item['service_charges'];
-                    $discountValue = (float) $item['discount_value'];
-                    $discountAmount = $item['discount_type'] === 'percent'
-                        ? $subTotal * $discountValue / 100
-                        : $discountValue;
-                    $discountAmount = min($discountAmount, $subTotal);
-
-                    InvoiceItem::create([
-                        'invoice_id' => $invoice->id,
-                        'service_id' => $item['type'] === 'service' ? ($item['catalog_id'] ?: null) : null,
-                        'medicine_id' => $item['type'] === 'medicine' ? ($item['catalog_id'] ?: null) : null,
-                        'service' => $item['service'],
-                        'quantity' => $item['quantity'],
-                        'session_number' => $item['session'] ?: null,
-                        'service_charges' => $item['service_charges'],
-                        'discount_type' => $item['discount_type'],
-                        'discount_value' => $discountValue,
-                        'sub_total' => $subTotal,
-                        'discount' => $discountAmount,
-                        'after_discount' => $subTotal - $discountAmount,
-                    ]);
-
-                    if ($item['type'] === 'medicine' && $item['catalog_id']) {
-                        $med = medicine::lockForUpdate()->findOrFail($item['catalog_id']);
-
-                        if ($med->quantity < $item['quantity']) {
-                            throw new \RuntimeException('Not enough stock for ' . $med->name);
-                        }
-
-                        $med->decrement('quantity', $item['quantity']);
-
-                        StockMovement::create([
-                            'medicine_id' => $med->id,
-                            'change' => -$item['quantity'],
-                            'reason' => 'invoice_deduction',
-                            'reference_type' => Invoice::class,
-                            'reference_id' => $invoice->id,
-                            'user_id' => auth()->id(),
-                        ]);
-                    }
-                }
-
-                foreach ($this->payments as $payment) {
-                    if ((float) $payment['amount'] <= 0) {
-                        continue;
-                    }
-                    InvoicePayment::create([
-                        'invoice_id' => $invoice->id,
-                        'paid_on' => $payment['paid_on'],
-                        'amount' => $payment['amount'],
-                        'payment_mode' => $payment['payment_mode'],
-                    ]);
-                }
-
-                return $invoice;
-            });
-        } catch (\RuntimeException $e) {
-            $this->addError('items', $e->getMessage());
-            return;
+        if (!$confirmShortfall) {
+            $this->shortfalls = $this->findShortfalls($products, $stock);
+            if ($this->shortfalls) {
+                $this->dispatchBrowserEvent('invoice-shortfall-open');
+                return;
+            }
         }
+        $this->shortfalls = [];
+
+        $invoice = DB::transaction(function () use ($products, $stock) {
+            if ($this->editing_invoice_id) {
+                $invoice = Invoice::findOrFail($this->editing_invoice_id);
+                $invoice->update([
+                    'patient_id' => $this->patient_id,
+                    'doctor_id' => $this->doctor_id ?: null,
+                    'notes' => $this->notes,
+                ]);
+
+                // Edit = reverse everything the invoice moved, then re-apply.
+                $stock->reverse($invoice);
+
+                $invoice->items()->delete();
+                $invoice->payments()->delete();
+            } else {
+                $invoiceNumber = date('y') . str_pad(Invoice::withTrashed()->max('id') + 1, 5, '0', STR_PAD_LEFT);
+
+                $invoice = Invoice::create([
+                    'invoice_number' => $invoiceNumber,
+                    'patient_id' => $this->patient_id,
+                    'doctor_id' => $this->doctor_id ?: null,
+                    'created_by' => auth()->id(),
+                    'printed_by' => auth()->user()->name ?? null,
+                    'notes' => $this->notes,
+                ]);
+            }
+
+            foreach ($this->items as $index => $item) {
+                $subTotal = (float) $item['quantity'] * (float) $item['service_charges'];
+                $discountValue = (float) $item['discount_value'];
+                $discountAmount = $item['discount_type'] === 'percent'
+                    ? $subTotal * $discountValue / 100
+                    : $discountValue;
+                $discountAmount = min($discountAmount, $subTotal);
+                $product = $products[$index] ?? null;
+
+                $line = InvoiceItem::create([
+                    'invoice_id' => $invoice->id,
+                    'line_type' => $item['type'],
+                    'service_id' => $item['type'] === 'service' ? ($item['catalog_id'] ?: null) : null,
+                    'inventory_item_id' => $product ? $product->id : null,
+                    'is_billable' => true,
+                    'unit_cost' => $product ? $product->cost_price : null,
+                    'service' => $item['service'],
+                    'quantity' => $item['quantity'],
+                    'session_number' => $item['type'] === 'product' ? null : ($item['session'] ?: null),
+                    'service_charges' => $item['service_charges'],
+                    'discount_type' => $item['discount_type'],
+                    'discount_value' => $discountValue,
+                    'sub_total' => $subTotal,
+                    'discount' => $discountAmount,
+                    'after_discount' => $subTotal - $discountAmount,
+                ]);
+
+                if ($product) {
+                    $stock->stockOut($product, (int) $item['quantity'], $invoice, null, $line->id);
+                }
+            }
+
+            foreach ($this->payments as $payment) {
+                if ((float) $payment['amount'] <= 0) {
+                    continue;
+                }
+                InvoicePayment::create([
+                    'invoice_id' => $invoice->id,
+                    'paid_on' => $payment['paid_on'],
+                    'amount' => $payment['amount'],
+                    'payment_mode' => $payment['payment_mode'],
+                ]);
+            }
+
+            return $invoice;
+        });
 
         $this->logActivity(
             $this->editing_invoice_id ? 'updated' : 'created',
@@ -457,6 +434,62 @@ class Invoices extends Component
         session()->flash('message', 'Invoice generated successfully.');
         $this->view_invoice_id = $invoice->id;
         $this->_page = 'view';
+    }
+
+    /**
+     * Product lines (summed per item) needing more than is sellable. When
+     * editing, stock this invoice already holds counts as available,
+     * because it is put back before the new lines are applied.
+     */
+    protected function findShortfalls(array $products, StockService $stock): array
+    {
+        $needed = [];
+        foreach ($products as $index => $product) {
+            $needed[$product->id] = ($needed[$product->id] ?? 0) + (int) $this->items[$index]['quantity'];
+        }
+
+        $editing = $this->editing_invoice_id ? Invoice::find($this->editing_invoice_id) : null;
+        $shortfalls = [];
+
+        foreach ($needed as $itemId => $qty) {
+            $product = collect($products)->firstWhere('id', $itemId);
+            $available = $stock->sellableQty($product) + ($editing ? $stock->heldBy($editing, $itemId) : 0);
+            if ($qty > $available) {
+                $shortfalls[] = ['name' => $product->name, 'needed' => $qty, 'available' => $available, 'short' => $qty - $available];
+            }
+        }
+
+        return $shortfalls;
+    }
+
+    public function cancel_shortfall()
+    {
+        $this->shortfalls = [];
+    }
+
+    /**
+     * Live "available" figure shown beside each product line.
+     *
+     * @return array<int, int> inventory item id => sellable qty
+     */
+    protected function availableForSelectedProducts(): array
+    {
+        $stock = app(StockService::class);
+        $editing = $this->editing_invoice_id ? Invoice::find($this->editing_invoice_id) : null;
+
+        return collect($this->items)
+            ->where('type', 'product')
+            ->pluck('catalog_id')
+            ->filter()
+            ->unique()
+            ->mapWithKeys(function ($id) use ($stock, $editing) {
+                $product = InventoryItem::find($id);
+                if (!$product) {
+                    return [];
+                }
+                return [$id => $stock->sellableQty($product) + ($editing ? $stock->heldBy($editing, (int) $id) : 0)];
+            })
+            ->all();
     }
 
     public function add_payment_to_invoice()
@@ -519,7 +552,13 @@ class Invoices extends Component
 
         $invoiceNumber = $invoice->invoice_number;
         $id = $invoice->id;
-        $invoice->delete();
+
+        // Delete is the invoice "cancel" (spec decision K): stock goes back,
+        // the record stays soft-deleted.
+        DB::transaction(function () use ($invoice) {
+            app(StockService::class)->reverse($invoice);
+            $invoice->delete();
+        });
         $this->logActivity('deleted', 'invoices', $id, "Deleted invoice #{$invoiceNumber}.");
 
         $this->confirm_delete_id = null;
@@ -542,7 +581,9 @@ class Invoices extends Component
                 'patients' => patient::all(),
                 'doctors' => doctor::with('employ')->whereHas('employ')->get(),
                 'services' => Service::all(),
-                'medicines' => medicine::all(),
+                'products' => InventoryItem::where('is_active', true)->orderBy('name')->get(),
+                'available' => $this->availableForSelectedProducts(),
+                'canOverridePrice' => auth()->user()->hasPermission('inventory', 'price_override'),
             ])->layout('admins.layouts.app');
         }
 

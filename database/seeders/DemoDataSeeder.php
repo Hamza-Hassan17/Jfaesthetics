@@ -4,7 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\doctor;
 use App\Models\employee;
-use App\Models\medicine;
+use App\Models\InventoryCategory;
+use App\Models\InventoryItem;
 use App\Models\nurse;
 use App\Models\patient;
 use App\Models\Service;
@@ -15,7 +16,7 @@ class DemoDataSeeder extends Seeder
 {
     /**
      * Seeds 25 doctors, 14 patients, 5 nurses, 3 accountants, 2 pharmacists,
-     * 2 receptionists, 4 cleaners, 1 security, 10 medicines, and 25 services.
+     * 2 receptionists, 4 cleaners, 1 security, 10 inventory items (no stock), and 25 services.
      *
      * No dependency on fakerphp/faker (a dev-only package not present on
      * production installs run with `composer install --no-dev`) — all random
@@ -61,7 +62,7 @@ class DemoDataSeeder extends Seeder
                 'security' => 1,
             ]);
             $this->seedPatients(14);
-            $this->seedMedicines();
+            $this->seedInventoryItems();
             $this->seedServices();
         });
     }
@@ -206,39 +207,36 @@ class DemoDataSeeder extends Seeder
         }
     }
 
-    protected function seedMedicines(): void
+    /**
+     * Catalog only - stock is loaded through an Opening stock adjustment,
+     * never by writing qty_on_hand directly.
+     */
+    protected function seedInventoryItems(): void
     {
-        $medicines = [
-            'Paracetamol 500mg',
-            'Amoxicillin 250mg',
-            'Ibuprofen 400mg',
-            'Betamethasone Cream',
-            'Hyaluronic Acid Dermal Filler',
-            'Vitamin C Brightening Serum',
-            'Lidocaine 2% Injection',
-            'Tretinoin Cream 0.05%',
-            'Botulinum Toxin (Botox) Vial',
-            'Normal Saline Solution 500ml',
+        $catalog = [
+            'Injections' => ['Hyaluronic Acid Dermal Filler', 'Lidocaine 2% Injection', 'Botulinum Toxin (Botox) Vial', 'Fat Dissolving Injection'],
+            'Consumables' => ['Syringe 3ml', 'Gloves (pair)', 'Normal Saline Solution 500ml'],
+            'Retail' => ['Vitamin C Brightening Serum', 'Tretinoin Cream 0.05%', 'Sunblock SPF 50'],
         ];
 
-        $usedCodes = [];
+        $sequence = 1;
+        foreach ($catalog as $categoryName => $names) {
+            $category = InventoryCategory::firstOrCreate(['name' => $categoryName], ['is_active' => true]);
 
-        foreach ($medicines as $name) {
-            do {
-                $code = 'MED-' . str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT)
-                    . chr(random_int(65, 90)) . chr(random_int(65, 90));
-            } while (isset($usedCodes[$code]));
-            $usedCodes[$code] = true;
-
-            medicine::firstOrCreate(
-                ['name' => $name],
-                [
-                    'price' => $this->randomPriceBetween(100, 5000),
-                    'quantity' => random_int(10, 200),
-                    'code' => $code,
-                    'low_stock_threshold' => 10,
-                ]
-            );
+            foreach ($names as $name) {
+                InventoryItem::firstOrCreate(
+                    ['name' => $name],
+                    [
+                        'code' => 'ITM-' . str_pad((string) $sequence, 4, '0', STR_PAD_LEFT),
+                        'category_id' => $category->id,
+                        'cost_price' => $this->randomPriceBetween(50, 3000),
+                        'sale_price' => $this->randomPriceBetween(100, 5000),
+                        'low_stock_threshold' => 10,
+                        'default_billable' => $categoryName !== 'Consumables',
+                    ]
+                );
+                $sequence++;
+            }
         }
     }
 

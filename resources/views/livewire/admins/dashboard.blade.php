@@ -656,18 +656,18 @@
             <div class="jf-card">
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <h5 class="mb-0">Low Stock</h5>
-                    <span class="badge-jf">Medicine Store</span>
+                    <span class="badge-jf">Inventory</span>
                 </div>
                 <div class="table-responsive">
                     <table class="table">
-                        <thead><tr><th>Medicine</th><th>Quantity</th><th>Threshold</th><th></th></tr></thead>
+                        <thead><tr><th>Item</th><th>Usable</th><th>Threshold</th><th></th></tr></thead>
                         <tbody>
-                            @forelse ($lowStockMedicines as $medicine)
+                            @forelse ($lowStockItems as $lowItem)
                                 <tr>
-                                    <td>{{ $medicine->name ?: 'Medicine #' . $medicine->id . ' (needs a name)' }}</td>
-                                    <td class="text-danger font-weight-bold">{{ $medicine->quantity }}</td>
-                                    <td>{{ $medicine->low_stock_threshold }}</td>
-                                    <td><a href="{{ route('medicinesStore') }}" class="btn btn-outline-success btn-sm">Receive Stock</a></td>
+                                    <td>{{ $lowItem->name }} <small class="text-muted">{{ $lowItem->code }}</small></td>
+                                    <td class="text-danger font-weight-bold">{{ (int) $lowItem->usable_qty }}</td>
+                                    <td>{{ $lowItem->low_stock_threshold }}</td>
+                                    <td><a href="{{ route('admin_inventory_items') }}" class="btn btn-outline-success btn-sm">View Inventory</a></td>
                                 </tr>
                             @empty
                                 <tr><td colspan="4" class="text-muted">Nothing running low.</td></tr>

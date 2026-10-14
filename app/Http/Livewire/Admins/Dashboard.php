@@ -7,7 +7,7 @@ use App\Models\doctor;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
-use App\Models\medicine;
+use App\Models\InventoryItem;
 use App\Models\patient;
 use App\Models\requestedAppointment;
 use Carbon\Carbon;
@@ -110,7 +110,7 @@ class Dashboard extends Component
             $q->whereBetween('created_at', [now()->startOfYear(), now()->endOfYear()]);
         })->selectRaw('service, SUM(after_discount) as revenue')->groupBy('service')->orderByDesc('revenue')->take(5)->get();
 
-        $lowStockMedicines = medicine::whereColumn('quantity', '<=', 'low_stock_threshold')->orderBy('quantity')->take(5)->get();
+        $lowStockItems = InventoryItem::withUsableQty()->lowStock()->orderBy('usable_qty')->take(5)->get();
 
         $topDoctors = doctor::with('employ')->whereHas('employ')->get()->map(function ($doc) use ($from, $to) {
             $appointmentsCount = appointment::where('doctor_id', $doc->id)->whereBetween('intime', [$from, $to])->count();
@@ -204,7 +204,7 @@ class Dashboard extends Component
             ->take(5)
             ->get();
 
-        $lowStockCount = medicine::whereColumn('quantity', '<=', 'low_stock_threshold')->count();
+        $lowStockCount = InventoryItem::lowStock()->count();
 
         $this->dispatchBrowserEvent('revenue-chart-updated', [
             'labels' => $revenueChartLabels,
@@ -255,7 +255,7 @@ class Dashboard extends Component
             'topServicesThisMonth' => $topServicesThisMonth,
             'topServicesByQtyThisYear' => $topServicesByQtyThisYear,
             'topServicesByRevenueThisYear' => $topServicesByRevenueThisYear,
-            'lowStockMedicines' => $lowStockMedicines,
+            'lowStockItems' => $lowStockItems,
             'topDoctors' => $topDoctors,
         ])->layout('admins.layouts.app');
     }

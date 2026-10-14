@@ -8,6 +8,23 @@ use Illuminate\Database\Seeder;
 
 class RoleSeeder extends Seeder
 {
+    // docs/inventory-spec.md, "Permissions"
+    public const INVENTORY_ACTIONS = [
+        'view',
+        'manage_items',
+        'manage_recipes',
+        'price_override',
+        'manage_po',
+        'manage_grn',
+        'manage_suppliers',
+        'supplier_payments',
+        'supplier_returns',
+        'patient_returns',
+        'manage_adjustments',
+        'view_reports',
+        'view_cost',
+    ];
+
     /**
      * Rank: 0 = highest authority (Super Admin), larger = lower authority.
      * A role can only manage (edit permissions of / assign / delete) a role
@@ -59,7 +76,7 @@ class RoleSeeder extends Seeder
             'invoices' => $allActions,
             'expenses' => $allActions,
             'consultation_form' => $allActions,
-            'medicines_store' => $allActions,
+            'inventory' => self::INVENTORY_ACTIONS,
             'services' => $allActions,
             'reports' => ['view', 'export'],
             'roles' => ['view', 'create', 'update', 'delete', 'assign'],
@@ -88,6 +105,13 @@ class RoleSeeder extends Seeder
             $role->permissions()->sync($ids);
         };
 
+        // Rows for modules/actions no longer defined above (e.g. the old
+        // medicines_store module) are removed so they don't linger as dead
+        // checkboxes on the Roles screen. role_permissions cascades.
+        Permission::whereNotIn('id', array_values($permissionIds))->delete();
+
+        $inventory = fn (array $actions) => array_map(fn ($action) => "inventory.$action", $actions);
+
         $everyPermission = array_values($permissionIds);
 
         // ---- Super Admin: everything. ----
@@ -102,7 +126,7 @@ class RoleSeeder extends Seeder
             'invoices.view', 'invoices.create', 'invoices.update', 'invoices.delete',
             'expenses.view', 'expenses.create', 'expenses.update', 'expenses.delete',
             'consultation_form.view', 'consultation_form.create', 'consultation_form.update', 'consultation_form.delete',
-            'medicines_store.view', 'medicines_store.create', 'medicines_store.update', 'medicines_store.delete',
+            ...$inventory(self::INVENTORY_ACTIONS),
             'services.view', 'services.create', 'services.update', 'services.delete',
             'reports.view', // no 'reports.export' — "no export of raw financials" per spec
             'roles.view', 'roles.assign', // limited: view + assign only (Section 5)
@@ -118,7 +142,7 @@ class RoleSeeder extends Seeder
             'patients.view', 'patients.update', // own patients, view/edit only
             'appointments.view', 'appointments.create', 'appointments.update', 'appointments.delete', // own
             'consultation_form.view', 'consultation_form.create', 'consultation_form.update', 'consultation_form.delete', // own
-            'medicines_store.view',
+            ...$inventory(['view', 'manage_recipes']),
             'services.view',
         ]);
 
@@ -128,6 +152,7 @@ class RoleSeeder extends Seeder
             'appointments.view', 'appointments.create', 'appointments.update', 'appointments.delete',
             'invoices.view', 'invoices.create', // limited: create/view only
             'expenses.view', // view only, no create/update/delete/export
+            ...$inventory(['view', 'patient_returns']),
             'services.view',
         ]);
 
@@ -137,7 +162,10 @@ class RoleSeeder extends Seeder
             'patients.view', // read-only for billing context
             'invoices.view', 'invoices.create', 'invoices.update', 'invoices.delete',
             'expenses.view', 'expenses.create', 'expenses.update', 'expenses.delete',
-            'medicines_store.view',
+            ...$inventory([
+                'view', 'manage_items', 'manage_po', 'manage_grn', 'manage_suppliers', 'supplier_payments',
+                'supplier_returns', 'patient_returns', 'manage_adjustments', 'view_reports', 'view_cost',
+            ]),
             'services.view',
             'reports.view', 'reports.export',
         ]);
@@ -147,7 +175,7 @@ class RoleSeeder extends Seeder
             'patients.view',
             'appointments.view', 'appointments.update',
             'consultation_form.view',
-            'medicines_store.view',
+            ...$inventory(['view']),
             'services.view',
         ]);
     }

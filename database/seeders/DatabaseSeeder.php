@@ -68,7 +68,6 @@ class DatabaseSeeder extends Seeder
             HodSeeder::class,
             roomSeeder::class,
             bedsSeeder::class,
-            medicineSeeder::class,
             ]);
 
         // \App\Models\User::factory(10)->create();
