@@ -24,7 +24,9 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('inventory:verify')->weekly();
+        $schedule->command('inventory:verify')
+            ->weekly()
+            ->appendOutputTo(storage_path('logs/inventory-verify.log'));
     }
 
     /**

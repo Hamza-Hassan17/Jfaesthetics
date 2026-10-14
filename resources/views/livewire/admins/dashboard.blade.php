@@ -169,6 +169,11 @@
                 <div class="jfd-trend {{ $revenueGood ? 'good' : 'bad' }}">
                     <i class="fas fa-arrow-{{ $revenueTrend >= 0 ? 'up' : 'down' }}"></i> {{ number_format(abs($revenueTrend), 1) }}% <span class="muted">vs last month</span>
                 </div>
+                <div class="muted small mt-1" title="Invoiced this month by line type">
+                    Invoiced: services Rs. {{ number_format($revenueSplit['services'] ?? 0, 0) }}
+                    · products Rs. {{ number_format($revenueSplit['products'] ?? 0, 0) }}
+                    @if (($revenueSplit['other'] ?? 0) > 0) · other Rs. {{ number_format($revenueSplit['other'], 0) }} @endif
+                </div>
             </div>
         </div>
         <div class="col-md-4 col-xl mb-3">

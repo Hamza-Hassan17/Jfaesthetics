@@ -134,6 +134,14 @@ class Dashboard extends Component
         $revenueLastMonth = (float) InvoicePayment::whereBetween('paid_on', [$lastMonthStart, $lastMonthEnd])->sum('amount');
         $revenueTrend = $this->pctChange($revenueLastMonth, $revenueThisMonth);
 
+        // Invoiced this month by line type (discounts are per line, so no
+        // allocation is needed). Non-billable consumables are price 0.
+        $revenueSplit = InvoiceItem::whereHas('invoice', fn ($q) => $q->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd]))
+            ->where('is_billable', true)
+            ->selectRaw("CASE WHEN line_type = 'service' THEN 'services' WHEN inventory_item_id IS NOT NULL THEN 'products' ELSE 'other' END as bucket, SUM(after_discount) as total")
+            ->groupBy('bucket')
+            ->pluck('total', 'bucket');
+
         $allInvoicesForOutstanding = Invoice::with('items', 'payments')->get();
         $totalOutstanding = (float) $allInvoicesForOutstanding->sum(fn ($invoice) => $invoice->unpaid_total);
         $outstandingThisMonthCohort = (float) $allInvoicesForOutstanding
@@ -219,6 +227,7 @@ class Dashboard extends Component
 
         return view('livewire.admins.dashboard', [
             'revenueThisMonth' => $revenueThisMonth,
+            'revenueSplit' => $revenueSplit,
             'revenueTrend' => $revenueTrend,
             'totalOutstanding' => $totalOutstanding,
             'outstandingTrend' => $outstandingTrend,

@@ -10,8 +10,12 @@ use App\Models\InventoryItem;
 use App\Models\doctor;
 use App\Models\patient;
 use App\Models\Service;
+use App\Models\ServiceItem;
+use App\Services\Inventory\InvoiceService;
 use App\Services\Inventory\StockService;
 use App\Traits\LogsActivity;
+use DomainException;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -69,6 +73,8 @@ class Invoices extends Component
         $invoiceId = request()->query('invoice');
         if ($invoiceId && Invoice::find($invoiceId)) {
             $this->view($invoiceId);
+        } elseif (request()->query('new') && auth()->user()->hasPermission('invoices', 'create')) {
+            $this->show_create_form();
         }
     }
 
@@ -86,9 +92,17 @@ class Invoices extends Component
         return $role && ($role->rank <= 1 || $role->name === 'Receptionist');
     }
 
-    protected function blankItem()
+    /**
+     * Form lines carry a uid so a child line can point at its service line
+     * (parent_uid) before either is saved; `id` is the saved line id, kept
+     * stable across edits.
+     */
+    protected function blankItem(array $overrides = [])
     {
-        return [
+        return array_merge([
+            'uid' => 'n' . Str::random(10),
+            'parent_uid' => null,
+            'id' => null,
             'type' => 'custom',
             'catalog_id' => '',
             'service' => '',
@@ -97,7 +111,15 @@ class Invoices extends Component
             'service_charges' => 0,
             'discount_type' => 'flat',
             'discount_value' => 0,
-        ];
+            'is_billable' => true,
+            'qty_per_session' => null,
+            'qty_overridden' => false,
+        ], $overrides);
+    }
+
+    protected function blankPayment()
+    {
+        return ['id' => null, 'paid_on' => now()->format('Y-m-d'), 'amount' => 0, 'payment_mode' => 'Cash'];
     }
 
     public function resetForm()
@@ -107,9 +129,7 @@ class Invoices extends Component
         $this->doctor_id = '';
         $this->notes = '';
         $this->items = [$this->blankItem()];
-        $this->payments = [
-            ['paid_on' => now()->format('Y-m-d'), 'amount' => 0, 'payment_mode' => 'Cash'],
-        ];
+        $this->payments = [$this->blankPayment()];
     }
 
     public function show_create_form()
@@ -144,33 +164,36 @@ class Invoices extends Component
         $this->doctor_id = $invoice->doctor_id;
         $this->notes = $invoice->notes;
 
-        $this->items = $invoice->items->map(function ($item) {
-            return [
-                'type' => $item->line_type,
-                'catalog_id' => $item->service_id ?: ($item->inventory_item_id ?: ''),
-                'service' => $item->service,
-                'quantity' => $item->quantity,
-                'session' => $item->session_number,
-                'service_charges' => $item->service_charges,
-                'discount_type' => $item->discount_type,
-                'discount_value' => $item->discount_value,
-            ];
-        })->all();
+        $this->items = $invoice->items->sortBy(fn ($item) => [$item->position, $item->id])->values()->map(fn ($item) => [
+            'uid' => 'l' . $item->id,
+            'parent_uid' => $item->parent_line_id ? 'l' . $item->parent_line_id : null,
+            'id' => $item->id,
+            'type' => $item->line_type,
+            'catalog_id' => $item->service_id ?: ($item->inventory_item_id ?: ''),
+            'service' => $item->service,
+            'quantity' => $item->quantity,
+            'session' => $item->session_number,
+            'service_charges' => $item->service_charges,
+            'discount_type' => $item->discount_type,
+            'discount_value' => $item->discount_value,
+            'is_billable' => (bool) $item->is_billable,
+            'qty_per_session' => $item->qty_per_session,
+            'qty_overridden' => (bool) $item->qty_overridden,
+        ])->all();
 
         if (empty($this->items)) {
             $this->items = [$this->blankItem()];
         }
 
-        $this->payments = $invoice->payments->map(function ($payment) {
-            return [
-                'paid_on' => \Carbon\Carbon::parse($payment->paid_on)->format('Y-m-d'),
-                'amount' => $payment->amount,
-                'payment_mode' => $payment->payment_mode,
-            ];
-        })->all();
+        $this->payments = $invoice->payments->map(fn ($payment) => [
+            'id' => $payment->id,
+            'paid_on' => \Carbon\Carbon::parse($payment->paid_on)->format('Y-m-d'),
+            'amount' => $payment->amount,
+            'payment_mode' => $payment->payment_mode,
+        ])->all();
 
         if (empty($this->payments)) {
-            $this->payments = [['paid_on' => now()->format('Y-m-d'), 'amount' => 0, 'payment_mode' => 'Cash']];
+            $this->payments = [$this->blankPayment()];
         }
 
         $this->_page = 'create';
@@ -181,18 +204,112 @@ class Invoices extends Component
         $this->items[] = $this->blankItem();
     }
 
+    /** "Add item used" under a service line. */
+    public function add_child($index)
+    {
+        $parent = $this->items[$index] ?? null;
+        if (!$parent || $parent['type'] !== 'service') {
+            return;
+        }
+
+        $this->insertAfterFamily($parent['uid'], [$this->blankItem(['type' => 'product', 'parent_uid' => $parent['uid'], 'qty_overridden' => true])]);
+    }
+
+    /** Removing a service line removes its child lines too. */
     public function remove_item($index)
     {
-        if (count($this->items) > 1) {
-            unset($this->items[$index]);
-            $this->items = array_values($this->items);
+        $line = $this->items[$index] ?? null;
+        if (!$line) {
+            return;
+        }
+
+        $remaining = collect($this->items)->reject(fn ($item, $i) => $i === (int) $index || ($line['type'] === 'service' && $item['parent_uid'] === $line['uid']));
+        if ($remaining->isEmpty()) {
+            return;
+        }
+        $this->items = $remaining->values()->all();
+    }
+
+    /** Inserts lines right after a service line and its existing children. */
+    protected function insertAfterFamily(string $parentUid, array $newLines)
+    {
+        $at = 0;
+        foreach ($this->items as $i => $item) {
+            if ($item['uid'] === $parentUid || $item['parent_uid'] === $parentUid) {
+                $at = $i + 1;
+            }
+        }
+        array_splice($this->items, $at, 0, $newLines);
+        $this->items = array_values($this->items);
+    }
+
+    /** Replaces a service line's children with its recipe (qty × sessions). */
+    protected function fillRecipe(int $index)
+    {
+        $service = $this->items[$index];
+        $this->items = array_values(array_filter($this->items, fn ($item) => $item['parent_uid'] !== $service['uid']));
+        $sessions = max(1, (int) $service['session']);
+
+        $children = ServiceItem::with('item')->where('service_id', $service['catalog_id'])->get()
+            ->filter(fn ($recipeLine) => $recipeLine->item && $recipeLine->item->is_active)
+            ->map(fn ($recipeLine) => $this->blankItem([
+                'type' => 'product',
+                'parent_uid' => $service['uid'],
+                'catalog_id' => $recipeLine->item_id,
+                'service' => $recipeLine->item->name,
+                'qty_per_session' => $recipeLine->qty_per_session,
+                'quantity' => $recipeLine->qty_per_session * $sessions,
+                'is_billable' => $recipeLine->is_billable,
+                'service_charges' => $recipeLine->is_billable ? $recipeLine->item->sale_price : 0,
+            ]))
+            ->values()
+            ->all();
+
+        if ($children) {
+            $this->insertAfterFamily($service['uid'], $children);
+        }
+    }
+
+    /** Sessions changed: recipe children follow, unless typed by hand. */
+    protected function recalcChildren(string $parentUid, $sessions)
+    {
+        $sessions = max(1, (int) $sessions);
+        foreach ($this->items as $i => $item) {
+            if ($item['parent_uid'] === $parentUid && !$item['qty_overridden'] && $item['qty_per_session']) {
+                $this->items[$i]['quantity'] = $item['qty_per_session'] * $sessions;
+            }
         }
     }
 
     public function updated($name, $value)
     {
+        if (preg_match('/^items\.(\d+)\.session$/', $name)) {
+            $index = (int) explode('.', $name)[1];
+            if ($this->items[$index]['type'] === 'service') {
+                $this->recalcChildren($this->items[$index]['uid'], $value);
+            }
+        }
+
+        if (preg_match('/^items\.(\d+)\.quantity$/', $name)) {
+            $index = (int) explode('.', $name)[1];
+            if ($this->items[$index]['parent_uid']) {
+                $this->items[$index]['qty_overridden'] = true;
+            }
+        }
+
+        if (preg_match('/^items\.(\d+)\.is_billable$/', $name)) {
+            $index = (int) explode('.', $name)[1];
+            $item = InventoryItem::find($this->items[$index]['catalog_id']);
+            $this->items[$index]['service_charges'] = $value && $item ? $item->sale_price : 0;
+            if (!$value) {
+                $this->items[$index]['discount_value'] = 0;
+            }
+        }
+
         if (preg_match('/^items\.(\d+)\.type$/', $name)) {
             $index = (int) explode('.', $name)[1];
+            $uid = $this->items[$index]['uid'];
+            $this->items = array_values(array_filter($this->items, fn ($item) => $item['parent_uid'] !== $uid));
             $this->items[$index]['catalog_id'] = '';
             $this->items[$index]['service'] = '';
             if ($this->items[$index]['type'] === 'custom') {
@@ -217,12 +334,18 @@ class Invoices extends Component
                 if ($catalogItem) {
                     $this->items[$index]['service'] = $catalogItem->name;
                     $this->items[$index]['service_charges'] = $catalogItem->price;
+                    $this->fillRecipe($index);
                 }
             } elseif ($type === 'product') {
                 $catalogItem = InventoryItem::find($value);
                 if ($catalogItem) {
+                    $isChild = (bool) $this->items[$index]['parent_uid'];
+                    // A hand-added child takes the item's billable default.
+                    if ($isChild && !$this->items[$index]['qty_per_session']) {
+                        $this->items[$index]['is_billable'] = (bool) $catalogItem->default_billable;
+                    }
                     $this->items[$index]['service'] = $catalogItem->name;
-                    $this->items[$index]['service_charges'] = $catalogItem->sale_price;
+                    $this->items[$index]['service_charges'] = $this->items[$index]['is_billable'] ? $catalogItem->sale_price : 0;
                 }
             }
         }
@@ -263,7 +386,7 @@ class Invoices extends Component
 
     public function add_payment()
     {
-        $this->payments[] = ['paid_on' => now()->format('Y-m-d'), 'amount' => 0, 'payment_mode' => 'Cash'];
+        $this->payments[] = $this->blankPayment();
     }
 
     public function remove_payment($index)
@@ -310,8 +433,10 @@ class Invoices extends Component
         $this->validate([
             'patient_id' => 'required',
             'doctor_id' => 'nullable',
+            'items' => 'required|array|min:1',
             'items.*.type' => 'required|in:service,product,custom',
-            'items.*.service' => 'required|string',
+            'items.*.service' => 'required_unless:items.*.type,product|nullable|string',
+            'items.*.catalog_id' => 'required_if:items.*.type,product',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.session' => 'nullable|integer|between:1,10',
             'items.*.service_charges' => 'required|numeric|min:0',
@@ -320,30 +445,15 @@ class Invoices extends Component
             'payments.*.paid_on' => 'required|date',
             'payments.*.amount' => 'required|numeric|min:0',
             'payments.*.payment_mode' => 'required|string',
+        ], [
+            'items.*.catalog_id.required_if' => 'Choose a product from inventory.',
+            'items.*.service.required_unless' => 'Enter or choose what this line is for.',
         ]);
-
-        $products = [];
-        foreach ($this->items as $index => $item) {
-            if ($item['type'] !== 'product') {
-                continue;
-            }
-            $product = $item['catalog_id'] ? InventoryItem::find($item['catalog_id']) : null;
-            if (!$product) {
-                $this->addError("items.$index.service", 'Choose a product from inventory.');
-                return;
-            }
-            $products[$index] = $product;
-
-            // Unit price is the item's sale price unless the user may override it.
-            if (!auth()->user()->hasPermission('inventory', 'price_override')) {
-                $this->items[$index]['service_charges'] = $product->sale_price;
-            }
-        }
 
         $stock = app(StockService::class);
 
         if (!$confirmShortfall) {
-            $this->shortfalls = $this->findShortfalls($products, $stock);
+            $this->shortfalls = $this->findShortfalls($stock);
             if ($this->shortfalls) {
                 $this->dispatchBrowserEvent('invoice-shortfall-open');
                 return;
@@ -351,117 +461,57 @@ class Invoices extends Component
         }
         $this->shortfalls = [];
 
-        $invoice = RetryingTransaction::run(function () use ($products, $stock) {
-            // Every item this save touches (new lines + lines being replaced),
-            // locked in id order before any stock moves.
-            $existing = $this->editing_invoice_id ? Invoice::find($this->editing_invoice_id) : null;
-            $stock->lockItems(array_merge(
-                collect($products)->pluck('id')->all(),
-                $existing ? $stock->itemsMovedBy($existing) : []
-            ));
+        $editing = $this->editing_invoice_id ? Invoice::findOrFail($this->editing_invoice_id) : null;
 
-            if ($this->editing_invoice_id) {
-                $invoice = Invoice::findOrFail($this->editing_invoice_id);
-                $invoice->update([
-                    'patient_id' => $this->patient_id,
-                    'doctor_id' => $this->doctor_id ?: null,
-                    'notes' => $this->notes,
-                ]);
+        try {
+            $invoice = app(InvoiceService::class)->save(
+                ['patient_id' => $this->patient_id, 'doctor_id' => $this->doctor_id, 'notes' => $this->notes],
+                $this->items,
+                $this->payments,
+                $editing,
+                auth()->user()->hasPermission('inventory', 'price_override')
+            );
+        } catch (DomainException $e) {
+            $this->addError('items', $e->getMessage());
+            return;
+        }
 
-                // Edit = reverse everything the invoice moved, then re-apply.
-                $stock->reverse($invoice);
+        if (!$editing) {
+            $this->logActivity('created', 'invoices', $invoice->id, "Created invoice #{$invoice->invoice_number}.");
+        }
 
-                $invoice->items()->delete();
-                $invoice->payments()->delete();
-            } else {
-                $invoiceNumber = date('y') . str_pad(Invoice::withTrashed()->max('id') + 1, 5, '0', STR_PAD_LEFT);
-
-                $invoice = Invoice::create([
-                    'invoice_number' => $invoiceNumber,
-                    'patient_id' => $this->patient_id,
-                    'doctor_id' => $this->doctor_id ?: null,
-                    'created_by' => auth()->id(),
-                    'printed_by' => auth()->user()->name ?? null,
-                    'notes' => $this->notes,
-                ]);
-            }
-
-            foreach ($this->items as $index => $item) {
-                $subTotal = (float) $item['quantity'] * (float) $item['service_charges'];
-                $discountValue = (float) $item['discount_value'];
-                $discountAmount = $item['discount_type'] === 'percent'
-                    ? $subTotal * $discountValue / 100
-                    : $discountValue;
-                $discountAmount = min($discountAmount, $subTotal);
-                $product = $products[$index] ?? null;
-
-                $line = InvoiceItem::create([
-                    'invoice_id' => $invoice->id,
-                    'line_type' => $item['type'],
-                    'service_id' => $item['type'] === 'service' ? ($item['catalog_id'] ?: null) : null,
-                    'inventory_item_id' => $product ? $product->id : null,
-                    'is_billable' => true,
-                    'unit_cost' => $product ? $product->cost_price : null,
-                    'service' => $item['service'],
-                    'quantity' => $item['quantity'],
-                    'session_number' => $item['type'] === 'product' ? null : ($item['session'] ?: null),
-                    'service_charges' => $item['service_charges'],
-                    'discount_type' => $item['discount_type'],
-                    'discount_value' => $discountValue,
-                    'sub_total' => $subTotal,
-                    'discount' => $discountAmount,
-                    'after_discount' => $subTotal - $discountAmount,
-                ]);
-
-                if ($product) {
-                    $stock->stockOut($product, (int) $item['quantity'], $invoice, null, $line->id);
-                }
-            }
-
-            foreach ($this->payments as $payment) {
-                if ((float) $payment['amount'] <= 0) {
-                    continue;
-                }
-                InvoicePayment::create([
-                    'invoice_id' => $invoice->id,
-                    'paid_on' => $payment['paid_on'],
-                    'amount' => $payment['amount'],
-                    'payment_mode' => $payment['payment_mode'],
-                ]);
-            }
-
-            return $invoice;
-        });
-
-        $this->logActivity(
-            $this->editing_invoice_id ? 'updated' : 'created',
-            'invoices',
-            $invoice->id,
-            ($this->editing_invoice_id ? 'Updated' : 'Created') . " invoice #{$invoice->invoice_number}."
-        );
-
-        session()->flash('message', 'Invoice generated successfully.');
+        session()->flash('message', $editing ? 'Invoice updated successfully.' : 'Invoice generated successfully.');
         $this->view_invoice_id = $invoice->id;
         $this->_page = 'view';
     }
 
     /**
-     * Product lines (summed per item) needing more than is sellable. When
-     * editing, stock this invoice already holds counts as available,
-     * because it is put back before the new lines are applied.
+     * Stock lines (summed per item) needing more than is sellable. A saved
+     * line whose item and billed qty are unchanged keeps what it holds
+     * (it may have had a stock-only reduction); stock the invoice already
+     * holds counts as available.
      */
-    protected function findShortfalls(array $products, StockService $stock): array
+    protected function findShortfalls(StockService $stock): array
     {
+        $editing = $this->editing_invoice_id ? Invoice::find($this->editing_invoice_id) : null;
+        $saved = $editing ? $editing->items()->get()->keyBy('id') : collect();
+
         $needed = [];
-        foreach ($products as $index => $product) {
-            $needed[$product->id] = ($needed[$product->id] ?? 0) + (int) $this->items[$index]['quantity'];
+        foreach ($this->items as $line) {
+            if ($line['type'] !== 'product' || !$line['catalog_id']) {
+                continue;
+            }
+            $old = $line['id'] ? $saved->get((int) $line['id']) : null;
+            $unchanged = $old && (int) $old->inventory_item_id === (int) $line['catalog_id'] && (int) $old->quantity === (int) $line['quantity'];
+            $needed[(int) $line['catalog_id']] = ($needed[(int) $line['catalog_id']] ?? 0) + ($unchanged ? (int) $old->stock_qty : (int) $line['quantity']);
         }
 
-        $editing = $this->editing_invoice_id ? Invoice::find($this->editing_invoice_id) : null;
         $shortfalls = [];
-
         foreach ($needed as $itemId => $qty) {
-            $product = collect($products)->firstWhere('id', $itemId);
+            $product = InventoryItem::find($itemId);
+            if (!$product) {
+                continue;
+            }
             $available = $stock->sellableQty($product) + ($editing ? $stock->heldBy($editing, $itemId) : 0);
             if ($qty > $available) {
                 $shortfalls[] = ['name' => $product->name, 'needed' => $qty, 'available' => $available, 'short' => $qty - $available];
@@ -477,7 +527,7 @@ class Invoices extends Component
     }
 
     /**
-     * Live "available" figure shown beside each product line.
+     * Live "available" figure shown beside each product and child line.
      *
      * @return array<int, int> inventory item id => sellable qty
      */
@@ -499,6 +549,49 @@ class Invoices extends Component
                 return [$id => $stock->sellableQty($product) + ($editing ? $stock->heldBy($editing, (int) $id) : 0)];
             })
             ->all();
+    }
+
+    // ---- Stock-only reduction (prepaid package, patient stopped early) ----
+
+    public $reduce_line_id;
+    public $reduce_qty = 1;
+    public $reduce_reason = '';
+
+    public function prompt_reduce($lineId)
+    {
+        abort_unless(auth()->user()->hasPermission('invoices', 'update'), 403);
+
+        $line = InvoiceItem::findOrFail($lineId);
+        abort_unless($this->canViewAllInvoices() || $line->invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
+
+        $this->reduce_line_id = $line->id;
+        $this->reduce_qty = 1;
+        $this->reduce_reason = '';
+        $this->resetErrorBag(['reduce_qty', 'reduce_reason']);
+    }
+
+    public function reduce_stock()
+    {
+        abort_unless(auth()->user()->hasPermission('invoices', 'update'), 403);
+
+        $this->validate([
+            'reduce_qty' => 'required|integer|min:1',
+            'reduce_reason' => 'required|string|max:500',
+        ], [], ['reduce_qty' => 'qty', 'reduce_reason' => 'reason']);
+
+        $line = InvoiceItem::findOrFail($this->reduce_line_id);
+        abort_unless($this->canViewAllInvoices() || $line->invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
+
+        try {
+            app(InvoiceService::class)->reduceStockUsed($line, (int) $this->reduce_qty, $this->reduce_reason);
+        } catch (DomainException $e) {
+            $this->addError('reduce_qty', $e->getMessage());
+            return;
+        }
+
+        $this->reduce_line_id = null;
+        $this->dispatchBrowserEvent('invoice-reduce-closed');
+        session()->flash('message', "Unused {$line->service} returned to stock. The billed amount is unchanged.");
     }
 
     public function add_payment_to_invoice()
@@ -580,8 +673,17 @@ class Invoices extends Component
     {
         if ($this->_page === 'view' && $this->view_invoice_id) {
             $this->new_paid_on = $this->new_paid_on ?: now()->format('Y-m-d');
+            $invoice = Invoice::with(['items', 'payments', 'patient', 'doctor.employ'])->findOrFail($this->view_invoice_id);
+            $lines = $invoice->items->sortBy(fn ($item) => [$item->position, $item->id])->values();
+
             return view('livewire.admins.invoices', [
-                'invoice' => Invoice::with(['items', 'payments', 'patient', 'doctor.employ'])->findOrFail($this->view_invoice_id),
+                'invoice' => $invoice,
+                // Billable lines in order, each child right under its service.
+                'billedLines' => $lines->filter(fn ($line) => $line->is_billable)->values(),
+                // D3: shown to staff here, never on the patient PDF.
+                'consumables' => $lines->reject(fn ($line) => $line->is_billable)->values(),
+                'reduceLine' => $this->reduce_line_id ? $invoice->items->firstWhere('id', $this->reduce_line_id) : null,
+                'canEdit' => auth()->user()->hasPermission('invoices', 'update'),
             ])->layout('admins.layouts.app');
         }
 

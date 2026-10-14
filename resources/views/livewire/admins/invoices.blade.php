@@ -148,8 +148,15 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($items as $index => $item)
-                                            <tr>
-                                                <td>
+                                            @php $isChild = (bool) $item['parent_uid']; @endphp
+                                            <tr wire:key="line-{{ $item['uid'] }}" @if ($isChild) style="background: #f8fbfb;" @endif>
+                                                <td @if ($isChild) style="padding-left: 34px;" @endif>
+                                                    @if ($isChild)
+                                                        <div class="form-inline mb-1 small text-muted">
+                                                            <span class="mr-2">&#8627; used for the service above</span>
+                                                            <label class="mb-0"><input type="checkbox" class="mr-1" wire:model="items.{{ $index }}.is_billable"> Billable</label>
+                                                        </div>
+                                                    @else
                                                     <div class="form-inline mb-1">
                                                         <select class="form-control form-control-sm mr-1" wire:model="items.{{ $index }}.type">
                                                             <option value="custom">Custom / Typed</option>
@@ -157,6 +164,7 @@
                                                             <option value="product">Product</option>
                                                         </select>
                                                     </div>
+                                                    @endif
 
                                                     @if ($item['type'] === 'custom')
                                                         <input type="text" class="form-control" wire:model.lazy="items.{{ $index }}.service" placeholder="e.g. Carbon+PRP+Meso">
@@ -177,7 +185,11 @@
                                                             @php $avail = $available[$item['catalog_id']]; @endphp
                                                             <small class="{{ $avail < (int) $item['quantity'] ? 'text-danger font-weight-bold' : 'text-muted' }}">Available: {{ $avail }}</small>
                                                         @endif
+                                                        @if ($item['type'] === 'service' && $item['catalog_id'] !== '')
+                                                            <button type="button" class="btn btn-link btn-sm p-0 d-block" wire:click="add_child({{ $index }})">+ Add item used</button>
+                                                        @endif
                                                     @endif
+                                                    @error("items.$index.catalog_id") <span class="text-danger text-xs d-block">{{ $message }}</span> @enderror
                                                 </td>
                                                 <td>
                                                     @if ($item['type'] === 'service')
@@ -201,11 +213,11 @@
                                                 <td>
                                                     <input type="number" step="0.01" min="0" class="form-control"
                                                         wire:model.lazy="items.{{ $index }}.service_charges"
-                                                        @if ($item['type'] === 'service' || ($item['type'] === 'product' && !$canOverridePrice)) readonly style="background: #f4f6f6;" title="Price comes from the catalog. Use Discount to adjust." @endif>
+                                                        @if ($item['type'] === 'service' || ($item['type'] === 'product' && (!$canOverridePrice || !$item['is_billable']))) readonly style="background: #f4f6f6;" title="{{ $item['is_billable'] ? 'Price comes from the catalog. Use Discount to adjust.' : 'Not billed: deducts stock only.' }}" @endif>
                                                 </td>
                                                 <td>
                                                     <div class="input-group">
-                                                        <input type="number" step="0.01" min="0" class="form-control" wire:model.lazy="items.{{ $index }}.discount_value">
+                                                        <input type="number" step="0.01" min="0" class="form-control" wire:model.lazy="items.{{ $index }}.discount_value" @unless ($item['is_billable']) readonly style="background: #f4f6f6;" @endunless>
                                                         <select class="form-control" wire:model.lazy="items.{{ $index }}.discount_type" style="min-width: 70px; max-width: 100px;">
                                                             <option value="flat">PKR</option>
                                                             <option value="percent">%</option>
@@ -216,7 +228,8 @@
                                                 <td class="align-middle">{{ number_format($this->item_totals[$index]['discount_amount'] ?? 0, 2) }}</td>
                                                 <td class="align-middle">{{ number_format($this->item_totals[$index]['after_discount'] ?? 0, 2) }}</td>
                                                 <td class="align-middle">
-                                                    <button type="button" class="btn btn-outline-danger btn-sm" wire:click="remove_item({{ $index }})"><i class="fas fa-trash"></i></button>
+                                                    <button type="button" class="btn btn-outline-danger btn-sm" wire:click="remove_item({{ $index }})"
+                                                        @if ($item['type'] === 'service' && collect($items)->contains('parent_uid', $item['uid'])) onclick="return confirm('Remove this service and the items used for it?')" @endif><i class="fas fa-trash"></i></button>
                                                 </td>
                                             </tr>
                                             @error("items.$index.service") <tr><td colspan="9"><span class="text-danger text-xs">{{ $message }}</span></td></tr> @enderror
@@ -403,9 +416,17 @@
                                 <tr><th>Service/Product</th><th>Qty</th><th>No. of Sessions</th><th>Charges</th><th>Sub Total</th><th>Discount</th><th>After Discount</th></tr>
                             </thead>
                             <tbody>
-                                @foreach ($invoice->items as $item)
-                                    <tr>
-                                        <td>{{ $item->service }}</td>
+                                @foreach ($billedLines as $item)
+                                    <tr @if ($item->parent_line_id) style="background: #f8fbfb;" @endif>
+                                        <td @if ($item->parent_line_id) style="padding-left: 30px;" @endif>
+                                            @if ($item->parent_line_id)&#8627; @endif{{ $item->service }}
+                                            @if ($item->inventory_item_id && $item->stock_qty !== null && $item->stock_qty < $item->quantity)
+                                                <small class="text-muted d-block">billed {{ $item->quantity }} · used {{ $item->stock_qty }}</small>
+                                            @endif
+                                            @if ($canEdit && $item->parent_line_id && $item->inventory_item_id && $item->stock_qty > 0)
+                                                <button class="btn btn-link btn-sm p-0" wire:click="prompt_reduce({{ $item->id }})" data-toggle="modal" data-target="#reduceStockModal">Reduce stock used</button>
+                                            @endif
+                                        </td>
                                         <td>{{ $item->quantity }}</td>
                                         <td>{{ $item->session_number ?? '-' }}</td>
                                         <td>{{ number_format($item->service_charges, 2) }}</td>
@@ -421,6 +442,62 @@
                                 @endforeach
                             </tbody>
                         </table>
+
+                        @if ($consumables->isNotEmpty())
+                            <h6 class="text-muted">Consumables used (not billed)</h6>
+                            <table class="table table-sm table-bordered text-muted mb-4">
+                                <thead><tr><th>Item</th><th>For</th><th>Qty used</th></tr></thead>
+                                <tbody>
+                                    @foreach ($consumables as $item)
+                                        <tr>
+                                            <td>{{ $item->service }}</td>
+                                            <td>{{ optional($invoice->items->firstWhere('id', $item->parent_line_id))->service ?? '-' }}</td>
+                                            <td>
+                                                {{ $item->stock_qty ?? $item->quantity }}
+                                                @if ($item->stock_qty !== null && $item->stock_qty < $item->quantity)<small>(of {{ $item->quantity }})</small>@endif
+                                                @if ($canEdit && $item->parent_line_id && $item->stock_qty > 0)
+                                                    <button class="btn btn-link btn-sm p-0 ml-2" wire:click="prompt_reduce({{ $item->id }})" data-toggle="modal" data-target="#reduceStockModal">Reduce stock used</button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
+
+                        <div class="modal fade" id="reduceStockModal" tabindex="-1" role="dialog" aria-hidden="true" wire:ignore.self>
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header"><h5 class="modal-title">Reduce stock used</h5></div>
+                                    <div class="modal-body">
+                                        @if ($reduceLine)
+                                            <p class="mb-2"><strong>{{ $reduceLine->service }}</strong>: billed {{ $reduceLine->quantity }}, currently used {{ $reduceLine->stock_qty }}.</p>
+                                            <p class="small text-muted">Unused stock goes back to the batches it came from. The billed amount does not change.</p>
+                                        @endif
+                                        <div class="form-group">
+                                            <label>Qty to return *</label>
+                                            <input type="number" min="1" class="form-control" wire:model.defer="reduce_qty">
+                                            @error('reduce_qty') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                        <div class="form-group mb-0">
+                                            <label>Reason *</label>
+                                            <input type="text" class="form-control" wire:model.defer="reduce_reason" placeholder="e.g. Patient stopped after 2 of 5 sessions">
+                                            @error('reduce_reason') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" wire:click="reduce_stock">Return to stock</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <script>
+                            if (!window.__jfReduceBound) {
+                                window.__jfReduceBound = true;
+                                window.addEventListener('invoice-reduce-closed', function () { $('#reduceStockModal').modal('hide'); });
+                            }
+                        </script>
 
                         <h5>Payment History</h5>
                         <table class="table table-bordered">

@@ -4,8 +4,10 @@ namespace App\Services\Inventory;
 
 use App\Support\RetryingTransaction;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\InventoryItem;
 use App\Models\ItemBatch;
+use App\Models\ShortfallSettlement;
 use App\Models\StockMovement;
 use DomainException;
 use Illuminate\Database\Eloquent\Model;
@@ -203,8 +205,120 @@ class StockService
                 $allocations[] = ['batch_id' => null, 'qty' => $remaining];
             }
 
+            $this->recostLine($reference, $lineId);
+
             return $allocations;
         });
+    }
+
+    /**
+     * Gives back part of what one document line took, to the batches it
+     * came from, newest allocation first (any unbatched/negative part
+     * first, then batches by most recent take). Never re-picks FEFO, so a
+     * reduced line never silently moves to a different batch.
+     */
+    public function returnFromLine(Model $reference, int $lineId, int $itemId, int $qty, string $type = 'invoice_reversal'): void
+    {
+        if ($qty <= 0) {
+            throw new InvalidArgumentException('Return quantity must be positive.');
+        }
+
+        RetryingTransaction::run(function () use ($reference, $lineId, $itemId, $qty, $type) {
+            $item = $this->lockItem($itemId);
+            $held = $this->lineHoldings($reference, $lineId, $itemId);
+
+            if ($qty > $held['total']) {
+                throw new DomainException("Can't return {$qty} of {$item->name}: this line only holds {$held['total']}.");
+            }
+
+            $left = $qty;
+            if ($held['unbatched'] > 0) {
+                $part = min($left, $held['unbatched']);
+                $this->returnUnbatched($item, $part, $type, $reference, $lineId);
+                $left -= $part;
+            }
+
+            foreach ($held['batches'] as $batchId => $batchQty) {
+                if ($left === 0) {
+                    break;
+                }
+                $put = min($left, $batchQty);
+                $batch = ItemBatch::lockForUpdate()->findOrFail($batchId);
+                $batch->increment('qty_remaining', $put);
+                $this->writeMovement($item, $batch->id, $type, $put, (float) $batch->unit_cost, $reference, $lineId);
+                $left -= $put;
+            }
+
+            $this->recostLine($reference, $lineId);
+        });
+    }
+
+    /**
+     * What one line currently holds out of an item: its unbatched
+     * (negative-stock) qty and, per batch, newest take first.
+     *
+     * @return array{total: int, unbatched: int, batches: array<int, int>}
+     */
+    public function lineHoldings(Model $reference, int $lineId, int $itemId): array
+    {
+        $rows = StockMovement::where('reference_type', $reference->getMorphClass())
+            ->where('reference_id', $reference->getKey())
+            ->where('reference_line_id', $lineId)
+            ->where('item_id', $itemId)
+            ->selectRaw('batch_id, -SUM(qty) as held, MAX(id) as last_id')
+            ->groupBy('batch_id')
+            ->get();
+
+        $unbatched = (int) optional($rows->firstWhere('batch_id', null))->held;
+        $batches = $rows->whereNotNull('batch_id')->filter(fn ($row) => (int) $row->held > 0)
+            ->sortByDesc('last_id')
+            ->mapWithKeys(fn ($row) => [(int) $row->batch_id => (int) $row->held])
+            ->all();
+
+        return ['total' => max(0, $unbatched) + array_sum($batches), 'unbatched' => max(0, $unbatched), 'batches' => $batches];
+    }
+
+    /**
+     * Weighted cost of what a line holds: each batch at its own unit cost,
+     * the negative-stock part at the batch that later settled it, and any
+     * still-unsettled part at the item's cost price on the day of sale.
+     */
+    public function lineUnitCost(Model $reference, int $lineId): ?float
+    {
+        $movements = StockMovement::where('reference_type', $reference->getMorphClass())
+            ->where('reference_id', $reference->getKey())
+            ->where('reference_line_id', $lineId)
+            ->get();
+
+        $batchQty = -(int) $movements->whereNotNull('batch_id')->sum('qty');
+        $batchCost = -$movements->whereNotNull('batch_id')->sum(fn ($m) => $m->qty * (float) $m->unit_cost);
+
+        $unbatched = max(0, -(int) $movements->whereNull('batch_id')->sum('qty'));
+        $settlements = ShortfallSettlement::where('owner_type', $reference->getMorphClass())
+            ->where('owner_id', $reference->getKey())
+            ->where('owner_line_id', $lineId)
+            ->get();
+        $settledQty = (int) $settlements->sum('qty');
+        $settledCost = $settlements->sum(fn ($s) => $s->qty * (float) $s->unit_cost);
+        $saleCost = (float) optional($movements->whereNull('batch_id')->where('qty', '<', 0)->sortByDesc('id')->first())->unit_cost;
+        $unsettledCost = max(0, $unbatched - $settledQty) * $saleCost;
+
+        $qty = $batchQty + $unbatched;
+
+        return $qty > 0 ? round(($batchCost + $settledCost + $unsettledCost) / $qty, 2) : null;
+    }
+
+    /** Keeps an invoice line's unit_cost equal to its actual allocations. */
+    private function recostLine(Model $reference, ?int $lineId): void
+    {
+        if ($lineId === null || !$reference instanceof Invoice) {
+            return;
+        }
+
+        $cost = $this->lineUnitCost($reference, $lineId);
+        if ($cost !== null) {
+            InvoiceItem::whereKey($lineId)->update(['unit_cost' => $cost]);
+        }
     }
 
     /**
@@ -244,7 +358,18 @@ class StockService
                         continue;
                     }
 
-                    $this->reverseUnbatched($item, $undo, $type, $reference, $row->reference_line_id);
+                    if ($undo > 0) {
+                        // This document sold into negative: give that back.
+                        $this->returnUnbatched($item, $undo, $type, $reference, $row->reference_line_id);
+                    } else {
+                        // This document's stock-in settled other documents'
+                        // shortfalls: those shortfalls are open again.
+                        $this->unsettleBy($item, -$undo, $type, $reference, $row->reference_line_id);
+                    }
+                }
+
+                foreach ($rows->pluck('reference_line_id')->unique() as $line) {
+                    $this->recostLine($reference, $line);
                 }
             }
         });
@@ -296,6 +421,19 @@ class StockService
                 $problems[] = "{$item->code} {$item->name}: batches {$batches} + unbatched {$unbatched} ≠ qty_on_hand {$item->qty_on_hand}";
             }
 
+            // Each stock-in's net "settled" qty must match its settlement records.
+            $settledInLedger = (int) StockMovement::where('item_id', $item->id)
+                ->whereNull('batch_id')
+                ->selectRaw('SUM(qty) as net')
+                ->groupBy('reference_type', 'reference_id', 'reference_line_id')
+                ->havingRaw('SUM(qty) > 0')
+                ->get()
+                ->sum('net');
+            $settledRecorded = (int) ShortfallSettlement::where('item_id', $item->id)->sum('qty');
+            if ($settledInLedger !== $settledRecorded) {
+                $problems[] = "{$item->code} {$item->name}: settled shortfall {$settledInLedger} in ledger ≠ {$settledRecorded} in settlement records";
+            }
+
             foreach (ItemBatch::where('item_id', $item->id)->get() as $batch) {
                 $batchLedger = (int) StockMovement::where('batch_id', $batch->id)->sum('qty');
                 if ($batchLedger !== $batch->qty_remaining) {
@@ -307,59 +445,173 @@ class StockService
         return $problems;
     }
 
+    /**
+     * Settles open shortfalls of the item out of a batch just received,
+     * oldest shortfall first, recording which batch covered each one so
+     * the selling line can be re-costed at that batch's cost.
+     */
     private function settleShortfall(InventoryItem $item, ItemBatch $batch, Model $reference, ?int $lineId): void
     {
-        $shortfall = -$this->unbatchedNet($item->id);
-        $settle = min($shortfall, $batch->qty_remaining);
+        // The ledger's own figure is the ceiling: shortfalls settled before
+        // settlement records existed must not be settled a second time.
+        $outstanding = max(0, -$this->unbatchedNet($item->id));
 
-        if ($settle <= 0) {
-            return;
+        foreach ($this->openShortfalls($item->id) as $owner) {
+            $batch->refresh();
+            if ($batch->qty_remaining <= 0 || $outstanding <= 0) {
+                break;
+            }
+            $settle = min($owner['unsettled'], $batch->qty_remaining, $outstanding);
+            $outstanding -= $settle;
+
+            $batch->decrement('qty_remaining', $settle);
+            $this->writeMovement($item, null, 'shortfall_settle', $settle, (float) $batch->unit_cost, $reference, $lineId, false);
+            $this->writeMovement($item, $batch->id, 'shortfall_settle', -$settle, (float) $batch->unit_cost, $reference, $lineId, false);
+
+            ShortfallSettlement::create([
+                'item_id' => $item->id,
+                'owner_type' => $owner['type'],
+                'owner_id' => $owner['id'],
+                'owner_line_id' => $owner['line'],
+                'batch_id' => $batch->id,
+                'settled_by_type' => $reference->getMorphClass(),
+                'settled_by_id' => $reference->getKey(),
+                'settled_by_line_id' => $lineId,
+                'qty' => $settle,
+                'unit_cost' => $batch->unit_cost,
+                'created_by' => auth()->id(),
+            ]);
+
+            $this->recostOwner($owner);
         }
-
-        $batch->decrement('qty_remaining', $settle);
-        $this->writeMovement($item, null, 'shortfall_settle', $settle, (float) $batch->unit_cost, $reference, $lineId, false);
-        $this->writeMovement($item, $batch->id, 'shortfall_settle', -$settle, (float) $batch->unit_cost, $reference, $lineId, false);
     }
 
     /**
-     * Undoing a sale that went negative. While the shortfall is still
-     * unsettled the qty simply cancels it; any part a later stock-in has
-     * already settled goes back to the batch(es) that absorbed it,
-     * newest settlement first.
+     * Documents/lines holding stock they sold into negative and that no
+     * stock-in has covered yet, oldest first.
+     *
+     * @return array<int, array{type: string, id: int, line: ?int, unsettled: int}>
      */
-    private function reverseUnbatched(InventoryItem $item, int $undo, string $type, Model $reference, ?int $lineId): void
+    private function openShortfalls(int $itemId): array
     {
-        if ($undo < 0) {
-            $this->writeMovement($item, null, $type, $undo, (float) $item->cost_price, $reference, $lineId);
-            return;
+        $owners = StockMovement::where('item_id', $itemId)
+            ->whereNull('batch_id')
+            ->selectRaw('reference_type, reference_id, reference_line_id, -SUM(qty) as held, MIN(id) as first_id')
+            ->groupBy('reference_type', 'reference_id', 'reference_line_id')
+            ->havingRaw('SUM(qty) < 0')
+            ->orderBy('first_id')
+            ->get();
+
+        $open = [];
+        foreach ($owners as $owner) {
+            $settled = (int) ShortfallSettlement::where('item_id', $itemId)
+                ->where('owner_type', $owner->reference_type)
+                ->where('owner_id', $owner->reference_id)
+                ->where('owner_line_id', $owner->reference_line_id)
+                ->sum('qty');
+            $unsettled = (int) $owner->held - $settled;
+            if ($unsettled > 0) {
+                $open[] = ['type' => $owner->reference_type, 'id' => (int) $owner->reference_id, 'line' => $owner->reference_line_id !== null ? (int) $owner->reference_line_id : null, 'unsettled' => $unsettled];
+            }
         }
 
-        $toShortfall = min($undo, max(0, -$this->unbatchedNet($item->id)));
-        if ($toShortfall > 0) {
-            $this->writeMovement($item, null, $type, $toShortfall, (float) $item->cost_price, $reference, $lineId);
-        }
+        return $open;
+    }
 
-        $left = $undo - $toShortfall;
-        $settlements = StockMovement::where('item_id', $item->id)
-            ->where('type', 'shortfall_settle')
-            ->whereNotNull('batch_id')
-            ->where('qty', '<', 0)
+    /**
+     * A line gives back stock it sold into negative. The still-unsettled
+     * part just cancels the shortfall; any part a later stock-in already
+     * covered goes back into the batch that covered it (newest settlement
+     * first) and that settlement shrinks.
+     */
+    private function returnUnbatched(InventoryItem $item, int $qty, string $type, Model $reference, ?int $lineId): void
+    {
+        $settlements = ShortfallSettlement::where('item_id', $item->id)
+            ->where('owner_type', $reference->getMorphClass())
+            ->where('owner_id', $reference->getKey())
+            ->where('owner_line_id', $lineId)
             ->orderByDesc('id')
             ->get();
 
+        $held = max(0, -(int) StockMovement::where('item_id', $item->id)
+            ->where('reference_type', $reference->getMorphClass())
+            ->where('reference_id', $reference->getKey())
+            ->where('reference_line_id', $lineId)
+            ->whereNull('batch_id')
+            ->sum('qty'));
+        $unsettled = max(0, $held - (int) $settlements->sum('qty'));
+
+        $cancel = min($qty, $unsettled);
+        if ($cancel > 0) {
+            $this->writeMovement($item, null, $type, $cancel, (float) $item->cost_price, $reference, $lineId);
+        }
+
+        $left = $qty - $cancel;
         foreach ($settlements as $settlement) {
             if ($left === 0) {
                 break;
             }
-            $put = min($left, -$settlement->qty);
-            $batch = ItemBatch::lockForUpdate()->find($settlement->batch_id);
+            $put = min($left, $settlement->qty);
+            $batch = ItemBatch::lockForUpdate()->findOrFail($settlement->batch_id);
+            $settledBy = $this->settledByReference($settlement);
+
+            // The line's negative stock is given back...
+            $this->writeMovement($item, null, $type, $put, (float) $batch->unit_cost, $reference, $lineId);
+            // ...and the stock-in's settlement is undone, back into its batch.
             $batch->increment('qty_remaining', $put);
-            $this->writeMovement($item, $batch->id, $type, $put, (float) $batch->unit_cost, $reference, $lineId);
+            $this->writeMovement($item, null, 'shortfall_settle', -$put, (float) $batch->unit_cost, $settledBy, $settlement->settled_by_line_id, false);
+            $this->writeMovement($item, $batch->id, 'shortfall_settle', $put, (float) $batch->unit_cost, $settledBy, $settlement->settled_by_line_id, false);
+
+            $settlement->qty - $put > 0 ? $settlement->update(['qty' => $settlement->qty - $put]) : $settlement->delete();
             $left -= $put;
         }
 
         if ($left > 0) {
-            $this->writeMovement($item, null, $type, $left, (float) $item->cost_price, $reference, $lineId);
+            throw new DomainException("Can't return {$qty} of {$item->name}: more than this line took.");
+        }
+    }
+
+    /**
+     * Reversing a stock-in that settled other lines' shortfalls: those
+     * shortfalls are open again (their lines go back to sale-day cost).
+     */
+    private function unsettleBy(InventoryItem $item, int $qty, string $type, Model $reference, ?int $lineId): void
+    {
+        $settlements = ShortfallSettlement::where('item_id', $item->id)
+            ->where('settled_by_type', $reference->getMorphClass())
+            ->where('settled_by_id', $reference->getKey())
+            ->where('settled_by_line_id', $lineId)
+            ->orderByDesc('id')
+            ->get();
+
+        if ((int) $settlements->sum('qty') !== $qty) {
+            throw new DomainException("Settlement records for {$item->name} don't match the ledger; run inventory:verify.");
+        }
+
+        $this->writeMovement($item, null, $type, -$qty, (float) $item->cost_price, $reference, $lineId);
+
+        foreach ($settlements as $settlement) {
+            $owner = ['type' => $settlement->owner_type, 'id' => $settlement->owner_id, 'line' => $settlement->owner_line_id];
+            $settlement->delete();
+            $this->recostOwner($owner);
+        }
+    }
+
+    private function settledByReference(ShortfallSettlement $settlement): Model
+    {
+        $class = \Illuminate\Database\Eloquent\Relations\Relation::getMorphedModel($settlement->settled_by_type) ?? $settlement->settled_by_type;
+
+        return $class::withoutGlobalScopes()->findOrFail($settlement->settled_by_id);
+    }
+
+    private function recostOwner(array $owner): void
+    {
+        if ($owner['line'] === null || $owner['type'] !== (new Invoice)->getMorphClass()) {
+            return;
+        }
+        $invoice = Invoice::withTrashed()->find($owner['id']);
+        if ($invoice) {
+            $this->recostLine($invoice, $owner['line']);
         }
     }
 

@@ -14,4 +14,9 @@ class Service extends Model
         'name',
         'price',
     ];
+
+    public function recipe()
+    {
+        return $this->hasMany(ServiceItem::class);
+    }
 }

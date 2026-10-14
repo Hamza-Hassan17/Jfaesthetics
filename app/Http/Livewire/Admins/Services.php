@@ -2,13 +2,17 @@
 
 namespace App\Http\Livewire\Admins;
 
+use App\Models\InventoryItem;
 use App\Models\Service;
+use App\Traits\LogsActivity;
+use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
 
 class Services extends Component
 {
     use WithPagination;
+    use LogsActivity;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -83,10 +87,97 @@ class Services extends Component
         session()->flash('message', 'Service Deleted Successfully.');
     }
 
+    // ---- Recipe (consumables per session) ----
+
+    public $recipe_service_id;
+    public $recipe_lines = [];
+
+    public function show_recipe($id)
+    {
+        abort_unless(auth()->user()->hasPermission('inventory', 'view'), 403);
+
+        $service = Service::with('recipe')->findOrFail($id);
+        $this->recipe_service_id = $service->id;
+        $this->recipe_lines = $service->recipe->map(fn ($line) => [
+            'item_id' => $line->item_id,
+            'qty_per_session' => $line->qty_per_session,
+            'is_billable' => $line->is_billable,
+        ])->all();
+        $this->resetErrorBag();
+    }
+
+    public function close_recipe()
+    {
+        $this->recipe_service_id = null;
+        $this->recipe_lines = [];
+    }
+
+    public function add_recipe_line()
+    {
+        $this->recipe_lines[] = ['item_id' => '', 'qty_per_session' => 1, 'is_billable' => true];
+    }
+
+    public function remove_recipe_line($index)
+    {
+        unset($this->recipe_lines[$index]);
+        $this->recipe_lines = array_values($this->recipe_lines);
+    }
+
+    public function updated($name, $value)
+    {
+        // Billable defaults from the item's own setting when it is picked.
+        if (preg_match('/^recipe_lines\.(\d+)\.item_id$/', $name) && $value !== '') {
+            $item = InventoryItem::find($value);
+            if ($item) {
+                $this->recipe_lines[(int) explode('.', $name)[1]]['is_billable'] = (bool) $item->default_billable;
+            }
+        }
+    }
+
+    /** Changing a recipe affects new invoices only: saved invoices keep their own lines. */
+    public function save_recipe()
+    {
+        abort_unless(auth()->user()->hasPermission('inventory', 'manage_recipes'), 403);
+
+        $this->validate([
+            'recipe_lines.*.item_id' => 'required|distinct|exists:inventory_items,id',
+            'recipe_lines.*.qty_per_session' => 'required|integer|min:1',
+            'recipe_lines.*.is_billable' => 'boolean',
+        ], ['recipe_lines.*.item_id.distinct' => 'Each item can appear once in a recipe.'], [
+            'recipe_lines.*.item_id' => 'item',
+            'recipe_lines.*.qty_per_session' => 'qty per session',
+        ]);
+
+        $service = Service::findOrFail($this->recipe_service_id);
+        $before = $service->recipe()->with('item')->get()->map(fn ($l) => "{$l->item->name} ×{$l->qty_per_session}" . ($l->is_billable ? '' : ' (not billed)'))->implode(', ');
+
+        DB::transaction(function () use ($service) {
+            $service->recipe()->delete();
+            foreach ($this->recipe_lines as $line) {
+                $service->recipe()->create([
+                    'item_id' => $line['item_id'],
+                    'qty_per_session' => (int) $line['qty_per_session'],
+                    'is_billable' => (bool) $line['is_billable'],
+                    'created_by' => auth()->id(),
+                ]);
+            }
+        });
+
+        $after = $service->recipe()->with('item')->get()->map(fn ($l) => "{$l->item->name} ×{$l->qty_per_session}" . ($l->is_billable ? '' : ' (not billed)'))->implode(', ');
+        $this->logActivity('updated', 'services', $service->id, "Recipe for '{$service->name}': " . ($before ?: 'none') . ' → ' . ($after ?: 'none'));
+
+        session()->flash('message', "Recipe for {$service->name} saved. It applies to new invoices only.");
+        $this->close_recipe();
+    }
+
     public function render()
     {
         return view('livewire.admins.services', [
-            'services' => Service::latest()->paginate(10),
+            'services' => Service::withCount('recipe')->latest()->paginate(10),
+            'recipeService' => $this->recipe_service_id ? Service::find($this->recipe_service_id) : null,
+            'inventoryItems' => $this->recipe_service_id ? InventoryItem::where('is_active', true)->orderBy('name')->get() : collect(),
+            'canEditRecipe' => auth()->user()->hasPermission('inventory', 'manage_recipes'),
+            'canSeeRecipe' => auth()->user()->hasPermission('inventory', 'view'),
         ])->layout('admins.layouts.app');
     }
 }

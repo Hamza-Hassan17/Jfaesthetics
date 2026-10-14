@@ -93,6 +93,7 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         Route::get('/inventory/items', App\Http\Livewire\Admins\Inventory\Items::class)->name('admin_inventory_items')->middleware('permission:inventory');
         Route::get('/inventory/categories', App\Http\Livewire\Admins\Inventory\Categories::class)->name('admin_inventory_categories')->middleware('permission:inventory');
         Route::get('/inventory/adjustments', App\Http\Livewire\Admins\Inventory\Adjustments::class)->name('admin_inventory_adjustments')->middleware('permission:inventory');
+        Route::get('/inventory/invoices', App\Http\Livewire\Admins\Inventory\InvoiceStock::class)->name('admin_inventory_invoices')->middleware('permission:inventory');
         Route::get('/inventory/suppliers', App\Http\Livewire\Admins\Inventory\Suppliers::class)->name('admin_inventory_suppliers')->middleware('permission:inventory');
         Route::get('/inventory/purchase-orders', App\Http\Livewire\Admins\Inventory\PurchaseOrders::class)->name('admin_inventory_purchase_orders')->middleware('permission:inventory');
         Route::get('/inventory/receiving', App\Http\Livewire\Admins\Inventory\Receiving::class)->name('admin_inventory_receiving')->middleware('permission:inventory');

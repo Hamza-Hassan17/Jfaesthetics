@@ -124,9 +124,10 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($invoice->items as $item)
+                {{-- Non-billable consumables never appear on the patient copy. --}}
+                @foreach ($invoice->items->filter(fn ($line) => $line->is_billable)->sortBy(fn ($line) => [$line->position, $line->id]) as $item)
                     <tr>
-                        <td>{{ $item->service }}</td>
+                        <td @if ($item->parent_line_id) style="padding-left: 22px;" @endif>@if ($item->parent_line_id)&#8627; @endif{{ $item->service }}</td>
                         <td>{{ $item->service_id ? '-' : $item->quantity }}</td>
                         <td>{{ $item->line_type === 'product' ? '-' : ($item->session_number ?? '-') }}</td>
                         <td>{{ number_format($item->service_charges, 0) }}</td>

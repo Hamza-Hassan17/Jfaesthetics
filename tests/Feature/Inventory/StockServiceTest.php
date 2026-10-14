@@ -180,6 +180,8 @@ class StockServiceTest extends TestCase
         $this->stock->stockOut($this->item, 5, $this->sale());
         $this->receive(10, null, 'B');
 
-        $this->artisan('inventory:verify')->expectsOutput('Inventory OK: 0 mismatches.')->assertExitCode(0);
+        \Illuminate\Support\Carbon::setTestNow('2026-10-18 00:00:00');
+        $this->artisan('inventory:verify')->expectsOutput('[2026-10-18 00:00:00] Inventory OK: 0 mismatches.')->assertExitCode(0);
+        \Illuminate\Support\Carbon::setTestNow();
     }
 }

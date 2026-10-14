@@ -11,6 +11,10 @@ class InvoiceItem extends Model
 
     protected $fillable = [
         'invoice_id',
+        'position',
+        'stock_qty',
+        'qty_per_session',
+        'qty_overridden',
         'line_type',
         'service_id',
         'inventory_item_id',
@@ -28,6 +32,14 @@ class InvoiceItem extends Model
         'after_discount',
     ];
 
+    protected $casts = [
+        'is_billable' => 'boolean',
+        'qty_overridden' => 'boolean',
+        'quantity' => 'integer',
+        'stock_qty' => 'integer',
+        'qty_per_session' => 'integer',
+    ];
+
     public function invoice()
     {
         return $this->belongsTo(Invoice::class);
@@ -40,6 +52,21 @@ class InvoiceItem extends Model
 
     public function inventoryItem()
     {
-        return $this->belongsTo(InventoryItem::class);
+        return $this->belongsTo(InventoryItem::class)->withTrashed();
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(self::class, 'parent_line_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(self::class, 'parent_line_id')->orderBy('position');
+    }
+
+    public function getIsStockLineAttribute(): bool
+    {
+        return $this->inventory_item_id !== null;
     }
 }

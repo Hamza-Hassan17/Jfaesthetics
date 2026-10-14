@@ -14,11 +14,14 @@ class InventoryVerify extends Command
     public function handle(StockService $stock)
     {
         $problems = $stock->verify();
+        $stamp = '[' . now()->toDateTimeString() . '] ';
 
         if (empty($problems)) {
-            $this->info('Inventory OK: 0 mismatches.');
+            $this->info($stamp . 'Inventory OK: 0 mismatches.');
             return 0;
         }
+
+        $this->line($stamp . 'inventory:verify found problems:');
 
         foreach ($problems as $problem) {
             $this->error($problem);

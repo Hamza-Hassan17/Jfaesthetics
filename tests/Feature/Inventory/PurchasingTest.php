@@ -632,6 +632,9 @@ class PurchasingTest extends TestCase
         $this->pay(3000);
 
         $this->assertEquals(30, $this->syringe->fresh()->qty_on_hand);
-        $this->artisan('inventory:verify')->expectsOutput('Inventory OK: 0 mismatches.')->assertExitCode(0);
+        $this->assertSame([], app(StockService::class)->verify());
+        \Illuminate\Support\Carbon::setTestNow('2026-10-18 00:00:00');
+        $this->artisan('inventory:verify')->expectsOutput('[2026-10-18 00:00:00] Inventory OK: 0 mismatches.')->assertExitCode(0);
+        \Illuminate\Support\Carbon::setTestNow();
     }
 }

@@ -52,6 +52,49 @@
                     @endif
                     <hr>
 
+                    @if ($recipeService)
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="mb-1">Recipe: {{ $recipeService->name }}</h5>
+                                <p class="text-muted small">Consumables used per session. When this service is added to an invoice these become editable lines under it (qty × sessions). Changing the recipe affects new invoices only.</p>
+                                @error('recipe_lines.*') <div class="text-danger text-xs">{{ $message }}</div> @enderror
+                                <table class="table table-bordered table-sm">
+                                    <thead><tr><th style="min-width:240px">Item</th><th style="width:150px">Qty per session</th><th style="width:110px">Billable</th>@if ($canEditRecipe)<th style="width:60px"></th>@endif</tr></thead>
+                                    <tbody>
+                                        @forelse ($recipe_lines as $i => $line)
+                                            <tr>
+                                                <td>
+                                                    <select class="form-control form-control-sm" wire:model="recipe_lines.{{ $i }}.item_id" @unless ($canEditRecipe) disabled @endunless>
+                                                        <option value="">Choose item</option>
+                                                        @foreach ($inventoryItems as $inventoryItem)
+                                                            <option value="{{ $inventoryItem->id }}">{{ $inventoryItem->name }} ({{ $inventoryItem->code }})</option>
+                                                        @endforeach
+                                                    </select>
+                                                    @error("recipe_lines.$i.item_id") <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                                </td>
+                                                <td>
+                                                    <input type="number" min="1" class="form-control form-control-sm" wire:model.defer="recipe_lines.{{ $i }}.qty_per_session" @unless ($canEditRecipe) readonly @endunless>
+                                                    @error("recipe_lines.$i.qty_per_session") <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                                                </td>
+                                                <td class="text-center"><input type="checkbox" wire:model.defer="recipe_lines.{{ $i }}.is_billable" @unless ($canEditRecipe) disabled @endunless></td>
+                                                @if ($canEditRecipe)
+                                                    <td><button type="button" class="btn btn-outline-danger btn-sm" wire:click="remove_recipe_line({{ $i }})"><i class="fas fa-trash"></i></button></td>
+                                                @endif
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="4" class="text-muted">No consumables yet.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                                @if ($canEditRecipe)
+                                    <button type="button" class="btn btn-outline-primary btn-sm" wire:click="add_recipe_line">+ Add item</button>
+                                    <button type="button" class="btn btn-primary btn-sm" wire:click="save_recipe">Save recipe</button>
+                                @endif
+                                <button type="button" class="btn btn-secondary btn-sm" wire:click="close_recipe">Close</button>
+                            </div>
+                        </div>
+                    @endif
+
                     <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">
                         {{ __('All Services') }}</div>
                     <table class="table table-hover">
@@ -60,6 +103,7 @@
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Default Price</th>
+                                @if ($canSeeRecipe)<th>Recipe</th>@endif
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -69,6 +113,13 @@
                                     <td>{{ $service->id }}</td>
                                     <td>{{ $service->name }}</td>
                                     <td>{{ number_format($service->price, 2) }}</td>
+                                    @if ($canSeeRecipe)
+                                        <td>
+                                            <button wire:click="show_recipe({{ $service->id }})" class="btn btn-link btn-sm p-0">
+                                                {{ $service->recipe_count ? $service->recipe_count . ' item' . ($service->recipe_count > 1 ? 's' : '') : ($canEditRecipe ? 'Add recipe' : 'None') }}
+                                            </button>
+                                        </td>
+                                    @endif
                                     <td class="text-right">
                                         @if (auth()->user()->hasPermission('services', 'update'))
                                             <button wire:click="edit({{ $service->id }})"
