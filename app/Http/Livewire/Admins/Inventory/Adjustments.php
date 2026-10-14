@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admins\Inventory;
 
+use App\Support\RetryingTransaction;
 use App\Models\DocumentSequence;
 use App\Models\InventoryItem;
 use App\Models\StockAdjustment;
@@ -117,7 +118,9 @@ class Adjustments extends Component
         $canViewCost = auth()->user()->hasPermission('inventory', 'view_cost');
         $stock = app(StockService::class);
 
-        $adjustment = DB::transaction(function () use ($canViewCost, $stock) {
+        $adjustment = RetryingTransaction::run(function () use ($canViewCost, $stock) {
+            $stock->lockItems(collect($this->lines)->pluck('item_id'));
+
             $adjustment = StockAdjustment::create([
                 'adj_no' => DocumentSequence::next('ADJ'),
                 'adj_date' => $this->adj_date,
@@ -166,7 +169,7 @@ class Adjustments extends Component
         $adjustment = StockAdjustment::findOrFail($id);
 
         try {
-            DB::transaction(function () use ($adjustment) {
+            RetryingTransaction::run(function () use ($adjustment) {
                 app(StockService::class)->reverse($adjustment);
                 $adjustment->delete();
             });

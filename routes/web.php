@@ -93,6 +93,51 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         Route::get('/inventory/items', App\Http\Livewire\Admins\Inventory\Items::class)->name('admin_inventory_items')->middleware('permission:inventory');
         Route::get('/inventory/categories', App\Http\Livewire\Admins\Inventory\Categories::class)->name('admin_inventory_categories')->middleware('permission:inventory');
         Route::get('/inventory/adjustments', App\Http\Livewire\Admins\Inventory\Adjustments::class)->name('admin_inventory_adjustments')->middleware('permission:inventory');
+        Route::get('/inventory/suppliers', App\Http\Livewire\Admins\Inventory\Suppliers::class)->name('admin_inventory_suppliers')->middleware('permission:inventory');
+        Route::get('/inventory/purchase-orders', App\Http\Livewire\Admins\Inventory\PurchaseOrders::class)->name('admin_inventory_purchase_orders')->middleware('permission:inventory');
+        Route::get('/inventory/receiving', App\Http\Livewire\Admins\Inventory\Receiving::class)->name('admin_inventory_receiving')->middleware('permission:inventory');
+        Route::get('/inventory/supplier-payments', App\Http\Livewire\Admins\Inventory\SupplierPayments::class)->name('admin_inventory_supplier_payments')->middleware('permission:inventory');
+
+        Route::get('/inventory/purchase-orders/{purchaseOrder}/print', function (App\Models\PurchaseOrder $purchaseOrder) {
+            abort_unless(App\Http\Livewire\Admins\Inventory\Concerns\PurchasingAccess::canSeePurchasingTab(auth()->user(), 'manage_po'), 403);
+
+            return view('admins.inventory.print.purchase-order', [
+                'po' => $purchaseOrder->load(['items.item', 'supplier', 'creator']),
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_inventory_po_print')->middleware('permission:inventory');
+
+        Route::get('/inventory/receiving/{goodsReceipt}/print', function ($goodsReceipt) {
+            abort_unless(App\Http\Livewire\Admins\Inventory\Concerns\PurchasingAccess::canSeePurchasingTab(auth()->user(), 'manage_grn'), 403);
+
+            return view('admins.inventory.print.goods-receipt', [
+                'receipt' => App\Models\GoodsReceipt::withTrashed()->with(['items.item', 'supplier', 'purchaseOrder', 'creator'])->findOrFail($goodsReceipt),
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_inventory_grn_print')->middleware('permission:inventory');
+
+        Route::get('/inventory/suppliers/{supplier}/ledger/print', function (Illuminate\Http\Request $request, App\Models\Supplier $supplier) {
+            return view('admins.inventory.print.supplier-ledger', [
+                'supplier' => $supplier,
+                'rows' => app(App\Services\Inventory\PayablesService::class)->ledger($supplier, $request->query('from'), $request->query('to')),
+                'from' => $request->query('from'),
+                'to' => $request->query('to'),
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_inventory_supplier_ledger_print')->middleware('permission:inventory,view_cost');
+
+        Route::get('/inventory/suppliers/{supplier}/ledger/csv', function (Illuminate\Http\Request $request, App\Models\Supplier $supplier) {
+            $rows = app(App\Services\Inventory\PayablesService::class)->ledger($supplier, $request->query('from'), $request->query('to'));
+
+            return response()->streamDownload(function () use ($rows) {
+                $out = fopen('php://output', 'w');
+                fputcsv($out, ['Date', 'Document', 'Debit', 'Credit', 'Balance']);
+                foreach ($rows as $row) {
+                    fputcsv($out, [$row['date'], $row['document'], number_format($row['debit'], 2, '.', ''), number_format($row['credit'], 2, '.', ''), number_format($row['balance'], 2, '.', '')]);
+                }
+                fclose($out);
+            }, 'supplier-ledger-' . Illuminate\Support\Str::slug($supplier->name) . '-' . now()->format('Y-m-d') . '.csv', ['Content-Type' => 'text/csv']);
+        })->name('admin_inventory_supplier_ledger_csv')->middleware('permission:inventory,view_cost');
 
         Route::get('/departments', App\Http\Livewire\Admins\Departments::class)->name('departments')->middleware('permission:legacy_modules');
 

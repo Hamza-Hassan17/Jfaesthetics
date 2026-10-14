@@ -42,14 +42,15 @@ class UserFactory extends Factory
      */
     protected function superAdminRoleId()
     {
-        $role = Role::firstOrCreate(
-            ['name' => 'Super Admin'],
-            ['rank' => 0, 'is_system_role' => true]
-        );
+        // RoleSeeder pins Super Admin to id 1, so look the role up after
+        // seeding rather than creating one first: on MySQL/MariaDB, rolled-
+        // back test transactions don't reset AUTO_INCREMENT, so a role made
+        // here would get a different id and never receive the permissions.
+        $role = Role::where('rank', 0)->whereHas('permissions')->first();
 
-        if ($role->permissions()->count() === 0) {
+        if (!$role) {
             (new \Database\Seeders\RoleSeeder())->run();
-            $role->refresh();
+            $role = Role::where('rank', 0)->whereHas('permissions')->firstOrFail();
         }
 
         return $role->id;

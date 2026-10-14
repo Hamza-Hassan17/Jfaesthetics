@@ -94,7 +94,7 @@ All stock changes go through one ledger, `stock_movements`. Quantities are whole
 |---|---|
 | `inventory_categories` / `InventoryCategory` | name, is_active |
 | `inventory_items` / `InventoryItem` | code (unique), name, category_id, unit (default `piece`), cost_price (last received cost), sale_price, low_stock_threshold (default 10), default_billable (bool), qty_on_hand (cached, may be negative), is_active |
-| `suppliers` / `Supplier` | name, contact_person, phone, email, address, opening_balance, is_active |
+| `suppliers` / `Supplier` | name, contact_person, phone, email, address, opening_balance, credit_days (default 0), is_active |
 | `item_batches` / `ItemBatch` | item_id, batch_no, expiry_date (nullable — items without expiry sort last in FEFO), unit_cost, qty_received, qty_remaining, source (`grn`, `adjustment`, `patient_return`), source_line_id. Index on (item_id, expiry_date) |
 
 ### Ledger
@@ -109,12 +109,12 @@ Movement types: `grn_in`, `invoice_out`, `invoice_reversal`, `supplier_return_ou
 
 | Table | Columns |
 |---|---|
-| `purchase_orders` | po_no (unique), supplier_id, order_date, expected_date, status, subtotal, discount, other_charges, total, notes |
+| `purchase_orders` | po_no (unique), supplier_id, order_date, expected_date, status (`draft`, `ordered`, `partially_received`, `received`, `closed`, `cancelled`), subtotal, discount, other_charges, total, notes, closed_reason, closed_at, closed_by |
 | `purchase_order_items` | purchase_order_id, item_id, qty_ordered, qty_received (cached), unit_cost, line_total |
 | `goods_receipts` | grn_no (unique), purchase_order_id (nullable for direct receive), supplier_id, supplier_bill_no, receive_date, due_date, subtotal, discount, other_charges, total, amount_paid (cached), payment_status (`unpaid`, `partial`, `paid`), notes |
 | `goods_receipt_items` | goods_receipt_id, purchase_order_item_id (nullable), item_id, batch_no, expiry_date, qty, unit_cost, line_total, batch_id |
 | `supplier_payments` | payment_no, supplier_id, payment_date, amount, mode (`cash`, `bank_transfer`, `cheque`), reference_no, notes |
-| `supplier_payment_allocations` | supplier_payment_id, goods_receipt_id, amount. Unallocated remainder = advance to supplier |
+| `supplier_payment_allocations` | supplier_payment_id, goods_receipt_id (null = opening balance), amount. Unallocated remainder = advance to supplier |
 | `supplier_returns` | return_no, supplier_id, goods_receipt_id (nullable), return_date, reason, total, notes |
 | `supplier_return_items` | supplier_return_id, item_id, batch_id, qty, unit_cost, line_total |
 
@@ -184,6 +184,20 @@ One service class, `App\Services\Inventory\StockService`, makes every stock chan
 - Cancelling or deleting: `reverse(document)` only. Documents with movements are soft-deleted, never hard-deleted. For invoices, cancel = the existing password-gated delete (K).
 - A GRN can't be edited or deleted if its batches were already used. The fix is a supplier return or an adjustment.
 
+### Locking and deadlocks
+
+Every inventory write (invoice save/delete, adjustments, receive, GRN edit/delete, payments) runs in `App\Support\RetryingTransaction::run()` and locks all the rows it will touch **up front, in one global order**, before any other work:
+
+1. `suppliers`
+2. `purchase_orders`
+3. `goods_receipts`
+4. `purchase_order_items` (ascending id)
+5. `inventory_items` (ascending id, via `StockService::lockItems()`)
+6. `item_batches` (only while holding that batch's item)
+7. `document_sequences` (last)
+
+Sales only touch steps 5–6, so invoices and purchasing queue on the same item instead of waiting on each other in a cycle. A deadlock or lock-wait timeout in the outermost transaction is retried up to 3 times (Laravel re-runs the callback after a full rollback); other errors are never retried.
+
 ### Integrity rules
 
 - `qty_on_hand` = Σ `stock_movements.qty` for the item.
@@ -193,6 +207,22 @@ One service class, `App\Services\Inventory\StockService`, makes every stock chan
 ## Purchasing and supplier payables (Phase 2)
 
 A P.O is a request only: it moves no stock and creates no debt. Stock and the amount owed both come from the GRN (goods received note), so a partial delivery only counts what actually arrived.
+
+### Phase 2 decisions
+
+| # | Topic | Decision |
+|---|---|---|
+| P1 | Opening balance | Treated as the supplier's oldest allocatable bill (`supplier_payment_allocations.goods_receipt_id = null`). Oldest-first allocation pays it off before any GRN. |
+| P2 | Undelivered P.O qty | **Close short** action on a partially received P.O: keeps `qty_ordered`, records a reason (`closed_reason`, `closed_at`, `closed_by`), status `closed`. The remaining qty is no longer receivable. P.O view and print show ordered vs received vs closed short. |
+| P3 | GRN discount / other charges | Change the GRN total (what we owe) only; batch unit cost stays at the line's unit cost. |
+| P4 | Expiry on GRN lines | Required, with a "No expiry" tick. Batch no optional; blank becomes `<GRN no>-<line no>`. Each GRN line gets its own batch (never merged with another document's batch). |
+| P5 | Due date | `suppliers.credit_days` (default 0). GRN due date defaults to receive date + credit days, editable. |
+| P6 | Access | Suppliers / Purchase Orders / Receiving / Supplier Payments tabs are visible only with `view_cost` or the tab's own manage permission (`manage_suppliers`, `manage_po`, `manage_grn`, `supplier_payments`). The supplier ledger needs `view_cost`. |
+| P7 | GRN editing | Bill no, due date and notes: always editable. Batch no and expiry: editable even after the stock is used. Qty and unit cost: editable only while no other document has used that line's batch; the change reverses and re-applies the line into the same batch via `StockService::restateStockIn()`. If an edit lowers a paid GRN's total, the excess comes off its newest allocations and becomes advance. |
+| P8 | GRN delete | Refused once any of its stock is used (fix with a supplier return or adjustment). Otherwise: stock reversed, payments against it released as advance, P.O received qty and status rolled back, GRN soft-deleted. |
+| P9 | Ordered P.O edits | Lines can be added and qty increased; qty can't be reduced and existing lines can't be removed or re-priced. Supplier, discount and other charges are fixed once ordered. |
+
+Services: `App\Services\Inventory\PurchasingService` (P.O lifecycle, receive, GRN edit/delete) and `App\Services\Inventory\PayablesService` (open bills, allocation, advances, balance, ledger).
 
 ### Purchase order
 
@@ -363,8 +393,8 @@ Each phase ships to production only after its tests pass on a copy of the live d
 
 ## Acceptance tests
 
-- [ ] Receiving 60 of a 100-qty P.O line sets the P.O to Partially received, adds 60 to stock, and adds the GRN total to the supplier balance
-- [ ] Receiving the remaining 40 sets the P.O to Received
+- [x] Receiving 60 of a 100-qty P.O line sets the P.O to Partially received, adds 60 to stock, and adds the GRN total to the supplier balance
+- [x] Receiving the remaining 40 sets the P.O to Received
 - [ ] A 3-session service with a recipe of 2 syringes per session deducts 6 syringes on save
 - [ ] With batches A (expiry Dec) and B (expiry Mar), a sale takes from the earlier-expiring batch first
 - [ ] An expired batch is never auto-picked
@@ -374,7 +404,7 @@ Each phase ships to production only after its tests pass on a copy of the live d
 - [ ] Cancelling (deleting) an invoice returns all its stock
 - [ ] Non-billable lines deduct stock but don't appear on the patient PDF or in the total
 - [ ] A product-only invoice saves without a doctor or service
-- [ ] A payment of 50,000 against two GRNs of 30,000 each marks the first paid and the second partial
+- [x] A payment of 50,000 against two GRNs of 30,000 each marks the first paid and the second partial
 - [ ] A supplier return of 5,000 reduces the supplier balance by 5,000
 - [ ] A patient return with Restock puts qty back in its original batch; Write off doesn't change stock
 - [ ] Invoice credit reduces Unpaid; a refund shows as a negative entry in Payment History

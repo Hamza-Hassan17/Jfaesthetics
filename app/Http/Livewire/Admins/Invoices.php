@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admins;
 
+use App\Support\RetryingTransaction;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
@@ -350,7 +351,15 @@ class Invoices extends Component
         }
         $this->shortfalls = [];
 
-        $invoice = DB::transaction(function () use ($products, $stock) {
+        $invoice = RetryingTransaction::run(function () use ($products, $stock) {
+            // Every item this save touches (new lines + lines being replaced),
+            // locked in id order before any stock moves.
+            $existing = $this->editing_invoice_id ? Invoice::find($this->editing_invoice_id) : null;
+            $stock->lockItems(array_merge(
+                collect($products)->pluck('id')->all(),
+                $existing ? $stock->itemsMovedBy($existing) : []
+            ));
+
             if ($this->editing_invoice_id) {
                 $invoice = Invoice::findOrFail($this->editing_invoice_id);
                 $invoice->update([
@@ -555,7 +564,7 @@ class Invoices extends Component
 
         // Delete is the invoice "cancel" (spec decision K): stock goes back,
         // the record stays soft-deleted.
-        DB::transaction(function () use ($invoice) {
+        RetryingTransaction::run(function () use ($invoice) {
             app(StockService::class)->reverse($invoice);
             $invoice->delete();
         });

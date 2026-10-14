@@ -2,6 +2,7 @@
 
 namespace App\Services\Inventory;
 
+use App\Support\RetryingTransaction;
 use App\Models\Invoice;
 use App\Models\InventoryItem;
 use App\Models\ItemBatch;
@@ -30,9 +31,11 @@ class StockService
     ];
 
     /**
-     * Receives stock into a batch (created, or topped up when the same
-     * batch no + expiry already exists), then settles any outstanding
-     * shortfall for the item out of that batch.
+     * Receives stock into a batch, then settles any outstanding shortfall
+     * for the item out of that batch. With $mergeBatch the stock tops up an
+     * existing batch with the same batch no + expiry; without it (GRNs) the
+     * line always gets its own batch, so the batch can later be edited or
+     * re-stated without touching stock from other documents.
      */
     public function stockIn(
         InventoryItem $item,
@@ -42,46 +45,111 @@ class StockService
         float $unitCost,
         Model $reference,
         ?int $lineId = null,
-        string $type = 'grn_in'
+        string $type = 'grn_in',
+        bool $mergeBatch = true
     ): ItemBatch {
         if ($qty <= 0) {
             throw new InvalidArgumentException('Stock-in quantity must be positive.');
         }
 
-        return DB::transaction(function () use ($item, $qty, $batchNo, $expiry, $unitCost, $reference, $lineId, $type) {
+        return RetryingTransaction::run(function () use ($item, $qty, $batchNo, $expiry, $unitCost, $reference, $lineId, $type, $mergeBatch) {
             $item = $this->lockItem($item->id);
             $batchNo = $batchNo !== null && trim($batchNo) !== '' ? trim($batchNo) : null;
             $expiry = $expiry ? Carbon::parse($expiry)->toDateString() : null;
 
-            $batch = ItemBatch::where('item_id', $item->id)
-                ->where('batch_no', $batchNo)
-                ->when($expiry, fn ($q) => $q->whereDate('expiry_date', $expiry), fn ($q) => $q->whereNull('expiry_date'))
-                ->lockForUpdate()
-                ->first();
+            $batch = $mergeBatch
+                ? ItemBatch::where('item_id', $item->id)
+                    ->where('batch_no', $batchNo)
+                    ->when($expiry, fn ($q) => $q->whereDate('expiry_date', $expiry), fn ($q) => $q->whereNull('expiry_date'))
+                    ->lockForUpdate()
+                    ->first()
+                : null;
 
-            if ($batch) {
-                $batch->qty_received += $qty;
-                $batch->qty_remaining += $qty;
-                $batch->save();
-            } else {
-                $batch = ItemBatch::create([
-                    'item_id' => $item->id,
-                    'batch_no' => $batchNo,
-                    'expiry_date' => $expiry,
-                    'unit_cost' => $unitCost,
-                    'qty_received' => $qty,
-                    'qty_remaining' => $qty,
-                    'source' => self::SOURCE_BY_TYPE[$type] ?? 'adjustment',
-                    'source_line_id' => $lineId,
-                    'created_by' => auth()->id(),
-                ]);
+            $batch = $batch ?? ItemBatch::create([
+                'item_id' => $item->id,
+                'batch_no' => $batchNo,
+                'expiry_date' => $expiry,
+                'unit_cost' => $unitCost,
+                'qty_received' => 0,
+                'qty_remaining' => 0,
+                'source' => self::SOURCE_BY_TYPE[$type] ?? 'adjustment',
+                'source_line_id' => $lineId,
+                'created_by' => auth()->id(),
+            ]);
+
+            return $this->receiveInto($item, $batch, $qty, $unitCost, $reference, $lineId, $type);
+        });
+    }
+
+    /**
+     * Changes a received line's qty and/or unit cost in place: the line's
+     * movements are reversed and re-applied into the same batch. Refused
+     * when any other document has used stock from that batch.
+     */
+    public function restateStockIn(Model $reference, int $lineId, ItemBatch $batch, int $qty, float $unitCost, string $type = 'grn_in'): ItemBatch
+    {
+        if ($qty <= 0) {
+            throw new InvalidArgumentException('Stock-in quantity must be positive.');
+        }
+
+        return RetryingTransaction::run(function () use ($reference, $lineId, $batch, $qty, $unitCost, $type) {
+            $item = $this->lockItem($batch->item_id);
+            $batch = ItemBatch::lockForUpdate()->findOrFail($batch->id);
+
+            if ($this->isBatchUsedOutside($batch, $reference)) {
+                throw new DomainException('Qty and unit cost can\'t be changed: stock from batch ' . ($batch->batch_no ?: '#' . $batch->id) . ' has already been used.');
             }
 
-            $this->writeMovement($item, $batch->id, $type, $qty, $unitCost, $reference, $lineId);
-            $this->settleShortfall($item, $batch, $reference, $lineId);
+            $this->reverse($reference, $lineId);
 
-            return $batch->fresh();
+            $batch->refresh();
+            $batch->qty_received = 0;
+            $batch->unit_cost = $unitCost;
+            $batch->save();
+
+            return $this->receiveInto($item->fresh(), $batch, $qty, $unitCost, $reference, $lineId, $type);
         });
+    }
+
+    /**
+     * Batch no and expiry are labels: they can be corrected at any time,
+     * even after the stock has been used.
+     */
+    public function updateBatchDetails(ItemBatch $batch, ?string $batchNo, $expiry): ItemBatch
+    {
+        $batch->update([
+            'batch_no' => $batchNo !== null && trim($batchNo) !== '' ? trim($batchNo) : null,
+            'expiry_date' => $expiry ? Carbon::parse($expiry)->toDateString() : null,
+        ]);
+
+        return $batch;
+    }
+
+    /**
+     * True when stock in the batch has moved because of any document other
+     * than $reference (i.e. its qty_remaining no longer equals what
+     * $reference itself put there).
+     */
+    public function isBatchUsedOutside(ItemBatch $batch, Model $reference): bool
+    {
+        $own = (int) StockMovement::where('batch_id', $batch->id)
+            ->where('reference_type', $reference->getMorphClass())
+            ->where('reference_id', $reference->getKey())
+            ->sum('qty');
+
+        return (int) $batch->fresh()->qty_remaining !== $own;
+    }
+
+    private function receiveInto(InventoryItem $item, ItemBatch $batch, int $qty, float $unitCost, Model $reference, ?int $lineId, string $type): ItemBatch
+    {
+        $batch->qty_received += $qty;
+        $batch->qty_remaining += $qty;
+        $batch->save();
+
+        $this->writeMovement($item, $batch->id, $type, $qty, $unitCost, $reference, $lineId);
+        $this->settleShortfall($item, $batch, $reference, $lineId);
+
+        return $batch->fresh();
     }
 
     /**
@@ -103,7 +171,7 @@ class StockService
             throw new InvalidArgumentException('Stock-out quantity must be positive.');
         }
 
-        return DB::transaction(function () use ($item, $qty, $reference, $batchId, $lineId, $type) {
+        return RetryingTransaction::run(function () use ($item, $qty, $reference, $batchId, $lineId, $type) {
             $item = $this->lockItem($item->id);
             $allocations = [];
 
@@ -145,13 +213,14 @@ class StockService
      * (item, batch). Calling it again is a no-op. Refuses when undoing a
      * stock-in would push a batch below zero (its stock was already used).
      */
-    public function reverse(Model $reference): void
+    public function reverse(Model $reference, ?int $lineId = null): void
     {
-        DB::transaction(function () use ($reference) {
+        RetryingTransaction::run(function () use ($reference, $lineId) {
             $nets = StockMovement::where('reference_type', $reference->getMorphClass())
                 ->where('reference_id', $reference->getKey())
-                ->selectRaw('item_id, batch_id, SUM(qty) as net')
-                ->groupBy('item_id', 'batch_id')
+                ->when($lineId !== null, fn ($q) => $q->where('reference_line_id', $lineId))
+                ->selectRaw('item_id, batch_id, reference_line_id, SUM(qty) as net')
+                ->groupBy('item_id', 'batch_id', 'reference_line_id')
                 ->get()
                 ->filter(fn ($row) => (int) $row->net !== 0);
 
@@ -171,11 +240,11 @@ class StockService
                             throw new DomainException("Can't undo: stock from batch " . ($batch->batch_no ?: '#' . $batch->id) . " of {$item->name} has already been used.");
                         }
                         $batch->increment('qty_remaining', $undo);
-                        $this->writeMovement($item, $batch->id, $type, $undo, (float) $batch->unit_cost, $reference, null);
+                        $this->writeMovement($item, $batch->id, $type, $undo, (float) $batch->unit_cost, $reference, $row->reference_line_id);
                         continue;
                     }
 
-                    $this->reverseUnbatched($item, $undo, $type, $reference);
+                    $this->reverseUnbatched($item, $undo, $type, $reference, $row->reference_line_id);
                 }
             }
         });
@@ -258,16 +327,16 @@ class StockService
      * already settled goes back to the batch(es) that absorbed it,
      * newest settlement first.
      */
-    private function reverseUnbatched(InventoryItem $item, int $undo, string $type, Model $reference): void
+    private function reverseUnbatched(InventoryItem $item, int $undo, string $type, Model $reference, ?int $lineId): void
     {
         if ($undo < 0) {
-            $this->writeMovement($item, null, $type, $undo, (float) $item->cost_price, $reference, null);
+            $this->writeMovement($item, null, $type, $undo, (float) $item->cost_price, $reference, $lineId);
             return;
         }
 
         $toShortfall = min($undo, max(0, -$this->unbatchedNet($item->id)));
         if ($toShortfall > 0) {
-            $this->writeMovement($item, null, $type, $toShortfall, (float) $item->cost_price, $reference, null);
+            $this->writeMovement($item, null, $type, $toShortfall, (float) $item->cost_price, $reference, $lineId);
         }
 
         $left = $undo - $toShortfall;
@@ -285,12 +354,12 @@ class StockService
             $put = min($left, -$settlement->qty);
             $batch = ItemBatch::lockForUpdate()->find($settlement->batch_id);
             $batch->increment('qty_remaining', $put);
-            $this->writeMovement($item, $batch->id, $type, $put, (float) $batch->unit_cost, $reference, null);
+            $this->writeMovement($item, $batch->id, $type, $put, (float) $batch->unit_cost, $reference, $lineId);
             $left -= $put;
         }
 
         if ($left > 0) {
-            $this->writeMovement($item, null, $type, $left, (float) $item->cost_price, $reference, null);
+            $this->writeMovement($item, null, $type, $left, (float) $item->cost_price, $reference, $lineId);
         }
     }
 
@@ -315,6 +384,31 @@ class StockService
     private function unbatchedNet(int $itemId): int
     {
         return (int) StockMovement::where('item_id', $itemId)->whereNull('batch_id')->sum('qty');
+    }
+
+    /**
+     * Locks every item a document will touch, in ascending id order, so two
+     * documents sharing items always queue on the lowest id first instead
+     * of each holding one and waiting for the other. Call inside a
+     * transaction before any stock work (see App\Support\RetryingTransaction).
+     */
+    public function lockItems(iterable $itemIds): void
+    {
+        $ids = collect($itemIds)->filter()->map(fn ($id) => (int) $id)->unique()->sort()->values();
+
+        if ($ids->isNotEmpty()) {
+            InventoryItem::withTrashed()->whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+        }
+    }
+
+    /** Item ids a document currently has stock movements for. */
+    public function itemsMovedBy(Model $reference): array
+    {
+        return StockMovement::where('reference_type', $reference->getMorphClass())
+            ->where('reference_id', $reference->getKey())
+            ->distinct()
+            ->pluck('item_id')
+            ->all();
     }
 
     private function lockItem(int $itemId): InventoryItem

@@ -154,6 +154,13 @@ class RolePermissionMatrixTest extends TestCase
             'Inventory\Adjustments::show_create_form (manage_adjustments)' => [\App\Http\Livewire\Admins\Inventory\Adjustments::class, 'show_create_form', [], 'inventory', 'manage_adjustments'],
             'Inventory\Adjustments::save (manage_adjustments)' => [\App\Http\Livewire\Admins\Inventory\Adjustments::class, 'save', [], 'inventory', 'manage_adjustments'],
             'Inventory\Adjustments::delete (manage_adjustments)' => [\App\Http\Livewire\Admins\Inventory\Adjustments::class, 'delete', [999999], 'inventory', 'manage_adjustments'],
+            'Inventory\Suppliers::save (manage_suppliers)' => [\App\Http\Livewire\Admins\Inventory\Suppliers::class, 'save', [], 'inventory', 'manage_suppliers'],
+            'Inventory\PurchaseOrders::save (manage_po)' => [\App\Http\Livewire\Admins\Inventory\PurchaseOrders::class, 'save', [], 'inventory', 'manage_po'],
+            'Inventory\PurchaseOrders::close_short (manage_po)' => [\App\Http\Livewire\Admins\Inventory\PurchaseOrders::class, 'close_short', [999999], 'inventory', 'manage_po'],
+            'Inventory\Receiving::save (manage_grn)' => [\App\Http\Livewire\Admins\Inventory\Receiving::class, 'save', [], 'inventory', 'manage_grn'],
+            'Inventory\Receiving::delete (manage_grn)' => [\App\Http\Livewire\Admins\Inventory\Receiving::class, 'delete', [999999], 'inventory', 'manage_grn'],
+            'Inventory\SupplierPayments::save (supplier_payments)' => [\App\Http\Livewire\Admins\Inventory\SupplierPayments::class, 'save', [], 'inventory', 'supplier_payments'],
+            'Inventory\SupplierPayments::delete (supplier_payments)' => [\App\Http\Livewire\Admins\Inventory\SupplierPayments::class, 'delete', [999999], 'inventory', 'supplier_payments'],
 
             'RolesPermissions::show_create_role (create)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'show_create_role', [], 'roles', 'create'],
             'RolesPermissions::delete_role (delete)' => [\App\Http\Livewire\Admins\RolesPermissions::class, 'delete_role', [$doctorRoleId], 'roles', 'delete'],
