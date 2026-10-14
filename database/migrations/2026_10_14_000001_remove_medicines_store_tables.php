@@ -24,9 +24,16 @@ class RemoveMedicinesStoreTables extends Migration
             return;
         }
 
-        Schema::table('invoice_items', function (Blueprint $table) {
-            $table->dropForeign(['medicine_id']);
-        });
+        // Drop whatever foreign keys actually reference `medicines` on this
+        // database (the live one has none on invoice_items), by real name.
+        $foreignKeys = DB::select(
+            'SELECT TABLE_NAME, CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+             WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME = ?',
+            ['medicines']
+        );
+        foreach ($foreignKeys as $fk) {
+            DB::statement("ALTER TABLE `{$fk->TABLE_NAME}` DROP FOREIGN KEY `{$fk->CONSTRAINT_NAME}`");
+        }
 
         Schema::dropIfExists('medicines');
     }
