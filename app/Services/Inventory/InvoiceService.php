@@ -24,7 +24,7 @@ class InvoiceService
 
     private const MONEY_EPSILON = 0.004;
 
-    public function __construct(private StockService $stock)
+    public function __construct(private StockService $stock, private ProductInvoiceService $productInvoices)
     {
     }
 
@@ -45,9 +45,15 @@ class InvoiceService
             $existing = $invoice ? $invoice->items()->get()->keyBy('id') : collect();
             $items = InventoryItem::withTrashed()->whereIn('id', collect($lines)->pluck('catalog_id')->filter())->get()->keyBy('id');
 
+            // Lock order: invoice → its product invoices → items.
+            if ($invoice) {
+                \App\Models\ProductInvoice::where('invoice_id', $invoice->id)->orderBy('id')->lockForUpdate()->get();
+            }
+            $serviceIds = collect($lines)->where('type', 'service')->pluck('catalog_id')->filter()->all();
             $this->stock->lockItems(array_merge(
                 collect($lines)->filter(fn ($l) => $this->isStockLine($l))->pluck('catalog_id')->all(),
-                $invoice ? $this->stock->itemsMovedBy($invoice) : []
+                $invoice ? $this->stock->itemsMovedBy($invoice) : [],
+                $this->productInvoices->recipeItemIdsFor($invoice, $serviceIds)
             ));
 
             $lines = array_map(fn ($line) => $this->priced($line, $items, $canOverridePrice), $lines);
@@ -97,6 +103,9 @@ class InvoiceService
             }
 
             $audit = array_merge($audit, $this->savePayments($invoice, $payments));
+
+            // Recipe consumables live on the linked product invoice.
+            $this->productInvoices->syncRecipes($invoice);
 
             foreach ($audit as $change) {
                 $this->logActivity('updated', 'invoices', $invoice->id, "Invoice #{$invoice->invoice_number}: {$change}");
@@ -168,7 +177,10 @@ class InvoiceService
         ];
 
         if (!$old) {
-            $saved = InvoiceItem::create($attributes + ['stock_qty' => $itemId ? $quantity : null]);
+            $saved = InvoiceItem::create($attributes + [
+                'stock_qty' => $itemId ? $quantity : null,
+                'recipe_applied' => $line['type'] === 'service' && !empty($line['catalog_id']),
+            ]);
             if ($itemId) {
                 $this->stock->stockOut($items->get($itemId), $quantity, $invoice, null, $saved->id);
             }

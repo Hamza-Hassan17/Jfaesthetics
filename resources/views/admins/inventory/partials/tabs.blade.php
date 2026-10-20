@@ -16,6 +16,6 @@
     @if ($canSeeTab('supplier_payments'))
         <a href="{{ route('admin_inventory_supplier_payments') }}" class="{{ request()->routeIs('admin_inventory_supplier_payments') ? 'active' : '' }}">Supplier Payments</a>
     @endif
-    <a href="{{ route('admin_inventory_invoices') }}" class="{{ request()->routeIs('admin_inventory_invoices') ? 'active' : '' }}">Invoices</a>
+    <a href="{{ route('admin_inventory_product_invoices') }}" class="{{ request()->routeIs('admin_inventory_product_invoices') ? 'active' : '' }}">Product Invoices</a>
     <a href="{{ route('admin_inventory_adjustments') }}" class="{{ request()->routeIs('admin_inventory_adjustments') ? 'active' : '' }}">Adjustments</a>
 </div>

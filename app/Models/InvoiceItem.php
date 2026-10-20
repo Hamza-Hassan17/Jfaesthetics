@@ -15,6 +15,7 @@ class InvoiceItem extends Model
         'stock_qty',
         'qty_per_session',
         'qty_overridden',
+        'recipe_applied',
         'line_type',
         'service_id',
         'inventory_item_id',
@@ -35,6 +36,7 @@ class InvoiceItem extends Model
     protected $casts = [
         'is_billable' => 'boolean',
         'qty_overridden' => 'boolean',
+        'recipe_applied' => 'boolean',
         'quantity' => 'integer',
         'stock_qty' => 'integer',
         'qty_per_session' => 'integer',

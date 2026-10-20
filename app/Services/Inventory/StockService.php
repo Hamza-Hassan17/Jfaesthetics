@@ -7,6 +7,8 @@ use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InventoryItem;
 use App\Models\ItemBatch;
+use App\Models\ProductInvoice;
+use App\Models\ProductInvoiceItem;
 use App\Models\ShortfallSettlement;
 use App\Models\StockMovement;
 use DomainException;
@@ -311,13 +313,14 @@ class StockService
     /** Keeps an invoice line's unit_cost equal to its actual allocations. */
     private function recostLine(Model $reference, ?int $lineId): void
     {
-        if ($lineId === null || !$reference instanceof Invoice) {
+        $lineModel = [Invoice::class => InvoiceItem::class, ProductInvoice::class => ProductInvoiceItem::class][get_class($reference)] ?? null;
+        if ($lineId === null || !$lineModel) {
             return;
         }
 
         $cost = $this->lineUnitCost($reference, $lineId);
         if ($cost !== null) {
-            InvoiceItem::whereKey($lineId)->update(['unit_cost' => $cost]);
+            $lineModel::whereKey($lineId)->update(['unit_cost' => $cost]);
         }
     }
 
@@ -338,7 +341,7 @@ class StockService
                 ->get()
                 ->filter(fn ($row) => (int) $row->net !== 0);
 
-            $type = $reference instanceof Invoice ? 'invoice_reversal' : 'reversal';
+            $type = ($reference instanceof Invoice || $reference instanceof ProductInvoice) ? 'invoice_reversal' : 'reversal';
 
             foreach ($nets->groupBy('item_id')->sortKeys() as $itemId => $rows) {
                 $item = $this->lockItem($itemId);
@@ -606,12 +609,13 @@ class StockService
 
     private function recostOwner(array $owner): void
     {
-        if ($owner['line'] === null || $owner['type'] !== (new Invoice)->getMorphClass()) {
+        $class = [(new Invoice)->getMorphClass() => Invoice::class, (new ProductInvoice)->getMorphClass() => ProductInvoice::class][$owner['type']] ?? null;
+        if ($owner['line'] === null || !$class) {
             return;
         }
-        $invoice = Invoice::withTrashed()->find($owner['id']);
-        if ($invoice) {
-            $this->recostLine($invoice, $owner['line']);
+        $document = $class::withTrashed()->find($owner['id']);
+        if ($document) {
+            $this->recostLine($document, $owner['line']);
         }
     }
 

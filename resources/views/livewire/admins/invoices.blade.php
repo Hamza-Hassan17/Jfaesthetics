@@ -161,7 +161,8 @@
                                                         <select class="form-control form-control-sm mr-1" wire:model="items.{{ $index }}.type">
                                                             <option value="custom">Custom / Typed</option>
                                                             <option value="service">Service</option>
-                                                            <option value="product">Product</option>
+                                                            {{-- Products are sold on Product Invoices; only older lines keep this type. --}}
+                                                            @if ($item['type'] === 'product')<option value="product">Product</option>@endif
                                                         </select>
                                                     </div>
                                                     @endif
@@ -184,9 +185,6 @@
                                                         @if ($item['type'] === 'product' && $item['catalog_id'] !== '' && isset($available[$item['catalog_id']]))
                                                             @php $avail = $available[$item['catalog_id']]; @endphp
                                                             <small class="{{ $avail < (int) $item['quantity'] ? 'text-danger font-weight-bold' : 'text-muted' }}">Available: {{ $avail }}</small>
-                                                        @endif
-                                                        @if ($item['type'] === 'service' && $item['catalog_id'] !== '')
-                                                            <button type="button" class="btn btn-link btn-sm p-0 d-block" wire:click="add_child({{ $index }})">+ Add item used</button>
                                                         @endif
                                                     @endif
                                                     @error("items.$index.catalog_id") <span class="text-danger text-xs d-block">{{ $message }}</span> @enderror
@@ -405,6 +403,9 @@
                     @if ($_page === 'view')
                         <div class="mb-3">
                             <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="btn btn-success"><i class="fas fa-print"></i> Print / Download A4 Invoice</a>
+                            @if (auth()->user()->hasPermission('invoices', 'create') && auth()->user()->hasPermission('inventory', 'view'))
+                                <a href="{{ route('admin_inventory_product_invoices', ['new' => 1, 'invoice' => $invoice->id]) }}" class="btn btn-outline-primary"><i class="fas fa-box"></i> New product invoice for this invoice</a>
+                            @endif
                             <button class="btn btn-secondary" wire:click="show_index">Back to List</button>
                         </div>
 
@@ -498,6 +499,24 @@
                                 window.addEventListener('invoice-reduce-closed', function () { $('#reduceStockModal').modal('hide'); });
                             }
                         </script>
+
+                        @if ($productInvoices->isNotEmpty())
+                            <h6>Product invoices linked to this invoice</h6>
+                            <table class="table table-sm table-bordered mb-4">
+                                <thead><tr><th>Product invoice</th><th>Type</th><th class="text-right">Total</th><th class="text-right">Paid</th><th class="text-right">Unpaid</th></tr></thead>
+                                <tbody>
+                                    @foreach ($productInvoices as $pi)
+                                        <tr>
+                                            <td><a href="{{ route('admin_inventory_product_invoices', ['pi' => $pi->id]) }}">{{ $pi->pi_no }}</a></td>
+                                            <td>{{ $pi->source === 'recipe' ? 'Consumables for services' : 'Products' }}</td>
+                                            <td class="text-right">{{ number_format($pi->grand_total, 2) }}</td>
+                                            <td class="text-right">{{ number_format($pi->paid_total, 2) }}</td>
+                                            <td class="text-right">{{ number_format($pi->unpaid_total, 2) }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endif
 
                         <h5>Payment History</h5>
                         <table class="table table-bordered">

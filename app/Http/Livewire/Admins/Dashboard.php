@@ -134,6 +134,16 @@ class Dashboard extends Component
         $revenueLastMonth = (float) InvoicePayment::whereBetween('paid_on', [$lastMonthStart, $lastMonthEnd])->sum('amount');
         $revenueTrend = $this->pctChange($revenueLastMonth, $revenueThisMonth);
 
+        // Product invoices (PI-...) are reported separately from patient revenue.
+        $productInvoicesThisMonth = \App\Models\ProductInvoice::with(['items', 'payments'])
+            ->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd])->get();
+        $productSales = [
+            'total' => $productInvoicesThisMonth->sum(fn ($pi) => $pi->grand_total),
+            'collected' => (float) \App\Models\ProductInvoicePayment::whereBetween('paid_on', [$thisMonthStart, $thisMonthEnd])->sum('amount'),
+            'unpaid' => \App\Models\ProductInvoice::with(['items', 'payments'])->get()->sum(fn ($pi) => $pi->unpaid_total),
+            'count' => $productInvoicesThisMonth->count(),
+        ];
+
         // Invoiced this month by line type (discounts are per line, so no
         // allocation is needed). Non-billable consumables are price 0.
         $revenueSplit = InvoiceItem::whereHas('invoice', fn ($q) => $q->whereBetween('created_at', [$thisMonthStart, $thisMonthEnd]))
@@ -228,6 +238,7 @@ class Dashboard extends Component
         return view('livewire.admins.dashboard', [
             'revenueThisMonth' => $revenueThisMonth,
             'revenueSplit' => $revenueSplit,
+            'productSales' => $productSales,
             'revenueTrend' => $revenueTrend,
             'totalOutstanding' => $totalOutstanding,
             'outstandingTrend' => $outstandingTrend,

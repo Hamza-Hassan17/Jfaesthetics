@@ -160,6 +160,22 @@
     </div>
 
     <div class="row mb-2">
+        @if (auth()->user()->hasPermission('inventory', 'view'))
+            <div class="col-md-4 col-xl mb-3">
+                <a href="{{ route('admin_inventory_product_invoices') }}" style="text-decoration:none; color:inherit;">
+                    <div class="jfd-stat-card">
+                        <div class="jfd-stat-icon blue"><i class="fas fa-box"></i></div>
+                        <div class="jfd-stat-label">Product Sales (this month)</div>
+                        <div class="jfd-stat-value">Rs. {{ number_format($productSales['total'], 0) }}</div>
+                        <div class="muted small mt-1">
+                            {{ $productSales['count'] }} invoice{{ $productSales['count'] === 1 ? '' : 's' }}
+                            · collected Rs. {{ number_format($productSales['collected'], 0) }}
+                            · unpaid Rs. {{ number_format($productSales['unpaid'], 0) }}
+                        </div>
+                    </div>
+                </a>
+            </div>
+        @endif
         <div class="col-md-4 col-xl mb-3">
             <div class="jfd-stat-card">
                 <div class="jfd-stat-icon blue"><i class="fas fa-chart-bar"></i></div>

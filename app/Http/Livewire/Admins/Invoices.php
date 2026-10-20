@@ -334,7 +334,6 @@ class Invoices extends Component
                 if ($catalogItem) {
                     $this->items[$index]['service'] = $catalogItem->name;
                     $this->items[$index]['service_charges'] = $catalogItem->price;
-                    $this->fillRecipe($index);
                 }
             } elseif ($type === 'product') {
                 $catalogItem = InventoryItem::find($value);
@@ -658,7 +657,17 @@ class Invoices extends Component
         // Delete is the invoice "cancel" (spec decision K): stock goes back,
         // the record stays soft-deleted.
         RetryingTransaction::run(function () use ($invoice) {
-            app(StockService::class)->reverse($invoice);
+            $stock = app(StockService::class);
+            // Lock order: invoice → its product invoices → items.
+            Invoice::lockForUpdate()->findOrFail($invoice->id);
+            $productInvoices = \App\Models\ProductInvoice::where('invoice_id', $invoice->id)->orderBy('id')->lockForUpdate()->get();
+            $stock->lockItems(array_merge($stock->itemsMovedBy($invoice), ...$productInvoices->map(fn ($pi) => $stock->itemsMovedBy($pi))->all()));
+
+            foreach ($productInvoices as $pi) {
+                $stock->reverse($pi);
+                $pi->delete();
+            }
+            $stock->reverse($invoice);
             $invoice->delete();
         });
         $this->logActivity('deleted', 'invoices', $id, "Deleted invoice #{$invoiceNumber}.");
@@ -684,6 +693,7 @@ class Invoices extends Component
                 'consumables' => $lines->reject(fn ($line) => $line->is_billable)->values(),
                 'reduceLine' => $this->reduce_line_id ? $invoice->items->firstWhere('id', $this->reduce_line_id) : null,
                 'canEdit' => auth()->user()->hasPermission('invoices', 'update'),
+                'productInvoices' => \App\Models\ProductInvoice::with(['items', 'payments'])->where('invoice_id', $invoice->id)->orderBy('id')->get(),
             ])->layout('admins.layouts.app');
         }
 

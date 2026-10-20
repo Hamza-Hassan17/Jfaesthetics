@@ -44,6 +44,11 @@ class Invoice extends Model
         return $this->hasMany(InvoicePayment::class);
     }
 
+    public function productInvoices()
+    {
+        return $this->hasMany(ProductInvoice::class);
+    }
+
     public function getSubTotalAttribute()
     {
         return $this->items->sum('sub_total');

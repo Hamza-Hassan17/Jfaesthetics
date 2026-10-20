@@ -93,7 +93,16 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         Route::get('/inventory/items', App\Http\Livewire\Admins\Inventory\Items::class)->name('admin_inventory_items')->middleware('permission:inventory');
         Route::get('/inventory/categories', App\Http\Livewire\Admins\Inventory\Categories::class)->name('admin_inventory_categories')->middleware('permission:inventory');
         Route::get('/inventory/adjustments', App\Http\Livewire\Admins\Inventory\Adjustments::class)->name('admin_inventory_adjustments')->middleware('permission:inventory');
-        Route::get('/inventory/invoices', App\Http\Livewire\Admins\Inventory\InvoiceStock::class)->name('admin_inventory_invoices')->middleware('permission:inventory');
+        Route::get('/inventory/product-invoices', App\Http\Livewire\Admins\Inventory\ProductInvoices::class)->name('admin_inventory_product_invoices')->middleware('permission:inventory');
+        Route::get('/inventory/product-invoices/{productInvoice}/print', function (Illuminate\Http\Request $request, $productInvoice) {
+            $pi = App\Models\ProductInvoice::withTrashed()->with(['items', 'payments', 'patient', 'invoice.patient', 'invoice.items', 'invoice.payments'])->findOrFail($productInvoice);
+
+            return view('admins.inventory.print.product-invoice', [
+                'pi' => $pi,
+                'combined' => $request->boolean('combined') && $pi->invoice,
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_inventory_product_invoice_print')->middleware('permission:inventory');
         Route::get('/inventory/suppliers', App\Http\Livewire\Admins\Inventory\Suppliers::class)->name('admin_inventory_suppliers')->middleware('permission:inventory');
         Route::get('/inventory/purchase-orders', App\Http\Livewire\Admins\Inventory\PurchaseOrders::class)->name('admin_inventory_purchase_orders')->middleware('permission:inventory');
         Route::get('/inventory/receiving', App\Http\Livewire\Admins\Inventory\Receiving::class)->name('admin_inventory_receiving')->middleware('permission:inventory');
@@ -269,6 +278,16 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
         })->name('admin_doctor_performance_report_print')->middleware('permission:reports');
 
         Route::get('/reports/expenses', App\Http\Livewire\Admins\ExpenseReport::class)->name('admin_reports_expenses')->middleware('permission:reports');
+
+        Route::get('/reports/product-invoices', App\Http\Livewire\Admins\ProductInvoiceReport::class)->name('admin_reports_product_invoices')->middleware('permission:reports');
+        Route::get('/reports/product-invoices/print', function (Illuminate\Http\Request $request) {
+            return view('admins.inventory.print.product-invoice-report', [
+                'rows' => App\Http\Livewire\Admins\ProductInvoiceReport::filtered($request->only(['from', 'to', 'status'])),
+                'from' => $request->query('from'),
+                'to' => $request->query('to'),
+                'settings' => App\Models\Settings::pluck('value', 'key')->toArray(),
+            ]);
+        })->name('admin_reports_product_invoices_print')->middleware('permission:reports');
 
         Route::get('/reports/expenses/print', function (Illuminate\Http\Request $request) {
             $filters = $request->only(['from', 'to']);
