@@ -259,7 +259,8 @@ class Patients extends Component
         if ($this->_page == "index") {
             return view('livewire.admins.patients.index', [
                 'patients' => patient::when($this->search, fn ($q) => $q->where('name', 'like', "%{$this->search}%"))
-                    ->orderBy('name')
+                    ->latest()
+                    ->latest('id')
                     ->paginate(10),
             ])->layout('admins.layouts.app');
         } else if ($this->_page == "create") {

@@ -309,6 +309,7 @@
                                 <thead>
                                     <tr>
                                         <th>Patient</th>
+                                        <th>Phone Number</th>
                                         <th>Consultant</th>
                                         <th>Consultation For</th>
                                         <th>Date</th>
@@ -321,6 +322,7 @@
                                     @forelse ($forms as $item)
                                         <tr>
                                             <td>{{ $item->patient->name ?? 'N/A' }}</td>
+                                            <td>{{ $item->phone ?: ($item->patient->phone ?? '-') }}</td>
                                             <td>{{ $item->consultant->employ->name ?? '-' }}</td>
                                             <td>{{ $item->consultation_for ?: '-' }}</td>
                                             <td>{{ optional($item->consultation_date)->format('d M Y') }}</td>
@@ -338,7 +340,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr><td colspan="7">No consultation forms found.</td></tr>
+                                        <tr><td colspan="8">No consultation forms found.</td></tr>
                                     @endforelse
                                 </tbody>
                             </table>
