@@ -53,7 +53,7 @@ class PatientViewPageTest extends TestCase
         $this->assertStringContainsString('View Test Patient', $html);
     }
 
-    public function test_patients_index_search_filters_by_name_and_sorts_alphabetically()
+    public function test_patients_index_search_filters_by_name_and_lists_newest_first()
     {
         $superAdmin = Role::where('rank', 0)->first();
         $user = User::factory()->create(['role_id' => $superAdmin->id, 'is_active' => true]);
@@ -67,7 +67,8 @@ class PatientViewPageTest extends TestCase
         $amnaPos = strpos($html, 'Amna Malik');
         $bilalPos = strpos($html, 'Bilal Ahmed');
         $zaraPos = strpos($html, 'Zara Khan');
-        $this->assertTrue($amnaPos < $bilalPos && $bilalPos < $zaraPos, 'Patients should be sorted alphabetically by name.');
+        // Created Zara, then Amna, then Bilal: newest (Bilal) shows first.
+        $this->assertTrue($bilalPos < $amnaPos && $amnaPos < $zaraPos, 'Newest patients should be listed first.');
 
         Livewire::test(Patients::class)
             ->set('search', 'Amna')
