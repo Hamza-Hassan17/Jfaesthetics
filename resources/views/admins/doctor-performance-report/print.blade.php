@@ -75,7 +75,7 @@
         <button onclick="window.print()">Print / Save as PDF</button>
     </div>
     <div class="page">
-        <div class="watermark">JF Aesthetics</div>
+        <div class="watermark">{{ config('app.name') }}</div>
 
         <div class="brand-center">
             <h1>{{ $settings['title'] ?? config('app.name') }}</h1>

@@ -68,7 +68,7 @@
         <button onclick="window.print()">Print / Save as PDF</button>
     </div>
     <div class="page">
-        <div class="watermark">JF Aesthetics</div>
+        <div class="watermark">{{ config('app.name') }}</div>
 
         <div class="doc-header">
             <img class="doc-logo" src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">

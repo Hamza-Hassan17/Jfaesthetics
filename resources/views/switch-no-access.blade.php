@@ -14,7 +14,7 @@
 </head>
 <body>
     <div class="card">
-        <h1>You don't have access to JF Aesthetics {{ $site }}</h1>
+        <h1>You don't have access to JF {{ $site }}</h1>
         <p>Your account isn't allowed to open this site. If you think you should have access, ask a Super Admin.</p>
         <a href="{{ url('/login') }}">Go to login</a>
     </div>

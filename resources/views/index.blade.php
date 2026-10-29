@@ -10,7 +10,7 @@
             <div class="text-contant">
                <h2>
                   <span class="center"><span class="icon"><img src="{{ $iconValue ? config('app.url').'storage/'.$iconValue : 'images/icon-logo.png' }}" alt="#" /></span></span>
-                  <a href="" class="typewrite" data-period="2000" data-type='[ "Welcome to JF Aesthetics", "We Care Your Beauty", "We are Expert!" ]'>
+                  <a href="" class="typewrite" data-period="2000" data-type='[ "Welcome to {{ config('app.name') }}", "We Care Your Beauty", "We are Expert!" ]'>
                   <span class="wrap"></span>
                   </a>
                </h2>

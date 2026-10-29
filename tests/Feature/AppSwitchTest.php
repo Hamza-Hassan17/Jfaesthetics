@@ -48,7 +48,7 @@ class AppSwitchTest extends TestCase
     public function test_go_is_refused_without_access()
     {
         $this->actingAs($this->user(['can_switch_app' => false]))->get(route('app_switch_go'))
-            ->assertForbidden()->assertSee("You don't have access to JF Aesthetics Dental", false);
+            ->assertForbidden()->assertSee("You don't have access to JF Dental", false);
     }
 
     public function test_a_valid_token_logs_in_the_matching_account_without_a_password()
@@ -93,7 +93,7 @@ class AppSwitchTest extends TestCase
     {
         $nobody = new User(['email' => 'not-here@clinic.pk']);
         $this->get(route('app_switch_receive', ['token' => AppSwitch::makeToken($nobody)]))
-            ->assertForbidden()->assertSee("You don't have access to JF Aesthetics Aesthetics", false);
+            ->assertForbidden()->assertSee("You don't have access to JF Aesthetics", false);
 
         $inactive = $this->user(['is_active' => false]);
         $this->get(route('app_switch_receive', ['token' => AppSwitch::makeToken($inactive)]))->assertForbidden();
