@@ -605,6 +605,14 @@
                                 <div class="jf-navbar-search-results" id="jfNavbarSearchResults" hidden></div>
                             </div>
                         </li>
+                        @php $switchApp = config('app.switch'); @endphp
+                        @if ($switchApp['url'] && auth()->user()->role && auth()->user()->role->rank <= $switchApp['max_rank'])
+                            <li class="nav-item mr-2">
+                                <a href="{{ $switchApp['url'] }}" class="btn btn-sm btn-outline-secondary" title="Open {{ $switchApp['label'] }}" style="white-space: nowrap;">
+                                    <i class="fas fa-exchange-alt"></i> <span class="d-none d-md-inline">Switch to {{ $switchApp['label'] }}</span>
+                                </a>
+                            </li>
+                        @endif
                         <li class="nav-item">
                             <a href="{{ route('admin_inventory_items') }}" class="jf-navbar-icon-btn" title="Low stock alerts">
                                 <i class="fas fa-bell"></i>

@@ -54,6 +54,17 @@ return [
 
     'url' => env('APP_URL', 'http://127.0.0.1:8000/'),
 
+    /*
+    | Header button that opens the sister app's login (Aesthetics <-> Dental).
+    | Hidden when SWITCH_APP_URL is empty. Shown to roles with rank <=
+    | SWITCH_APP_MAX_RANK (0 = Super Admin, 1 = Admin).
+    */
+    'switch' => [
+        'url' => env('SWITCH_APP_URL'),
+        'label' => env('SWITCH_APP_LABEL', 'Dental'),
+        'max_rank' => (int) env('SWITCH_APP_MAX_RANK', 1),
+    ],
+
     'asset_url' => env('ASSET_URL', null),
 
     /*
