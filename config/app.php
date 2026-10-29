@@ -55,14 +55,17 @@ return [
     'url' => env('APP_URL', 'http://127.0.0.1:8000/'),
 
     /*
-    | Header button that opens the sister app's login (Aesthetics <-> Dental).
-    | Hidden when SWITCH_APP_URL is empty. Shown to roles with rank <=
-    | SWITCH_APP_MAX_RANK (0 = Super Admin, 1 = Admin).
+    | Switching to the sister app (Aesthetics <-> Dental) without logging in
+    | again. SWITCH_APP_URL is the other app's base URL; SWITCH_APP_SECRET
+    | must be the same long random string in both apps' .env. The button is
+    | shown only to users with "can_switch_app" ticked. Disabled when the URL
+    | or secret is empty.
     */
     'switch' => [
         'url' => env('SWITCH_APP_URL'),
         'label' => env('SWITCH_APP_LABEL', 'Dental'),
-        'max_rank' => (int) env('SWITCH_APP_MAX_RANK', 1),
+        'secret' => env('SWITCH_APP_SECRET'),
+        'this_label' => env('SWITCH_APP_THIS_LABEL', 'Aesthetics'),
     ],
 
     'asset_url' => env('ASSET_URL', null),

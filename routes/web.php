@@ -27,6 +27,10 @@ Route::view('/services', 'services');
 
 // Route::post('/admin/login',[AdminController::class,'authenticate_admin'])->name("admin_login");
 
+// Switching to the sister app (Aesthetics <-> Dental) without logging in again.
+Route::get('/switch/go', [App\Http\Controllers\AppSwitchController::class, 'go'])->name('app_switch_go')->middleware(['auth', 'throttle:20,1']);
+Route::get('/switch/receive', [App\Http\Controllers\AppSwitchController::class, 'receive'])->name('app_switch_receive')->middleware('throttle:20,1');
+
 Route::middleware(['auth', 'checksuperadmin'])->group(function () {
     Route::prefix('/admin')->group(function () {
         Route::get('/dashboard', App\Http\Livewire\Admins\Dashboard::class)->name('admin_dashboard')->middleware('permission:dashboard');

@@ -292,6 +292,14 @@
                                 </select>
                             </div>
 
+                            @if (auth()->user()->isSuperAdmin() && config('app.switch.url'))
+                                <div class="form-check mb-1">
+                                    <input type="checkbox" class="form-check-input" id="userCanSwitch" wire:model.defer="user_can_switch_app">
+                                    <label class="form-check-label" for="userCanSwitch">Can access {{ config('app.switch.label') }}</label>
+                                </div>
+                                <small class="text-muted d-block mb-2">Shows the "Switch to {{ config('app.switch.label') }}" button. The user also needs an active account with the same email on {{ config('app.switch.label') }}.</small>
+                            @endif
+
                             <div class="form-group mt-3">
                                 <button type="submit" class="btn btn-primary">{{ $editing_user_id ? 'Update User' : 'Create Login' }}</button>
                                 <button type="button" class="btn btn-secondary" wire:click="show_tab('users')">Cancel</button>

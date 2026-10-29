@@ -51,6 +51,7 @@ class RolesPermissions extends Component
     public $user_password;
     public $user_role_id;
     public $user_doctor_id;
+    public $user_can_switch_app = false;
 
     public function mount()
     {
@@ -198,6 +199,7 @@ class RolesPermissions extends Component
         // Per spec 8.7: never default a new login to Admin.
         $this->user_role_id = optional(Role::where('name', 'Receptionist')->first())->id;
         $this->user_doctor_id = '';
+        $this->user_can_switch_app = false;
         $this->_page = 'user-form';
     }
 
@@ -212,6 +214,7 @@ class RolesPermissions extends Component
         $this->user_password = '';
         $this->user_role_id = $user->role_id;
         $this->user_doctor_id = $user->doctor_id;
+        $this->user_can_switch_app = (bool) $user->can_switch_app;
         $this->_page = 'user-form';
     }
 
@@ -244,12 +247,21 @@ class RolesPermissions extends Component
         if ($this->user_password) {
             $data['password'] = bcrypt($this->user_password);
         }
+        // Access to the sister app is granted by a Super Admin only.
+        $switchChanged = false;
+        if ($actingUser->isSuperAdmin()) {
+            $data['can_switch_app'] = (bool) $this->user_can_switch_app;
+            $switchChanged = !$this->editing_user_id
+                ? $data['can_switch_app']
+                : (bool) User::whereKey($this->editing_user_id)->value('can_switch_app') !== $data['can_switch_app'];
+        }
 
         if ($this->editing_user_id) {
             $existing = User::findOrFail($this->editing_user_id);
             abort_unless($actingUser->canManageRole($existing->role), 403, 'You cannot manage this user.');
             $existing->update($data);
-            $this->log('updated', 'users', $existing->id, "Updated user '{$existing->name}'.");
+            $this->log('updated', 'users', $existing->id, "Updated user '{$existing->name}'."
+                . ($switchChanged ? ' ' . config('app.switch.label') . ' access ' . ($data['can_switch_app'] ? 'granted' : 'removed') . '.' : ''));
             session()->flash('message', 'User updated successfully.');
         } else {
             $data['is_active'] = true;

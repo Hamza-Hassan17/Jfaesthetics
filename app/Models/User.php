@@ -23,6 +23,7 @@ class User extends Authenticatable
         'role_id',
         'is_active',
         'doctor_id',
+        'can_switch_app',
     ];
 
     /**
@@ -43,6 +44,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
+        'can_switch_app' => 'boolean',
     ];
 
     // belongs to role
