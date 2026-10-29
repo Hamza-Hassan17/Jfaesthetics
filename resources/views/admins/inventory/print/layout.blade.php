@@ -71,7 +71,7 @@
         <div class="watermark">{{ config('app.name') }}</div>
 
         <div class="doc-header">
-            <img class="doc-logo" src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
+            <img class="doc-logo" src="{{ config('app.url') }}{{ config('app.logo') }}" alt="{{ $settings['title'] ?? config('app.name') }} logo">
             <div class="brand-center">
                 <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
                 <p>UAN: {{ $settings['business_phone'] ?? '' }}</p>

@@ -52,7 +52,7 @@
         <div class="header-top wow fadeIn">
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center" href="{{ url('/') }}"><img
-                        src="{{ config('app.url') }}images/logo.png"
+                        src="{{ config('app.url') }}{{ config('app.logo') }}"
                         alt="{{ $settings['title'] ?? config('app.name') }} logo"></a>
                 <div class="right-header">
                     <div class="header-info">
@@ -119,7 +119,7 @@
             <div class="row">
                 <div class="col-md-4">
                     <div class="logo padding">
-                        <a href="{{ url('/') }}"><img src="{{ config('app.url') }}images/logo.png"
+                        <a href="{{ url('/') }}"><img src="{{ config('app.url') }}{{ config('app.logo') }}"
                                 alt="{{ $settings['title'] ?? config('app.name') }} logo"></a>
                         <p>{{ $settings["description"] ?? 'hi this isLocavore pork belly scen ester pine est chill wave microdosing pop uple itarian cliche artisan.' }}
                         </p>

@@ -67,6 +67,8 @@ return [
     // catalogue services on invoices.
     'disabled_modules' => array_values(array_filter(array_map('trim', explode(',', (string) env('DISABLED_MODULES', ''))))),
     'custom_invoice_lines' => (bool) env('CUSTOM_INVOICE_LINES', true),
+    // Logo path under public/ (Dental: images/logo-dental.png).
+    'logo' => env('APP_LOGO', 'images/logo.png'),
 
     'switch' => [
         'url' => env('SWITCH_APP_URL'),

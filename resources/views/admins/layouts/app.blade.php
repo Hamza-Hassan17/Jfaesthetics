@@ -452,7 +452,7 @@
         <nav id="sidebar">
             <div class="jf-sidebar-logo">
                 <a href="{{ route(auth()->user()->landingRouteName()) }}">
-                    <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
+                    <img src="{{ config('app.url') }}{{ config('app.logo') }}" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
                 </a>
                 <button type="button" id="jfSidebarClose" class="jf-sidebar-close" aria-label="Close menu"><i class="fas fa-times"></i></button>
             </div>
@@ -593,7 +593,7 @@
                         class="fas fa-bars"></i><span></span></button>
                 <div class="jf-navbar-logo-wrap">
                     <a href="{{ route(auth()->user()->landingRouteName()) }}" class="jf-navbar-logo">
-                        <img src="{{ config('app.url') }}images/logo.png" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
+                        <img src="{{ config('app.url') }}{{ config('app.logo') }}" alt="{{ $adminSettings['title'] ?? env('APP_NAME') }} logo">
                     </a>
                 </div>
                 <div class="collapse navbar-collapse" id="navbarSupportedContent">

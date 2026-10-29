@@ -128,7 +128,7 @@
         <div class="watermark">{{ config('app.name') }}</div>
 
         <div class="card-header">
-            <img src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
+            <img src="{{ config('app.url') }}{{ config('app.logo') }}" alt="{{ $settings['title'] ?? config('app.name') }} logo">
             <div class="brand">
                 <h1>{{ $settings['title'] ?? config('app.name') }}</h1>
                 <p>{{ $settings['address'] ?? '' }}</p>

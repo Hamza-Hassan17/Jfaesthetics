@@ -458,7 +458,7 @@
     <header class="auth-topbar">
         <div class="container">
             <a class="logo" href="{{ url('/') }}">
-                <img src="{{ config('app.url') }}images/logo.png" alt="{{ $settings['title'] ?? config('app.name') }} logo">
+                <img src="{{ config('app.url') }}{{ config('app.logo') }}" alt="{{ $settings['title'] ?? config('app.name') }} logo">
             </a>
             <div class="contact-strip">
                 <div class="contact-item">
