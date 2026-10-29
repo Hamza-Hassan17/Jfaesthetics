@@ -136,6 +136,7 @@
                                             <th>Email</th>
                                             <th>Role</th>
                                             <th>Status</th>
+                                            @if (config('app.switch.url'))<th>{{ config('app.switch.label') }} access</th>@endif
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -146,6 +147,17 @@
                                                 <td>{{ $u->email }}</td>
                                                 <td>{{ $u->role->name ?? 'N/A' }}</td>
                                                 <td><span class="rbac-badge {{ $u->is_active ? 'active' : 'inactive' }}">{{ $u->is_active ? 'Active' : 'Inactive' }}</span></td>
+                                                @if (config('app.switch.url'))
+                                                    <td>
+                                                        @if (auth()->user()->isSuperAdmin())
+                                                            <button wire:click="toggle_switch_access({{ $u->id }})" class="btn btn-sm {{ $u->can_switch_app ? 'btn-success' : 'btn-outline-secondary' }}" title="Click to {{ $u->can_switch_app ? 'remove' : 'give' }} access">
+                                                                {{ $u->can_switch_app ? 'Yes' : 'No' }}
+                                                            </button>
+                                                        @else
+                                                            {{ $u->can_switch_app ? 'Yes' : 'No' }}
+                                                        @endif
+                                                    </td>
+                                                @endif
                                                 <td>
                                                     @if ($u->id === auth()->id())
                                                         <span class="text-muted small">This is you</span>

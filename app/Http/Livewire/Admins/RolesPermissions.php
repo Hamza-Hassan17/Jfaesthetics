@@ -273,6 +273,19 @@ class RolesPermissions extends Component
         $this->_page = 'index';
     }
 
+    /** Super Admin only, including their own account. */
+    public function toggle_switch_access($id)
+    {
+        abort_unless(auth()->user()->isSuperAdmin(), 403);
+
+        $user = User::findOrFail($id);
+        $user->update(['can_switch_app' => !$user->can_switch_app]);
+
+        $label = config('app.switch.label');
+        $this->log('updated', 'users', $user->id, "{$label} access " . ($user->can_switch_app ? 'granted to' : 'removed from') . " '{$user->name}'.");
+        session()->flash('message', "{$label} access " . ($user->can_switch_app ? 'given to ' : 'removed from ') . $user->name . '.');
+    }
+
     public function toggle_active($id)
     {
         $user = User::findOrFail($id);

@@ -110,6 +110,18 @@ class AppSwitchTest extends TestCase
         $this->actingAs($user)->get(route('admin_dashboard'))->assertDontSee('Switch to Dental');
     }
 
+    public function test_a_super_admin_can_toggle_access_in_the_users_list_including_their_own()
+    {
+        $super = User::factory()->create(['email' => 'super@clinic.pk', 'can_switch_app' => false]);
+
+        Livewire::actingAs($super)->test(RolesPermissions::class)->call('toggle_switch_access', $super->id);
+        $this->assertTrue($super->fresh()->can_switch_app);
+
+        $admin = User::factory()->create(['email' => 'boss@clinic.pk', 'role_id' => Role::where('name', 'Admin')->value('id')]);
+        Livewire::actingAs($admin)->test(RolesPermissions::class)->call('toggle_switch_access', $admin->id)->assertForbidden();
+        $this->assertFalse($admin->fresh()->can_switch_app);
+    }
+
     public function test_only_a_super_admin_can_grant_access()
     {
         $target = $this->user(['email' => 'reception@clinic.pk', 'can_switch_app' => false, 'role_id' => Role::where('name', 'Receptionist')->value('id')]);
