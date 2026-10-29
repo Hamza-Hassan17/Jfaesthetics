@@ -173,8 +173,12 @@
                                                         <select class="form-control" wire:model="items.{{ $index }}.catalog_id">
                                                             <option value="">Choose {{ $item['type'] === 'service' ? 'Service' : 'Product' }}</option>
                                                             @if ($item['type'] === 'service')
-                                                                @foreach ($services as $svc)
-                                                                    <option value="{{ $svc->id }}">{{ $svc->name }} (PKR {{ number_format($svc->price, 2) }})</option>
+                                                                @foreach ($services->groupBy(fn ($svc) => $svc->category ?: '') as $cat => $group)
+                                                                    @if ($cat !== '')<optgroup label="{{ $cat }}">@endif
+                                                                    @foreach ($group as $svc)
+                                                                        <option value="{{ $svc->id }}">{{ $svc->name }} (PKR {{ number_format($svc->price, 2) }})</option>
+                                                                    @endforeach
+                                                                    @if ($cat !== '')</optgroup>@endif
                                                                 @endforeach
                                                             @else
                                                                 @foreach ($products as $product)

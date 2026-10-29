@@ -37,6 +37,18 @@
                         </div>
 
                         <div class="form-group">
+                            <label for="category">Category</label>
+                            <input type="text" name="category" wire:model.lazy="category" list="service-categories"
+                                placeholder="Choose or type a category" class="form-control">
+                            <datalist id="service-categories">
+                                @foreach ($categories as $cat)<option value="{{ $cat }}">@endforeach
+                            </datalist>
+                            @error('category')
+                                <span class="text-red-500 text-danger text-xs">{{ $message }}</span>
+                            @enderror
+                        </div>
+
+                        <div class="form-group">
                             <label for="price">Default Price</label>
                             <input type="number" step="0.01" min="0" name="price" wire:model.lazy="price"
                                 placeholder="Enter Default Price" class="form-control">
@@ -97,11 +109,21 @@
 
                     <div class="text-capitalize bg-dark p-2 shadow mb-3 text-center text-lg text-light rounded">
                         {{ __('All Services') }}</div>
+                    @if ($categories->isNotEmpty())
+                        <div class="form-inline mb-2">
+                            <label class="mr-2">Category</label>
+                            <select class="form-control form-control-sm" wire:model="filter_category">
+                                <option value="">All categories</option>
+                                @foreach ($categories as $cat)<option value="{{ $cat }}">{{ $cat }}</option>@endforeach
+                            </select>
+                        </div>
+                    @endif
                     <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
+                                <th>Category</th>
                                 <th>Default Price</th>
                                 @if ($canSeeRecipe)<th>Recipe</th>@endif
                                 <th>Actions</th>
@@ -112,6 +134,7 @@
                                 <tr>
                                     <td>{{ $service->id }}</td>
                                     <td>{{ $service->name }}</td>
+                                    <td>{{ $service->category ?: '—' }}</td>
                                     <td>{{ number_format($service->price, 2) }}</td>
                                     @if ($canSeeRecipe)
                                         <td>
@@ -133,7 +156,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-warning">No services yet.</td></tr>
+                                <tr><td colspan="5" class="text-warning">No services yet.</td></tr>
                             @endforelse
                         </tbody>
                     </table>

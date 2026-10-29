@@ -59,7 +59,12 @@ class SiteFeatureSwitchesTest extends TestCase
         $this->seed(DentalServiceSeeder::class);
         $this->seed(DentalServiceSeeder::class);
 
-        $this->assertSame(count(DentalServiceSeeder::SERVICES), Service::count());
-        $this->assertEquals(25000, Service::where('name', 'Rotary Root Canal (Posterior Tooth)')->value('price'));
+        $this->assertSame(56, Service::count());
+        $this->assertSame(12, Service::distinct()->count('category'));
+        $rct = Service::where('name', 'Rotary Root Canal (Posterior Tooth)')->first();
+        $this->assertEquals(25000, $rct->price);
+        $this->assertSame('Root Canal', $rct->category);
+        $this->assertSame(['Bone Grafts', 'Chinese Implant', 'German Implant', 'Immediate Implant with Fix Tooth in 72 Hours', 'Korean Implant', 'Membranes', 'USA Implant'],
+            Service::where('category', 'Implants')->orderBy('name')->pluck('name')->all());
     }
 }

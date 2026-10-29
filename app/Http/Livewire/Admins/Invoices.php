@@ -707,7 +707,7 @@ class Invoices extends Component
             return view('livewire.admins.invoices', [
                 'patients' => patient::all(),
                 'doctors' => doctor::with('employ')->whereHas('employ')->get(),
-                'services' => Service::all(),
+                'services' => Service::orderByRaw('category IS NULL')->orderBy('category')->orderBy('id')->get(),
                 'products' => InventoryItem::where('is_active', true)->orderBy('name')->get(),
                 'available' => $this->availableForSelectedProducts(),
                 'canOverridePrice' => auth()->user()->hasPermission('inventory', 'price_override'),

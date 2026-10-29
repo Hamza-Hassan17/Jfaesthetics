@@ -17,7 +17,16 @@ class Services extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $name;
+    public $category;
     public $price;
+    public $filter_category = '';
+
+    protected $queryString = ['filter_category' => ['except' => '']];
+
+    public function updatingFilterCategory()
+    {
+        $this->resetPage();
+    }
 
     public $edit_service_id;
     public $button_text = "Add New Service";
@@ -31,11 +40,13 @@ class Services extends Component
 
             $this->validate([
                 'name' => 'required',
+                'category' => 'nullable|string|max:100',
                 'price' => 'required|numeric|min:0',
             ]);
 
             Service::create([
                 'name' => $this->name,
+                'category' => trim((string) $this->category) ?: null,
                 'price' => $this->price,
             ]);
 
@@ -53,6 +64,7 @@ class Services extends Component
         $service = Service::findOrFail($id);
         $this->edit_service_id = $id;
         $this->name = $service->name;
+        $this->category = $service->category;
         $this->price = $service->price;
         $this->button_text = "Update Service";
     }
@@ -63,15 +75,18 @@ class Services extends Component
 
         $this->validate([
             'name' => 'required',
+            'category' => 'nullable|string|max:100',
             'price' => 'required|numeric|min:0',
         ]);
 
         $service = Service::findOrFail($id);
         $service->name = $this->name;
+        $service->category = trim((string) $this->category) ?: null;
         $service->price = $this->price;
         $service->save();
 
         $this->name = "";
+        $this->category = "";
         $this->price = "";
         $this->edit_service_id = "";
 
@@ -173,7 +188,11 @@ class Services extends Component
     public function render()
     {
         return view('livewire.admins.services', [
-            'services' => Service::withCount('recipe')->latest()->paginate(10),
+            'services' => Service::withCount('recipe')
+                ->when($this->filter_category !== '', fn ($q) => $q->where('category', $this->filter_category))
+                ->orderByRaw('category IS NULL')->orderBy('category')->orderBy('id')
+                ->paginate(15),
+            'categories' => Service::whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
             'recipeService' => $this->recipe_service_id ? Service::find($this->recipe_service_id) : null,
             'inventoryItems' => $this->recipe_service_id ? InventoryItem::where('is_active', true)->orderBy('name')->get() : collect(),
             'canEditRecipe' => auth()->user()->hasPermission('inventory', 'manage_recipes'),
