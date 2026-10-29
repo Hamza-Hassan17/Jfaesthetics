@@ -61,6 +61,13 @@ return [
     | shown only to users with "can_switch_app" ticked. Disabled when the URL
     | or secret is empty.
     */
+    // Per-site feature switches (the Dental site turns some of these off).
+    // DISABLED_MODULES: comma-separated permission modules nobody gets,
+    // e.g. "consultation_form". CUSTOM_INVOICE_LINES=false leaves only
+    // catalogue services on invoices.
+    'disabled_modules' => array_values(array_filter(array_map('trim', explode(',', (string) env('DISABLED_MODULES', ''))))),
+    'custom_invoice_lines' => (bool) env('CUSTOM_INVOICE_LINES', true),
+
     'switch' => [
         'url' => env('SWITCH_APP_URL'),
         'label' => env('SWITCH_APP_LABEL', 'Dental'),

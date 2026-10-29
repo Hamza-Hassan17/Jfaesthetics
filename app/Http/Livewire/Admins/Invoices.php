@@ -103,7 +103,7 @@ class Invoices extends Component
             'uid' => 'n' . Str::random(10),
             'parent_uid' => null,
             'id' => null,
-            'type' => 'custom',
+            'type' => config('app.custom_invoice_lines') ? 'custom' : 'service',
             'catalog_id' => '',
             'service' => '',
             'quantity' => 1,
@@ -433,7 +433,13 @@ class Invoices extends Component
             'patient_id' => 'required',
             'doctor_id' => 'nullable',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:service,product,custom',
+            'items.*.type' => ['required', 'in:service,product,custom', function ($attribute, $value, $fail) {
+                // Lines saved before custom lines were switched off may stay.
+                $index = (int) explode('.', $attribute)[1];
+                if ($value === 'custom' && !config('app.custom_invoice_lines') && empty($this->items[$index]['id'])) {
+                    $fail('Choose a service from the list.');
+                }
+            }],
             'items.*.service' => 'required_unless:items.*.type,product|nullable|string',
             'items.*.catalog_id' => 'required_if:items.*.type,product',
             'items.*.quantity' => 'required|integer|min:1',

@@ -243,6 +243,7 @@
                             <h5 class="mt-4">Permissions</h5>
                             <hr class="mt-1">
                             @foreach ($allPermissions as $module => $perms)
+                                @continue(in_array($module, config('app.disabled_modules', []), true))
                                 <div class="rbac-module-block">
                                     <h6>{{ \App\Http\Livewire\Admins\RolesPermissions::MODULE_LABELS[$module] ?? ucfirst($module) }}</h6>
                                     @foreach ($perms as $perm)

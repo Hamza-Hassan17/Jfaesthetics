@@ -159,7 +159,7 @@
                                                     @else
                                                     <div class="form-inline mb-1">
                                                         <select class="form-control form-control-sm mr-1" wire:model="items.{{ $index }}.type">
-                                                            <option value="custom">Custom / Typed</option>
+                                                            @if (config('app.custom_invoice_lines') || $item['type'] === 'custom')<option value="custom">Custom / Typed</option>@endif
                                                             <option value="service">Service</option>
                                                             {{-- Products are sold on Product Invoices; only older lines keep this type. --}}
                                                             @if ($item['type'] === 'product')<option value="product">Product</option>@endif

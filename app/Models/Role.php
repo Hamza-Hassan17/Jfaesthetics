@@ -31,6 +31,10 @@ class Role extends Model
 
     public function hasPermission(string $module, string $action): bool
     {
+        if (in_array($module, config('app.disabled_modules', []), true)) {
+            return false;
+        }
+
         return $this->permissions->contains(function ($permission) use ($module, $action) {
             return $permission->module === $module && $permission->action === $action;
         });

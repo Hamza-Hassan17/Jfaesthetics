@@ -80,7 +80,7 @@ class User extends Authenticatable
 
     public function hasAnyPermissionFor(string $module): bool
     {
-        if (!$this->role) {
+        if (!$this->role || in_array($module, config('app.disabled_modules', []), true)) {
             return false;
         }
 

@@ -723,7 +723,9 @@
                         'medicines': '{{ route('admin_inventory_items') }}',
                         'services': '{{ route('admin_services') }}',
                         'invoices': '{{ route('admin_invoices') }}',
+                        @if (auth()->user()->hasAnyPermissionFor('consultation_form'))
                         'consultation form': '{{ route('admin_consultation_forms') }}',
+                        @endif
                         'reports': '{{ route('admin_invoices') }}',
                         'settings': '{{ route('admin_settings') }}',
                     };
