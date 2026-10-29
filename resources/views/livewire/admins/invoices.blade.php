@@ -170,15 +170,25 @@
                                                     @if ($item['type'] === 'custom')
                                                         <input type="text" class="form-control" wire:model.lazy="items.{{ $index }}.service" placeholder="e.g. Carbon+PRP+Meso">
                                                     @else
-                                                        <select class="form-control" wire:model="items.{{ $index }}.catalog_id">
-                                                            <option value="">Choose {{ $item['type'] === 'service' ? 'Service' : 'Product' }}</option>
+                                                        @php
+                                                            // Services with categories: pick the category first, then
+                                                            // only that category's services are listed.
+                                                            $pickCategory = $item['type'] === 'service' && !$isChild && $serviceCategories->isNotEmpty();
+                                                            $lineCategory = $item['category'] ?? '';
+                                                        @endphp
+                                                        @if ($pickCategory)
+                                                            <select class="form-control mb-1" wire:model="items.{{ $index }}.category">
+                                                                <option value="">Choose Category</option>
+                                                                @foreach ($serviceCategories as $cat)<option value="{{ $cat }}">{{ $cat }}</option>@endforeach
+                                                                @if ($services->contains(fn ($svc) => !$svc->category))<option value="__none">Other</option>@endif
+                                                            </select>
+                                                        @endif
+                                                        <select class="form-control" wire:model="items.{{ $index }}.catalog_id" @if ($pickCategory && $lineCategory === '') disabled @endif>
+                                                            <option value="">{{ $pickCategory && $lineCategory === '' ? 'Choose a category first' : 'Choose ' . ($item['type'] === 'service' ? 'Service' : 'Product') }}</option>
                                                             @if ($item['type'] === 'service')
-                                                                @foreach ($services->groupBy(fn ($svc) => $svc->category ?: '') as $cat => $group)
-                                                                    @if ($cat !== '')<optgroup label="{{ $cat }}">@endif
-                                                                    @foreach ($group as $svc)
-                                                                        <option value="{{ $svc->id }}">{{ $svc->name }} (PKR {{ number_format($svc->price, 2) }})</option>
-                                                                    @endforeach
-                                                                    @if ($cat !== '')</optgroup>@endif
+                                                                @foreach ($services as $svc)
+                                                                    @continue($pickCategory && ($lineCategory === '__none' ? (bool) $svc->category : $svc->category !== $lineCategory))
+                                                                    <option value="{{ $svc->id }}">{{ $svc->name }} (PKR {{ number_format($svc->price, 2) }})</option>
                                                                 @endforeach
                                                             @else
                                                                 @foreach ($products as $product)

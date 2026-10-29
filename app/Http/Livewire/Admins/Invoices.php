@@ -105,6 +105,7 @@ class Invoices extends Component
             'id' => null,
             'type' => config('app.custom_invoice_lines') ? 'custom' : 'service',
             'catalog_id' => '',
+            'category' => '', // form-only: narrows the service list
             'service' => '',
             'quantity' => 1,
             'session' => '',
@@ -170,6 +171,7 @@ class Invoices extends Component
             'id' => $item->id,
             'type' => $item->line_type,
             'catalog_id' => $item->service_id ?: ($item->inventory_item_id ?: ''),
+            'category' => $item->service_id ? (string) Service::withTrashed()->whereKey($item->service_id)->value('category') : '',
             'service' => $item->service,
             'quantity' => $item->quantity,
             'session' => $item->session_number,
@@ -304,6 +306,15 @@ class Invoices extends Component
             if (!$value) {
                 $this->items[$index]['discount_value'] = 0;
             }
+        }
+
+        if (preg_match('/^items\.(\d+)\.category$/', $name)) {
+            $index = (int) explode('.', $name)[1];
+            $uid = $this->items[$index]['uid'];
+            $this->items = array_values(array_filter($this->items, fn ($item) => $item['parent_uid'] !== $uid));
+            $this->items[$index]['catalog_id'] = '';
+            $this->items[$index]['service'] = '';
+            $this->items[$index]['service_charges'] = 0;
         }
 
         if (preg_match('/^items\.(\d+)\.type$/', $name)) {
@@ -708,6 +719,7 @@ class Invoices extends Component
                 'patients' => patient::all(),
                 'doctors' => doctor::with('employ')->whereHas('employ')->get(),
                 'services' => Service::orderByRaw('category IS NULL')->orderBy('category')->orderBy('id')->get(),
+                'serviceCategories' => Service::whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
                 'products' => InventoryItem::where('is_active', true)->orderBy('name')->get(),
                 'available' => $this->availableForSelectedProducts(),
                 'canOverridePrice' => auth()->user()->hasPermission('inventory', 'price_override'),

@@ -54,6 +54,26 @@ class SiteFeatureSwitchesTest extends TestCase
             ->assertHasErrors('items.0.type');
     }
 
+    public function test_invoice_lines_pick_a_category_first_then_its_services()
+    {
+        config(['app.custom_invoice_lines' => false]);
+        $crown = Service::create(['name' => 'Zirconia Crown', 'category' => 'Crowns & Bridges', 'price' => 40000]);
+        Service::create(['name' => 'Chinese Implant', 'category' => 'Implants', 'price' => 200000]);
+
+        Livewire::actingAs($this->superAdmin())->test(Invoices::class)
+            ->call('show_create_form')
+            ->assertSee('Choose a category first')
+            ->assertDontSee('Zirconia Crown')
+            ->set('items.0.category', 'Crowns & Bridges')
+            ->assertSee('Zirconia Crown')
+            ->assertDontSee('Chinese Implant')
+            ->set('items.0.catalog_id', $crown->id)
+            ->assertSet('items.0.service_charges', $crown->price)
+            ->set('items.0.category', 'Implants')
+            ->assertSet('items.0.catalog_id', '')
+            ->assertSee('Chinese Implant');
+    }
+
     public function test_the_dental_price_list_seeds_once()
     {
         $this->seed(DentalServiceSeeder::class);
