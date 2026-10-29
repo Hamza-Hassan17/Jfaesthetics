@@ -94,6 +94,14 @@
             grid-column: 3;
         }
 
+        /* On desktop the sidebar already shows the logo, and the centred
+           copy here sits under the search bar - show it on mobile only. */
+        @media (min-width: 992px) {
+            .jf-navbar-grid .jf-navbar-logo-wrap {
+                display: none;
+            }
+        }
+
         @media (max-width: 991px) {
             /* Switches from the desktop grid (hamburger | logo | nav) to
                a flex row - avoids the grid/absolute-logo mismatch
