@@ -63,6 +63,21 @@ return [
             ]) : [],
         ],
 
+        // The sister app's database (Aesthetics <-> Dental). User accounts
+        // are mirrored there by App\Support\SisterUserSync.
+        'sister' => [
+            'driver' => 'mysql',
+            'host' => env('SISTER_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('SISTER_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('SISTER_DB_DATABASE'),
+            'username' => env('SISTER_DB_USERNAME', env('DB_USERNAME', 'forge')),
+            'password' => env('SISTER_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'strict' => true,
+        ],
+
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL'),

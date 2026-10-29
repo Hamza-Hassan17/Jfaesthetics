@@ -47,6 +47,12 @@ class User extends Authenticatable
         'can_switch_app' => 'boolean',
     ];
 
+    protected static function booted()
+    {
+        static::saved(fn (User $user) => \App\Support\SisterUserSync::push($user, $user->getOriginal('email')));
+        static::deleted(fn (User $user) => \App\Support\SisterUserSync::remove($user->email));
+    }
+
     // belongs to role
     public function role()
     {
