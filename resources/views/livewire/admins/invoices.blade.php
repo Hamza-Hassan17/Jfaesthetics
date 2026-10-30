@@ -564,6 +564,14 @@
                             <h5>Grand Total: PKR {{ number_format($invoice->grand_total, 2) }}</h5>
                             <h5>Paid: PKR {{ number_format($invoice->paid_total, 2) }}</h5>
                             <h5>Unpaid: PKR {{ number_format($invoice->unpaid_total, 2) }}</h5>
+                            @if ($invoice->unpaid_total > 0)
+                                @php $reminderUrl = \App\Support\PaymentReminder::url($invoice); @endphp
+                                @if ($reminderUrl)
+                                    <a href="{{ $reminderUrl }}" target="_blank" rel="noopener" class="btn btn-success btn-sm mt-1"><i class="fab fa-whatsapp"></i> Send payment reminder</a>
+                                @else
+                                    <small class="text-muted">No valid mobile number on this patient, so a WhatsApp reminder can't be sent.</small>
+                                @endif
+                            @endif
                             @if ($invoice->overpaid_total > 0)
                                 <h5>Overpaid: PKR {{ number_format($invoice->overpaid_total, 2) }}</h5>
                             @endif
@@ -652,6 +660,14 @@
                                                         <button wire:click="edit_invoice({{ $invoice->id }})" class="jfr-icon-btn edit"><i class="fas fa-pen"></i></button>
                                                     @endif
                                                     <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
+                                                    @if ($invoice->unpaid_total > 0)
+                                                        @php $reminderUrl = \App\Support\PaymentReminder::url($invoice); @endphp
+                                                        @if ($reminderUrl)
+                                                            <a href="{{ $reminderUrl }}" target="_blank" rel="noopener" class="jfr-icon-btn" style="color:#25d366" title="Send payment reminder on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                                                        @else
+                                                            <span class="jfr-icon-btn" style="color:#bbb; cursor:not-allowed" title="No valid mobile number for this patient"><i class="fab fa-whatsapp"></i></span>
+                                                        @endif
+                                                    @endif
                                                     @if (auth()->user()->hasPermission('invoices', 'delete'))
                                                         <button wire:click="prompt_delete({{ $invoice->id }})" data-toggle="modal" data-target="#confirmDeleteInvoiceModal" class="jfr-icon-btn delete"><i class="fas fa-trash"></i></button>
                                                     @endif
