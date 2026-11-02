@@ -3,6 +3,7 @@
 namespace App\Http\Livewire\Admins;
 
 use App\Support\PaymentReminder;
+use App\Support\WhatsAppGateway;
 use App\Support\RetryingTransaction;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -439,12 +440,16 @@ class Invoices extends Component
      */
     // ---- WhatsApp payment reminder (editable before sending) ----
 
+    public $reminder_invoice_id = null;
+    public $reminder_connected = false;
     public $reminder_number = null;
     public $reminder_patient = '';
     public $reminder_text = '';
 
     public function open_reminder($id)
     {
+        abort_unless(auth()->user()->hasAnyPermissionFor('invoices'), 403);
+
         $invoice = Invoice::with('patient')->findOrFail($id);
         abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
 
@@ -452,14 +457,39 @@ class Invoices extends Component
             return;
         }
 
+        $this->reminder_invoice_id = $invoice->id;
         $this->reminder_number = PaymentReminder::whatsappNumber($invoice->patient->phone);
         $this->reminder_patient = $invoice->patient->name;
         $this->reminder_text = PaymentReminder::message($invoice);
+        $this->reminder_connected = WhatsAppGateway::status()['state'] === 'connected';
+        $this->resetErrorBag('reminder_text');
     }
 
     public function close_reminder()
     {
-        $this->reset(['reminder_number', 'reminder_patient', 'reminder_text']);
+        $this->reset(['reminder_invoice_id', 'reminder_number', 'reminder_patient', 'reminder_text', 'reminder_connected']);
+    }
+
+    /** Sends from the connected WhatsApp number; the recipient always comes from the invoice. */
+    public function send_reminder()
+    {
+        abort_unless(auth()->user()->hasAnyPermissionFor('invoices'), 403);
+
+        $invoice = Invoice::with('patient')->findOrFail($this->reminder_invoice_id);
+        abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
+
+        $this->validate(['reminder_text' => 'required|string|max:4000'], [], ['reminder_text' => 'message']);
+
+        $number = PaymentReminder::whatsappNumber($invoice->patient->phone);
+        $result = $number ? WhatsAppGateway::send($number, $this->reminder_text) : ['error' => 'This patient has no valid mobile number.'];
+
+        if (isset($result['error'])) {
+            $this->addError('reminder_text', $result['error']);
+            return;
+        }
+
+        session()->flash('message', 'Payment reminder sent to ' . $invoice->patient->name . '.');
+        $this->close_reminder();
     }
 
     public function generate_invoice($confirmShortfall = false)

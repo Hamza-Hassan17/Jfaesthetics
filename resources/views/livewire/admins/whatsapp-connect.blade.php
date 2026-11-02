@@ -17,7 +17,12 @@
             </form>
             @error('test_number') <p class="text-danger small">{{ $message }}</p> @enderror
 
+            @if (auth()->user()->isSuperAdmin())
             <button class="btn btn-outline-danger" wire:click="disconnect" onclick="return confirm('Disconnect this WhatsApp number?')">Disconnect</button>
+            @endif
+        @elseif (!auth()->user()->isSuperAdmin())
+            <h5>WhatsApp isn't connected</h5>
+            <p class="text-muted mb-0">Ask a Super Admin to connect it.</p>
         @elseif ($whatsapp['qr'])
             <h5>Connect WhatsApp</h5>
             <img src="{{ $whatsapp['qr'] }}" alt="WhatsApp QR code" width="320" height="320" style="max-width:100%">

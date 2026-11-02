@@ -15,7 +15,7 @@ class WhatsappConnect extends Component
 
     public function send_test()
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->hasAnyPermissionFor('invoices'), 403);
 
         $number = PaymentReminder::whatsappNumber($this->test_number);
         if (!$number) {
@@ -40,7 +40,7 @@ class WhatsappConnect extends Component
 
     public function render()
     {
-        abort_unless(auth()->user()->isSuperAdmin(), 403);
+        abort_unless(auth()->user()->hasAnyPermissionFor('invoices'), 403);
 
         return view('livewire.admins.whatsapp-connect', [
             'configured' => WhatsAppGateway::configured(),

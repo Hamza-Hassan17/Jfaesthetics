@@ -575,7 +575,7 @@
                     <a href="{{ route('admin_settings') }}"><i class="fas fa-cog"></i>Settings</a>
                 </li>
                 @endif
-                @if (auth()->user()->isSuperAdmin())
+                @if (auth()->user()->hasAnyPermissionFor('invoices'))
                 <li class="{{ request()->routeIs('admin_whatsapp') ? 'active' : '' }}">
                     <a href="{{ route('admin_whatsapp') }}"><i class="fab fa-whatsapp"></i>WhatsApp</a>
                 </li>

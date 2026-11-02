@@ -41,6 +41,29 @@ class PaymentReminderTest extends TestCase
             ->assertDontSee('Open in WhatsApp');
     }
 
+    public function test_a_reminder_sends_the_edited_text_from_the_connected_number()
+    {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+        config(['app.whatsapp' => ['url' => 'http://wa.test', 'token' => str_repeat('t', 40)]]);
+        \Illuminate\Support\Facades\Http::fake(['wa.test/status' => ['state' => 'connected', 'number' => '923465320546', 'qr' => null], 'wa.test/send' => ['ok' => true, 'id' => 'X']]);
+
+        $patient = patient::create(['name' => 'Sohail', 'phone' => '03178414882', 'address' => '-', 'gender' => 'Male', 'age' => 30, 'bloodgroup' => 'O+', 'email' => 's@x.com']);
+        $invoice = Invoice::create(['invoice_number' => 'INV-1', 'patient_id' => $patient->id]);
+        $invoice->items()->create(['service' => 'PFM Crown', 'quantity' => 1, 'service_charges' => 20000, 'sub_total' => 20000, 'discount_value' => 0, 'discount_type' => 'flat', 'discount' => 0, 'after_discount' => 20000]);
+
+        \Livewire\Livewire::actingAs(User::factory()->create(['email' => 'super@clinic.pk']))
+            ->test(\App\Http\Livewire\Admins\Invoices::class)
+            ->call('open_reminder', $invoice->id)
+            ->assertSee('Send now')
+            ->set('reminder_text', 'Edited text')
+            ->set('reminder_number', '920000000000') // a tampered number must be ignored
+            ->call('send_reminder')
+            ->assertSet('reminder_invoice_id', null);
+
+        \Illuminate\Support\Facades\Http::assertSent(fn ($request) => $request->url() === 'http://wa.test/send'
+            && $request['to'] === '923178414882' && $request['text'] === 'Edited text');
+    }
+
     public function test_a_link_only_for_invoices_with_a_balance()
     {
         $patient = patient::create(['name' => 'Sohail', 'phone' => '03178414882', 'address' => '-', 'gender' => 'Male', 'age' => 30, 'bloodgroup' => 'O+', 'email' => 's@x.com']);
