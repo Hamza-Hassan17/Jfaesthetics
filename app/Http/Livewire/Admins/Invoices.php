@@ -2,6 +2,7 @@
 
 namespace App\Http\Livewire\Admins;
 
+use App\Support\PaymentReminder;
 use App\Support\RetryingTransaction;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -436,6 +437,31 @@ class Invoices extends Component
      * @param bool $confirmShortfall true when the user chose "Save anyway"
      *        in the shortfall modal (stock may go negative, spec decision 11)
      */
+    // ---- WhatsApp payment reminder (editable before sending) ----
+
+    public $reminder_number = null;
+    public $reminder_patient = '';
+    public $reminder_text = '';
+
+    public function open_reminder($id)
+    {
+        $invoice = Invoice::with('patient')->findOrFail($id);
+        abort_unless($this->canViewAllInvoices() || $invoice->created_by === auth()->id(), 403, 'You do not have access to this invoice.');
+
+        if (!PaymentReminder::url($invoice)) {
+            return;
+        }
+
+        $this->reminder_number = PaymentReminder::whatsappNumber($invoice->patient->phone);
+        $this->reminder_patient = $invoice->patient->name;
+        $this->reminder_text = PaymentReminder::message($invoice);
+    }
+
+    public function close_reminder()
+    {
+        $this->reset(['reminder_number', 'reminder_patient', 'reminder_text']);
+    }
+
     public function generate_invoice($confirmShortfall = false)
     {
         abort_unless(auth()->user()->hasPermission('invoices', $this->editing_invoice_id ? 'update' : 'create'), 403);

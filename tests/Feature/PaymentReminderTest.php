@@ -24,6 +24,23 @@ class PaymentReminderTest extends TestCase
         }
     }
 
+    public function test_the_message_opens_in_an_editable_box()
+    {
+        $this->seed(\Database\Seeders\RoleSeeder::class);
+        $patient = patient::create(['name' => 'Sohail', 'phone' => '03178414882', 'address' => '-', 'gender' => 'Male', 'age' => 30, 'bloodgroup' => 'O+', 'email' => 's@x.com']);
+        $invoice = Invoice::create(['invoice_number' => 'INV-1', 'patient_id' => $patient->id]);
+        $invoice->items()->create(['service' => 'PFM Crown', 'quantity' => 1, 'service_charges' => 20000, 'sub_total' => 20000, 'discount_value' => 0, 'discount_type' => 'flat', 'discount' => 0, 'after_discount' => 20000]);
+
+        \Livewire\Livewire::actingAs(User::factory()->create(['email' => 'super@clinic.pk']))
+            ->test(\App\Http\Livewire\Admins\Invoices::class)
+            ->call('open_reminder', $invoice->id)
+            ->assertSet('reminder_number', '923178414882')
+            ->assertSee('Open in WhatsApp')
+            ->assertSee('Balance due: PKR 20,000')
+            ->call('close_reminder')
+            ->assertDontSee('Open in WhatsApp');
+    }
+
     public function test_a_link_only_for_invoices_with_a_balance()
     {
         $patient = patient::create(['name' => 'Sohail', 'phone' => '03178414882', 'address' => '-', 'gender' => 'Male', 'age' => 30, 'bloodgroup' => 'O+', 'email' => 's@x.com']);

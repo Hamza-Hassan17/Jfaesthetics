@@ -565,9 +565,8 @@
                             <h5>Paid: PKR {{ number_format($invoice->paid_total, 2) }}</h5>
                             <h5>Unpaid: PKR {{ number_format($invoice->unpaid_total, 2) }}</h5>
                             @if ($invoice->unpaid_total > 0)
-                                @php $reminderUrl = \App\Support\PaymentReminder::url($invoice); @endphp
-                                @if ($reminderUrl)
-                                    <a href="{{ $reminderUrl }}" target="_blank" rel="noopener" class="btn btn-success btn-sm mt-1"><i class="fab fa-whatsapp"></i> Send payment reminder</a>
+                                @if (\App\Support\PaymentReminder::url($invoice))
+                                    <button type="button" wire:click="open_reminder({{ $invoice->id }})" class="btn btn-success btn-sm mt-1"><i class="fab fa-whatsapp"></i> Send payment reminder</button>
                                 @else
                                     <small class="text-muted">No valid mobile number on this patient, so a WhatsApp reminder can't be sent.</small>
                                 @endif
@@ -575,6 +574,20 @@
                             @if ($invoice->overpaid_total > 0)
                                 <h5>Overpaid: PKR {{ number_format($invoice->overpaid_total, 2) }}</h5>
                             @endif
+                        </div>
+                    @endif
+
+                    @if ($reminder_number)
+                        <div style="position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,.5); z-index:2000; display:flex; align-items:center; justify-content:center; padding:16px;">
+                            <div class="bg-white rounded shadow p-3" style="width:100%; max-width:520px;">
+                                <h5 class="mb-1">Payment reminder to {{ $reminder_patient }}</h5>
+                                <p class="text-muted small mb-2">Edit the message if needed, then open it in WhatsApp.</p>
+                                <textarea id="reminderText" class="form-control mb-3" rows="12" wire:model.defer="reminder_text">{{ $reminder_text }}</textarea>
+                                <div class="text-right">
+                                    <button type="button" class="btn btn-secondary" wire:click="close_reminder">Cancel</button>
+                                    <button type="button" class="btn btn-success" onclick="window.open('https://wa.me/{{ $reminder_number }}?text=' + encodeURIComponent(document.getElementById('reminderText').value), '_blank', 'noopener')"><i class="fab fa-whatsapp"></i> Open in WhatsApp</button>
+                                </div>
+                            </div>
                         </div>
                     @endif
 
@@ -661,9 +674,8 @@
                                                     @endif
                                                     <a href="{{ route('admin_invoice_print', $invoice->id) }}" target="_blank" class="jfr-icon-btn print"><i class="fas fa-print"></i></a>
                                                     @if ($invoice->unpaid_total > 0)
-                                                        @php $reminderUrl = \App\Support\PaymentReminder::url($invoice); @endphp
-                                                        @if ($reminderUrl)
-                                                            <a href="{{ $reminderUrl }}" target="_blank" rel="noopener" class="jfr-icon-btn" style="color:#25d366" title="Send payment reminder on WhatsApp"><i class="fab fa-whatsapp"></i></a>
+                                                        @if (\App\Support\PaymentReminder::url($invoice))
+                                                            <button type="button" wire:click="open_reminder({{ $invoice->id }})" class="jfr-icon-btn" style="color:#25d366" title="Send payment reminder on WhatsApp"><i class="fab fa-whatsapp"></i></button>
                                                         @else
                                                             <span class="jfr-icon-btn" style="color:#bbb; cursor:not-allowed" title="No valid mobile number for this patient"><i class="fab fa-whatsapp"></i></span>
                                                         @endif
