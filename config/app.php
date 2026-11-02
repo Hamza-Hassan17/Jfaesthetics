@@ -70,6 +70,12 @@ return [
     // Logo path under public/ (Dental: images/logo-dental.png).
     'logo' => env('APP_LOGO', 'images/logo.png'),
 
+    // The Node program in whatsapp-service/. Both values come from .env.
+    'whatsapp' => [
+        'url' => env('WHATSAPP_SERVICE_URL'),
+        'token' => env('WHATSAPP_TOKEN'),
+    ],
+
     'switch' => [
         'url' => env('SWITCH_APP_URL'),
         'label' => env('SWITCH_APP_LABEL', 'Dental'),

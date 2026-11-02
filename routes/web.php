@@ -82,6 +82,7 @@ Route::middleware(['auth', 'checksuperadmin'])->group(function () {
             return response()->json($results);
         })->name('admin_search_suggestions');
         Route::get('settings', App\Http\Livewire\Admins\Settings::class)->name('admin_settings')->middleware('permission:settings');
+        Route::get('whatsapp', App\Http\Livewire\Admins\WhatsappConnect::class)->name('admin_whatsapp');
         Route::get('profile', App\Http\Livewire\Admins\Profile::class)->name('admin_profile');
 
         Route::get('roles-permissions', App\Http\Livewire\Admins\RolesPermissions::class)->name('admin_roles_permissions')->middleware('permission:roles');

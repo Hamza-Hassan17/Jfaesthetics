@@ -1,0 +1,14 @@
+{
+  "name": "jf-whatsapp-service",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Keeps one WhatsApp linked-device session open and sends messages for the JF app.",
+  "main": "app.js",
+  "scripts": { "start": "node app.js" },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "baileys": "7.0.0-rc14",
+    "pino": "^9.0.0",
+    "qrcode": "1.5.4"
+  }
+}

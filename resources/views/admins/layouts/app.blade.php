@@ -575,6 +575,11 @@
                     <a href="{{ route('admin_settings') }}"><i class="fas fa-cog"></i>Settings</a>
                 </li>
                 @endif
+                @if (auth()->user()->isSuperAdmin())
+                <li class="{{ request()->routeIs('admin_whatsapp') ? 'active' : '' }}">
+                    <a href="{{ route('admin_whatsapp') }}"><i class="fab fa-whatsapp"></i>WhatsApp</a>
+                </li>
+                @endif
                 @if (auth()->user()->hasAnyPermissionFor('roles'))
                 <li class="{{ request()->routeIs('admin_roles_permissions') ? 'active' : '' }}">
                     <a href="{{ route('admin_roles_permissions') }}"><i class="fas fa-user-shield"></i>Roles &amp; Permissions</a>
