@@ -1,7 +1,8 @@
 // Keeps one WhatsApp linked-device session open and sends messages for the
 // JF app. Sends only: incoming messages are ignored and never stored.
 //
-// Env: WHATSAPP_TOKEN (required, same value as the Laravel .env), PORT.
+// Env: WHATSAPP_TOKEN or a .token file (required, same value as the Laravel
+// .env), PORT.
 // CommonJS entry because cPanel's Node runner can't start an ES module;
 // Baileys itself is ESM, hence the dynamic import.
 const http = require('http');
@@ -11,8 +12,13 @@ const crypto = require('crypto');
 const QRCode = require('qrcode');
 const pino = require('pino');
 
-const TOKEN = process.env.WHATSAPP_TOKEN || '';
 const AUTH_DIR = path.join(__dirname, 'auth');
+const TOKEN_FILE = path.join(__dirname, '.token');
+
+// cPanel's Node screen doesn't always pass its variables to the app, so a
+// private .token file next to this script works too.
+const TOKEN = process.env.WHATSAPP_TOKEN
+    || (fs.existsSync(TOKEN_FILE) ? fs.readFileSync(TOKEN_FILE, 'utf8').trim() : '');
 
 let sock = null;
 let state = 'starting'; // starting | qr | connected | disconnected
@@ -128,7 +134,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 if (TOKEN.length < 32) {
-    console.error('WHATSAPP_TOKEN must be set (at least 32 characters).');
+    console.error('WHATSAPP_TOKEN or a .token file must be set (at least 32 characters).');
     process.exit(1);
 }
 
